@@ -1,6 +1,5 @@
 
 #import "RootViewController.h"
-#import "GridCell.h"
 
 @implementation RootViewController
 
@@ -74,32 +73,32 @@
 {
 	NSString *CellIdentifier = [NSString stringWithFormat:@"MyId %i", indexPath.row];
 
-	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-	if (cell == nil)
-	{
-		cell = [[[GridTableCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+	if (cell == nil) {
+		cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier] autorelease];
 		
-		UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(.0, 0, 130.0, tableView.rowHeight)] autorelease];
-		[cell addColumn:140];
-		[cell addColumn:220];
-		//label.tag = 1;
-		label.font = [UIFont systemFontOfSize:12.0];
-		label.text = [NSString stringWithFormat:@"Process #%u command line parameters", indexPath.row];
-		[cell.contentView addSubview:label];
-		//cell.textLabel.text = [NSString stringWithFormat:@"Process #%u", indexPath.row];
-		//cell.detailTextLabel.text = @"Details about the process";
+		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u", indexPath.row];
+		cell.detailTextLabel.text = @".";
 		//cell.detailTextLabel.frame.size.width = 90.0;
 		//cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
-		//cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
-		//cell.indentationLevel = indexPath.row < 5 ? 0 : 1;
+		cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
+		cell.indentationLevel = indexPath.row < 5 ? 0 : 1;
+		
+		CGFloat col = 190;
+		CGFloat shift = (cell.indentationLevel+1)*10;
+		CGFloat skew = tableView.rowHeight/2;
+		UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(shift, skew, col - shift, skew)] autorelease];
+		label.tag = 1;
+		label.font = [UIFont systemFontOfSize:12.0];
+		label.text = [NSString stringWithFormat:@"Process #%u command line parameters", indexPath.row];
+		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
+		[cell.contentView addSubview:label];
+		
+		UIView *divider = [[[UIView alloc] initWithFrame:CGRectMake(col+10, 0, 1, tableView.rowHeight)] autorelease];
+		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
+		[cell.contentView addSubview:divider];
 	}
 	/*
-	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-	if (cell == nil)
-	{
-		cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier] autorelease];
-	}
-	
 	// Configure the cell.
 	cell.textLabel.text = [NSString stringWithFormat:@"Created #%u", indexPath.row];
 	cell.detailTextLabel.text = @"Detailed description of the item";
