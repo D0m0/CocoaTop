@@ -1,5 +1,6 @@
 
 #import "RootViewController.h"
+#import "GridCell.h"
 
 @implementation RootViewController
 
@@ -71,8 +72,28 @@
 // Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	static NSString *CellIdentifier = @"Cell";
-	
+	NSString *CellIdentifier = [NSString stringWithFormat:@"MyId %i", indexPath.row];
+
+	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+	if (cell == nil)
+	{
+		cell = [[[GridTableCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
+		
+		UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(.0, 0, 130.0, tableView.rowHeight)] autorelease];
+		[cell addColumn:140];
+		[cell addColumn:220];
+		//label.tag = 1;
+		label.font = [UIFont systemFontOfSize:12.0];
+		label.text = [NSString stringWithFormat:@"Process #%u command line parameters", indexPath.row];
+		[cell.contentView addSubview:label];
+		//cell.textLabel.text = [NSString stringWithFormat:@"Process #%u", indexPath.row];
+		//cell.detailTextLabel.text = @"Details about the process";
+		//cell.detailTextLabel.frame.size.width = 90.0;
+		//cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
+		//cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
+		//cell.indentationLevel = indexPath.row < 5 ? 0 : 1;
+	}
+	/*
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil)
 	{
@@ -84,7 +105,8 @@
 	cell.detailTextLabel.text = @"Detailed description of the item";
 	cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 	cell.indentationLevel = indexPath.row < 5 ? 0 : 1;
-
+	*/
+	
 	return cell;
 }
 

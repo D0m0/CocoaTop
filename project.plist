@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>LastAccess</key>
-	<date>2014-10-12T20:57:06Z</date>
+	<date>2014-10-13T18:59:03Z</date>
 	<key>author</key>
 	<string>Doomer</string>
 	<key>bundleIdentifier</key>
@@ -53,6 +53,18 @@
 			<false/>
 			<key>name</key>
 			<string>DoomAppAppDelegate.m</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>GridCell.h</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>GridCell.m</string>
 		</dict>
 		<dict>
 			<key>folder</key>
