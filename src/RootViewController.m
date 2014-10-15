@@ -78,21 +78,30 @@
 		cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier] autorelease];
 		
 		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u", indexPath.row];
-		cell.detailTextLabel.text = @".";
+		cell.detailTextLabel.text = [NSString stringWithFormat:@"Process #%u command line parameters", indexPath.row];
 		//cell.detailTextLabel.frame.size.width = 90.0;
-		//cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
+		cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 		cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 		cell.indentationLevel = indexPath.row < 5 ? 0 : 1;
 		
 		CGFloat col = 190;
 		CGFloat shift = (cell.indentationLevel+1)*10;
 		CGFloat skew = tableView.rowHeight/2;
+		
+		CGRect newFrame = cell.detailTextLabel.frame;
+		//newFrame.origin.x = 40;
+		newFrame.size.width = 100;
+		//[cell.detailTextLabel setFrame:newFrame];
+		cell.detailTextLabel.frame = newFrame;
+		
+		/*
 		UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(shift, skew, col - shift, skew)] autorelease];
 		label.tag = 1;
 		label.font = [UIFont systemFontOfSize:12.0];
 		label.text = [NSString stringWithFormat:@"Process #%u command line parameters", indexPath.row];
 		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 		[cell.contentView addSubview:label];
+		*/
 		
 		UIView *divider = [[[UIView alloc] initWithFrame:CGRectMake(col+10, 0, 1, tableView.rowHeight)] autorelease];
 		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>LastAccess</key>
-	<date>2014-10-13T20:19:33Z</date>
+	<date>2014-10-14T04:22:34Z</date>
 	<key>author</key>
 	<string>Doomer</string>
 	<key>bundleIdentifier</key>
@@ -28,7 +28,7 @@
 	<key>product</key>
 	<string>DoomApp</string>
 	<key>projectDevice</key>
-	<string>iPhone</string>
+	<string>iPhone/iPad</string>
 	<key>projectType</key>
 	<string>Application</string>
 	<key>resources</key>
