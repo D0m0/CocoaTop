@@ -2,7 +2,7 @@
 
 @implementation GridTableCell
 
-- (instancetype)initWithHeight:(CGFloat *)height Id:(NSString *)reuseIdentifier
+- (instancetype)initWithHeight:(CGFloat)height Id:(NSString *)reuseIdentifier
 {
 	GridTableCell *cell = (GridTableCell *)[super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
 	cell.detailTextLabel.text = @"Detailed description of command line parameters";
@@ -37,12 +37,12 @@
 //	CGContextStrokePath(ctx);
 //}
 
-//- (void)layoutSubviews
-//{
-//	[super layoutSubviews];
-//	CGRect frame = self.textLabel.frame;
-//	frame.size.width = ...;
-//	self.textLabel.frame = frame;
-//}
+- (void)layoutSubviews
+{
+	[super layoutSubviews];
+	CGRect frame = self.detailTextLabel.frame;
+	frame.size.width = 180;
+	self.detailTextLabel.frame = frame;
+}
 
 @end
