@@ -58,6 +58,18 @@
 			<key>folder</key>
 			<false/>
 			<key>name</key>
+			<string>GridCell.h</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>GridCell.m</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
 			<string>main.m</string>
 		</dict>
 		<dict>
