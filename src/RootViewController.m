@@ -1,7 +1,10 @@
 #import "RootViewController.h"
 #import "GridCell.h"
+#import "Proc.h"
 
 @implementation RootViewController
+
+@synthesize procs;
 
 #pragma mark -
 #pragma mark View lifecycle
@@ -14,6 +17,16 @@
 	//self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	//self.tableView.rowHeight = 30;
 	self.tableView.separatorColor = [UIColor colorWithRed:.9 green:.9 blue:.9 alpha:1];
+
+	// array of struct kinfo_proc
+	self.procs = [NSMutableArray array];
+
+	struct kinfo_proc pinit[12] = {0};
+	for (int i = 0; i < sizeof(pinit)/sizeof(pinit[0]); i++) {
+		pinit[i].kp_proc.p_pid = 1 + i * 3;
+		strcpy(pinit[i].kp_proc.p_comm, "Processname");
+		[procs addObject:[[PSProc alloc] initWithPid:pinit[i].kp_proc.p_pid name:pinit[i].kp_proc.p_comm]];
+	}
 }
 
 /*
@@ -57,27 +70,31 @@
 // Customize the number of sections in the table view.
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-	return 1;
+	return 1;  // 2 - system + user!
 }
 
 
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return 10;
+	return procs.count;		// section 1: system processes, section 2: user processes
 }
 
 
 // Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	NSString *CellIdentifier = [NSString stringWithFormat:@"MyId %i", indexPath.row];
+	if (indexPath.row >= procs.count)
+		return nil;
+	PSProc *proc = [procs objectAtIndex:indexPath.row];
+	NSString *CellIdentifier = [NSString stringWithFormat:@"%i", proc.pid];
 
 	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil) {
 		cell = [[[GridTableCell alloc] initWithHeight:tableView.rowHeight Id:CellIdentifier] autorelease];
 		
-		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u", indexPath.row];
+		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u", proc.pid];
+		cell.detailTextLabel.text = proc.name;
 
 		cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 		cell.indentationLevel = indexPath.row < 5 ? 0 : 1;
@@ -189,12 +206,13 @@
 - (void)viewDidUnload
 {
 	// Relinquish ownership of anything that can be recreated in viewDidLoad or on demand.
-	// For example: self.myOutlet = nil;
+	self.procs = nil;
 }
 
 
 - (void)dealloc
 {
+	[procs release];
 	[super dealloc];
 }
 

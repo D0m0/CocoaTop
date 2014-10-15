@@ -5,7 +5,7 @@
 - (instancetype)initWithHeight:(CGFloat)height Id:(NSString *)reuseIdentifier
 {
 	GridTableCell *cell = (GridTableCell *)[super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
-	cell.detailTextLabel.text = @"Detailed description of command line parameters";
+//	cell.detailTextLabel.text = @"Detailed description of command line parameters";
 //	cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 
 	CGFloat col = 190;
