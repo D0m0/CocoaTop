@@ -2,10 +2,13 @@
 
 @implementation PSProc
 
-- (instancetype)initWithPid:(pid_t)newpid name:(const char *)newname;
+- (instancetype)initWithKInfoProc:(struct kinfo_proc *)proc
 {
-	_pid = newpid;
-	_name = [NSString stringWithUTF8String:(const char *)newname];
+	_pid = proc->kp_proc.p_pid;
+	_ppid = proc->kp_eproc.e_ppid;
+	_name = [NSString stringWithCString:proc->kp_proc.p_comm encoding:NSASCIIStringEncoding];
+	//UTF8String:(const char *)newname];
+	[_name retain];
 	return self;
 }
 

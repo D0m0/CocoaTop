@@ -5,7 +5,8 @@
 {
 }
 @property (assign) pid_t pid;
-@property (assign) NSString *name;
-- (instancetype)initWithPid:(pid_t)newpid name:(const char *)newname;
+@property (assign) pid_t ppid;
+@property (strong) NSString *name;
+- (instancetype)initWithKInfoProc:(struct kinfo_proc *)proc;
 
 @end

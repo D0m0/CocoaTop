@@ -4,10 +4,44 @@
 
 @implementation RootViewController
 
-@synthesize procs;
-
 #pragma mark -
 #pragma mark View lifecycle
+
+NSMutableArray *procs;
+
+- (int)populate
+{
+	struct kinfo_proc *kp, *kprocbuf;
+	int nentries, retry_count;
+	size_t orig_bufSize, bufSize;
+	int i, err;
+	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+
+	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0) {
+		//perror("Failure calling sysctl");
+		return 0;
+	}
+	kprocbuf = kp = (struct kinfo_proc *)malloc(bufSize);
+	orig_bufSize = bufSize;
+	for (retry_count = 0; ; retry_count++) {
+		/* retry for transient errors due to load in the system */
+		bufSize = orig_bufSize;
+		err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
+		if (err < 0 && retry_count >= 1000) {
+			//perror("Failure calling sysctl");
+			return 0;
+		} else if (err == 0)
+			break;
+		sleep(1);
+	}
+	nentries = bufSize / sizeof(struct kinfo_proc);
+	for (i = 0; i < nentries; i++) {
+		kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;
+		[procs addObject:[[PSProc alloc] initWithKInfoProc:&kp[i]]];
+	}
+	free(kprocbuf);
+	return 0;
+}
 
 - (void)viewDidLoad
 {
@@ -19,14 +53,11 @@
 	self.tableView.separatorColor = [UIColor colorWithRed:.9 green:.9 blue:.9 alpha:1];
 
 	// array of struct kinfo_proc
-	self.procs = [NSMutableArray array];
-
-	struct kinfo_proc pinit[12] = {0};
-	for (int i = 0; i < sizeof(pinit)/sizeof(pinit[0]); i++) {
-		pinit[i].kp_proc.p_pid = 1 + i * 3;
-		strcpy(pinit[i].kp_proc.p_comm, "Processname");
-		[procs addObject:[[PSProc alloc] initWithPid:pinit[i].kp_proc.p_pid name:pinit[i].kp_proc.p_comm]];
-	}
+	procs = [[NSMutableArray alloc] init];
+	[self populate];
+	[procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) {
+		return a.pid - b.pid;
+	}];
 }
 
 /*
@@ -63,7 +94,6 @@
 }
  */
 
-
 #pragma mark -
 #pragma mark Table view data source
 
@@ -73,31 +103,31 @@
 	return 1;  // 2 - system + user!
 }
 
-
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
 	return procs.count;		// section 1: system processes, section 2: user processes
 }
 
-
 // Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+	PSProc *proc;
 	if (indexPath.row >= procs.count)
 		return nil;
-	PSProc *proc = [procs objectAtIndex:indexPath.row];
-	NSString *CellIdentifier = [NSString stringWithFormat:@"%i", proc.pid];
+	proc = [procs objectAtIndex:(indexPath.row)];
+	
+	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
 
 	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil) {
 		cell = [[[GridTableCell alloc] initWithHeight:tableView.rowHeight Id:CellIdentifier] autorelease];
 		
-		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u", proc.pid];
+		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u/%u", proc.pid, proc.ppid];
 		cell.detailTextLabel.text = proc.name;
 
 		cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
-		cell.indentationLevel = indexPath.row < 5 ? 0 : 1;
+		cell.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 		
 		/*
 		UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(shift, skew, col - shift, skew)] autorelease];
@@ -107,23 +137,9 @@
 		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 		[cell.contentView addSubview:label];
 		*/
-		
-		//UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(.0, 0, 130.0, tableView.rowHeight)] autorelease];
-		//[cell addColumn:140];
-		//[cell addColumn:220];
-		//label.tag = 1;
-		//label.font = [UIFont systemFontOfSize:12.0];
-		//[cell.contentView addSubview:label];
-		//cell.textLabel.text = [NSString stringWithFormat:@"Process #%u", indexPath.row];
-		//cell.detailTextLabel.text = @"Details about the process";
-		//cell.detailTextLabel.frame.size.width = 90.0;
-		//cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
-		//cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
-		//cell.indentationLevel = indexPath.row < 5 ? 0 : 1;
 	}
 	return cell;
 }
-
 
 /*
 // Override to support conditional editing of the table view.
@@ -132,7 +148,6 @@
 	return YES;
 }
 */
-
 
 /*
 // Override to support editing the table view.
@@ -150,7 +165,6 @@
 }
 */
 
-
 /*
 // Override to support rearranging the table view.
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
@@ -159,7 +173,6 @@
 }
 */
 
-
 /*
 // Override to support conditional rearranging of the table view.
 - (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -167,7 +180,6 @@
 	return YES;
 }
 */
-
 
 #pragma mark -
 #pragma mark Table view delegate
@@ -191,7 +203,6 @@
 	// Configure the cell.
 }
 
-
 #pragma mark -
 #pragma mark Memory management
 
@@ -206,9 +217,8 @@
 - (void)viewDidUnload
 {
 	// Relinquish ownership of anything that can be recreated in viewDidLoad or on demand.
-	self.procs = nil;
+	procs = nil;
 }
-
 
 - (void)dealloc
 {
@@ -216,6 +226,4 @@
 	[super dealloc];
 }
 
-
 @end
-

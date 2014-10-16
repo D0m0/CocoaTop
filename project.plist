@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>LastAccess</key>
-	<date>2014-10-14T04:22:34Z</date>
+	<date>2014-10-16T21:54:45Z</date>
 	<key>author</key>
 	<string>Doomer</string>
 	<key>bundleIdentifier</key>
@@ -71,6 +71,18 @@
 			<false/>
 			<key>name</key>
 			<string>main.m</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>Proc.h</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>Proc.m</string>
 		</dict>
 		<dict>
 			<key>folder</key>
