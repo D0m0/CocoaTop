@@ -8,7 +8,7 @@
 //	cell.detailTextLabel.text = @"Detailed description of command line parameters";
 //	cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 
-	CGFloat col = 190;
+	CGFloat col = 890;
 	UIView *divider = [[[UIView alloc] initWithFrame:CGRectMake(col+10, 0, 1, height)] autorelease];
 	divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 	[cell.contentView addSubview:divider];
@@ -41,7 +41,7 @@
 {
 	[super layoutSubviews];
 	CGRect frame = self.detailTextLabel.frame;
-	frame.size.width = 180;
+	frame.size.width = 880;
 	self.detailTextLabel.frame = frame;
 }
 

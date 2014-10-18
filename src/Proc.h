@@ -6,7 +6,9 @@
 }
 @property (assign) pid_t pid;
 @property (assign) pid_t ppid;
-@property (strong) NSString *name;
-- (instancetype)initWithKInfoProc:(struct kinfo_proc *)proc;
+@property (retain) NSString *name;
+@property (retain) NSArray *args;
+- (instancetype)initWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args;
++ (instancetype)psprocWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args;
 
 @end

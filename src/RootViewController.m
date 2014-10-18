@@ -2,45 +2,84 @@
 #import "GridCell.h"
 #import "Proc.h"
 
+@interface RootViewController()
+{
+	NSMutableArray *procs;
+}
+@end
+
 @implementation RootViewController
 
 #pragma mark -
 #pragma mark View lifecycle
 
-NSMutableArray *procs;
+
+- (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki
+{
+	NSMutableArray*	args = nil;
+	int			nargs, c = 0;
+	static int	argmax = 0;
+	char		*argsbuf, *sp, *cp;
+	int			mib[3] = {CTL_KERN, KERN_PROCARGS2, ki->kp_proc.p_pid};
+	size_t		size;
+
+	if (!argmax) {
+		int mib2[2] = {CTL_KERN, KERN_ARGMAX};
+		size = sizeof(argmax);
+		if (sysctl(mib2, 2, &argmax, &size, NULL, 0) < 0)
+			argmax = 1024;
+	}
+	// Allocate process environment buffer
+	argsbuf = (char *)malloc(argmax);
+	if (argsbuf) {
+		size = (size_t)argmax;
+		if (sysctl(mib, 3, argsbuf, &size, NULL, 0) == 0) {
+			// Skip args count
+			nargs = *(int *)argsbuf;
+			cp = argsbuf + sizeof(nargs);
+			// Skip exec_path and trailing nulls
+			for (; cp < &argsbuf[size]; cp++)
+				if (!*cp) break;
+			for (; cp < &argsbuf[size]; cp++)
+				if (*cp) break;
+			// Now find the size of all args
+			for (sp = cp; cp < &argsbuf[size] && c < nargs; cp++)
+				if (*cp == '\0') c++;
+			if (sp != cp) {
+				args = [[[[NSString alloc] initWithBytes:sp length:(cp-sp)
+					encoding:NSUTF8StringEncoding]		// NSASCIIStringEncoding?
+					autorelease] componentsSeparatedByString:@"\0"];
+				[args filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(NSString *obj, NSDictionary *bind) {
+					return obj.length != 0;
+				}]];
+			}
+		}
+		free(argsbuf);
+	}
+	return args != nil ? args : [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
+}
 
 - (int)populate
 {
-	struct kinfo_proc *kp, *kprocbuf;
-	int nentries, retry_count;
-	size_t orig_bufSize, bufSize;
+	struct kinfo_proc *kp;
+	int nentries;
+	size_t bufSize;
 	int i, err;
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
 
-	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0) {
-		//perror("Failure calling sysctl");
-		return 0;
+	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
+		return errno;
+	kp = (struct kinfo_proc *)malloc(bufSize);
+	err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
+	if (!err) {
+		nentries = bufSize / sizeof(struct kinfo_proc);
+		for (i = 0; i < nentries; i++) {
+			kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
+			[procs addObject:[PSProc psprocWithKinfo:&kp[i] args:[self getArgsByKinfo:&kp[i]]]];
+		}
 	}
-	kprocbuf = kp = (struct kinfo_proc *)malloc(bufSize);
-	orig_bufSize = bufSize;
-	for (retry_count = 0; ; retry_count++) {
-		/* retry for transient errors due to load in the system */
-		bufSize = orig_bufSize;
-		err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
-		if (err < 0 && retry_count >= 1000) {
-			//perror("Failure calling sysctl");
-			return 0;
-		} else if (err == 0)
-			break;
-		sleep(1);
-	}
-	nentries = bufSize / sizeof(struct kinfo_proc);
-	for (i = 0; i < nentries; i++) {
-		kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;
-		[procs addObject:[[PSProc alloc] initWithKInfoProc:&kp[i]]];
-	}
-	free(kprocbuf);
-	return 0;
+	free(kp);
+	return err;
 }
 
 - (void)viewDidLoad
@@ -50,7 +89,7 @@ NSMutableArray *procs;
 	// Uncomment the following line to display an Edit button in the navigation bar for this view controller.
 	//self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	//self.tableView.rowHeight = 30;
-	self.tableView.separatorColor = [UIColor colorWithRed:.9 green:.9 blue:.9 alpha:1];
+	//self.tableView.separatorColor = [UIColor colorWithRed:.9 green:.9 blue:.9 alpha:1];
 
 	// array of struct kinfo_proc
 	procs = [[NSMutableArray alloc] init];
@@ -123,8 +162,12 @@ NSMutableArray *procs;
 	if (cell == nil) {
 		cell = [[[GridTableCell alloc] initWithHeight:tableView.rowHeight Id:CellIdentifier] autorelease];
 		
-		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u/%u", proc.pid, proc.ppid];
-		cell.detailTextLabel.text = proc.name;
+		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u/%u: %@", proc.pid, proc.ppid, proc.name];
+
+		NSString *full = [NSString stringWithString:[proc.args objectAtIndex:0]];
+		for (int i = 1; i < proc.args.count; i++)
+			full = [full stringByAppendingFormat:@" %@", [proc.args objectAtIndex:i]];
+		cell.detailTextLabel.text = full;
 
 		cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 		cell.indentationLevel = proc.ppid <= 1 ? 0 : 1;

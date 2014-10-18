@@ -78,12 +78,14 @@
   <ItemGroup>
     <ClInclude Include="src\DoomAppAppDelegate.h" />
     <ClInclude Include="src\GridCell.h" />
+    <ClInclude Include="src\Proc.h" />
     <ClInclude Include="src\RootViewController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\DoomAppAppDelegate.m" />
     <None Include="src\GridCell.m" />
     <None Include="src\main.m" />
+    <None Include="src\Proc.m" />
     <None Include="src\RootViewController.m" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

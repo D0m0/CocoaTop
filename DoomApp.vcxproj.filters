@@ -24,6 +24,9 @@
     <ClInclude Include="src\RootViewController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Proc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\DoomAppAppDelegate.m">
@@ -36,6 +39,9 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="src\RootViewController.m">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\Proc.m">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

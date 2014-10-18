@@ -4,5 +4,4 @@
 @interface RootViewController : UITableViewController
 {
 }
-
 @end
