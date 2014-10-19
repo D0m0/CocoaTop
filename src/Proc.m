@@ -5,7 +5,7 @@
 - (instancetype)initWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args
 {
 	if (self = [super init]) {
-		self.display = ProcDisplayNormal;
+		self.display = ProcDisplayStarted;
 		self.pid = proc->kp_proc.p_pid;
 		self.ppid = proc->kp_eproc.e_ppid;
 		self.flags = proc->kp_proc.p_flag;

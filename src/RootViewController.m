@@ -5,6 +5,7 @@
 @interface RootViewController()
 {
 	NSMutableArray *procs;
+    NSTimer *timer;
 }
 @end
 
@@ -48,9 +49,6 @@
 				args = [[[[NSString alloc] initWithBytes:sp length:(cp-sp)
 					encoding:NSUTF8StringEncoding] autorelease]		// NSASCIIStringEncoding?
 					componentsSeparatedByString:@"\0"];
-//				[args filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(NSString *obj, NSDictionary *bind) {
-//					return obj.length != 0;
-//				}]];
 			}
 		}
 		free(argsbuf);
@@ -61,7 +59,7 @@
 	return [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
 }
 
-- (int)refreshProcs
+- (int)refreshProcsList
 {
 	struct kinfo_proc *kp;
 	int nentries;
@@ -69,8 +67,12 @@
 	int i, err;
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
 
+	// Remove terminated processes
+	[procs filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
+		return obj.display != ProcDisplayTerminated;
+	}]];
 	for (PSProc *proc in procs)
-		proc.display = ProcDisplayRemove;
+		proc.display = ProcDisplayTerminated;
 	// Get buffer size
 	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
 		return errno;
@@ -90,10 +92,6 @@
 		}
 	}
 	free(kp);
-	// Remove terminated processes
-	[procs filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
-		return obj.display != ProcDisplayRemove;
-	}]];
 	// Sort by pid
 	[procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) {
 		return a.pid - b.pid;
@@ -101,9 +99,9 @@
 	return err;
 }
 
-- (void)refreshProcsButton
+- (void)refreshProcs
 {
-	[self refreshProcs];
+	[self refreshProcsList];
 	[self.tableView reloadData];
 }
 
@@ -117,13 +115,18 @@
 	//self.tableView.separatorColor = [UIColor colorWithRed:.9 green:.9 blue:.9 alpha:1];
 
 	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
-		target:self action:@selector(refreshProcsButton)];
+		target:self action:@selector(refreshProcs)];
 	self.navigationItem.rightBarButtonItem = anotherButton;
 	[anotherButton release];
 
 	// array of struct kinfo_proc
 	procs = [[NSMutableArray alloc] init];
-	[self refreshProcs];
+	[self refreshProcsList];
+	for (PSProc *proc in procs)
+		proc.display = ProcDisplayNormal;
+	timer = [[NSTimer scheduledTimerWithTimeInterval:1.0f 
+		target:self selector:@selector(refreshProcs)
+		userInfo:nil repeats:YES] retain];
 }
 
 /*
@@ -182,7 +185,7 @@
 	if (indexPath.row >= procs.count)
 		return nil;
 	proc = [procs objectAtIndex:(indexPath.row)];
-	
+
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
 
 	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
@@ -212,6 +215,15 @@
 	}
 	//[CellIdentifier release];
 	return cell;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	PSProc *proc = [procs objectAtIndex:(indexPath.row)];
+	if (proc.display == ProcDisplayTerminated)
+		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
+	else if (proc.display == ProcDisplayStarted)
+		cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
 }
 
 /*
@@ -290,11 +302,17 @@
 - (void)viewDidUnload
 {
 	// Relinquish ownership of anything that can be recreated in viewDidLoad or on demand.
-	procs = nil;
+	if (timer.isValid)
+		[timer invalidate];
+	[timer release];
+	[procs release];
 }
 
 - (void)dealloc
 {
+	if (timer.isValid)
+		[timer invalidate];
+	[timer release];
 	[procs release];
 	[super dealloc];
 }

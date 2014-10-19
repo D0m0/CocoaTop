@@ -9,7 +9,7 @@
 //	cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 
 	CGFloat col = 890;
-	UIView *divider = [[[UIView alloc] initWithFrame:CGRectMake(col+10, 0, 1, height)] autorelease];
+	UIView *divider = [[[UIView alloc] initWithFrame:CGRectMake(col, 0, 1, height)] autorelease];
 	divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 	[cell.contentView addSubview:divider];
 
