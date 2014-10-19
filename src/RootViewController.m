@@ -103,13 +103,14 @@
 {
 	[self refreshProcsList];
 	[self.tableView reloadData];
+	// If there's a new process, scroll to it
+//TODO: make it configurable!!!
 	NSUInteger idx = [procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		return ((PSProc *)obj).display == ProcDisplayStarted;
 	}];
 	if (idx != NSNotFound)
 		[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
 			atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-
 }
 
 - (void)viewDidLoad
@@ -119,7 +120,6 @@
 	// Uncomment the following line to display an Edit button in the navigation bar for this view controller.
 	//self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	//self.tableView.rowHeight = 30;
-	//self.tableView.separatorColor = [UIColor colorWithRed:.9 green:.9 blue:.9 alpha:1];
 
 	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
 		target:self action:@selector(refreshProcs)];
