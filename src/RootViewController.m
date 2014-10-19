@@ -13,13 +13,12 @@
 #pragma mark -
 #pragma mark View lifecycle
 
-
 - (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki
 {
-	NSMutableArray*	args = nil;
+	NSArray*	args = nil;
 	int			nargs, c = 0;
 	static int	argmax = 0;
-	char		*argsbuf, *sp, *cp;
+	char		*argsbuf, *sp, *ap, *cp;
 	int			mib[3] = {CTL_KERN, KERN_PROCARGS2, ki->kp_proc.p_pid};
 	size_t		size;
 
@@ -42,24 +41,27 @@
 				if (!*cp) break;
 			for (; cp < &argsbuf[size]; cp++)
 				if (*cp) break;
-			// Now find the size of all args
+
 			for (sp = cp; cp < &argsbuf[size] && c < nargs; cp++)
 				if (*cp == '\0') c++;
 			if (sp != cp) {
 				args = [[[[NSString alloc] initWithBytes:sp length:(cp-sp)
-					encoding:NSUTF8StringEncoding]		// NSASCIIStringEncoding?
-					autorelease] componentsSeparatedByString:@"\0"];
-				[args filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(NSString *obj, NSDictionary *bind) {
-					return obj.length != 0;
-				}]];
+					encoding:NSUTF8StringEncoding] autorelease]		// NSASCIIStringEncoding?
+					componentsSeparatedByString:@"\0"];
+//				[args filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(NSString *obj, NSDictionary *bind) {
+//					return obj.length != 0;
+//				}]];
 			}
 		}
 		free(argsbuf);
 	}
-	return args != nil ? args : [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
+	if (args != nil)
+		return args;
+	ki->kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
+	return [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
 }
 
-- (int)populate
+- (int)refreshProcs
 {
 	struct kinfo_proc *kp;
 	int nentries;
@@ -67,19 +69,42 @@
 	int i, err;
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
 
+	for (PSProc *proc in procs)
+		proc.display = ProcDisplayRemove;
+	// Get buffer size
 	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
 		return errno;
 	kp = (struct kinfo_proc *)malloc(bufSize);
+	// Get process list and update the procs array
 	err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
 	if (!err) {
 		nentries = bufSize / sizeof(struct kinfo_proc);
 		for (i = 0; i < nentries; i++) {
-			kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
-			[procs addObject:[PSProc psprocWithKinfo:&kp[i] args:[self getArgsByKinfo:&kp[i]]]];
+			NSUInteger idx = [procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+				return ((PSProc *)obj).pid == kp[i].kp_proc.p_pid;
+			}];
+			if (idx == NSNotFound)
+				[procs addObject:[PSProc psprocWithKinfo:&kp[i] args:[self getArgsByKinfo:&kp[i]]]];
+			else
+				((PSProc *)[procs objectAtIndex:idx]).display = ProcDisplayUser;
 		}
 	}
 	free(kp);
+	// Remove terminated processes
+	[procs filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
+		return obj.display != ProcDisplayRemove;
+	}]];
+	// Sort by pid
+	[procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) {
+		return a.pid - b.pid;
+	}];
 	return err;
+}
+
+- (void)refreshProcsButton
+{
+	[self refreshProcs];
+	[self.tableView reloadData];
 }
 
 - (void)viewDidLoad
@@ -91,12 +116,14 @@
 	//self.tableView.rowHeight = 30;
 	//self.tableView.separatorColor = [UIColor colorWithRed:.9 green:.9 blue:.9 alpha:1];
 
+	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
+		target:self action:@selector(refreshProcsButton)];
+	self.navigationItem.rightBarButtonItem = anotherButton;
+	[anotherButton release];
+
 	// array of struct kinfo_proc
 	procs = [[NSMutableArray alloc] init];
-	[self populate];
-	[procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) {
-		return a.pid - b.pid;
-	}];
+	[self refreshProcs];
 }
 
 /*
@@ -162,12 +189,14 @@
 	if (cell == nil) {
 		cell = [[[GridTableCell alloc] initWithHeight:tableView.rowHeight Id:CellIdentifier] autorelease];
 		
-		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u/%u: %@", proc.pid, proc.ppid, proc.name];
+		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u/%u [%X] %d: %@",
+			proc.pid, proc.ppid, proc.flags, proc.display, proc.name];
 
-		NSString *full = [NSString stringWithString:[proc.args objectAtIndex:0]];
+		NSString *full = [[proc.args objectAtIndex:0] copy];
 		for (int i = 1; i < proc.args.count; i++)
 			full = [full stringByAppendingFormat:@" %@", [proc.args objectAtIndex:i]];
 		cell.detailTextLabel.text = full;
+		//[full release];
 
 		cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 		cell.indentationLevel = proc.ppid <= 1 ? 0 : 1;
@@ -181,6 +210,7 @@
 		[cell.contentView addSubview:label];
 		*/
 	}
+	//[CellIdentifier release];
 	return cell;
 }
 
