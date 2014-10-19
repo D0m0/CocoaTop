@@ -224,6 +224,8 @@
 		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
 	else if (proc.display == ProcDisplayStarted)
 		cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
+	else if (indexPath.row & 1)
+		cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
 }
 
 /*
