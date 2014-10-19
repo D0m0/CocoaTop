@@ -53,7 +53,7 @@
 		}
 		free(argsbuf);
 	}
-	if (args != nil)
+	if (args)
 		return args;
 	ki->kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
 	return [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
@@ -103,6 +103,13 @@
 {
 	[self refreshProcsList];
 	[self.tableView reloadData];
+	NSUInteger idx = [procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+		return ((PSProc *)obj).display == ProcDisplayStarted;
+	}];
+	if (idx != NSNotFound)
+		[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
+			atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+
 }
 
 - (void)viewDidLoad
@@ -281,12 +288,10 @@
 	[detailViewController release];
 	*/
 	UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-	if (cell != nil)
-	{
+	if (cell) {
 		UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:cell.textLabel.text message:cell.detailTextLabel.text delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
 		[alertView show];
 	}
-	
 	// Configure the cell.
 }
 
