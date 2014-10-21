@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import "Proc.h"
 
 @interface PSColumn : NSObject
 {
@@ -12,10 +13,13 @@
 // Minimal column width
 @property (assign) NSInteger width;
 // Sort comparator
-//@property (nonatomic, copy) returnType (^blockName)(parameterTypes);
-@property (assign) NSComparator *sort;
+@property (assign) NSComparator sort;
+// Id
+@property (assign) int cid;
 
-- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width sort:(NSComparator *)sort;
-+ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width sort:(NSComparator *)sort;
+- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width id:(int)cid sort:(NSComparator)sort;
++ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width id:(int)cid sort:(NSComparator)sort;
++ (NSArray *)psColumnsArray;
+- (NSString *)getDataForProc:(PSProc *)proc;
 
 @end

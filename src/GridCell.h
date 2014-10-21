@@ -1,11 +1,12 @@
 #import <UIKit/UIKit.h>
+#import "Proc.h"
+#import "Column.h"
 
 @interface GridTableCell : UITableViewCell
 {
-	NSMutableArray *columns;
 }
-- (instancetype)initWithHeight:(CGFloat)height Id:(NSString *)reuseIdentifier;
-- (void)addColumn:(CGFloat)position;
+- (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height;
++ (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height;
 //- (void)drawRect:(CGRect)rect;
 - (void)layoutSubviews;
 

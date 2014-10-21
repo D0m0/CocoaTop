@@ -1,24 +1,48 @@
 #import "GridCell.h"
+#import "Proc.h"
+#import "Column.h"
 
 @implementation GridTableCell
 
-- (instancetype)initWithHeight:(CGFloat)height Id:(NSString *)reuseIdentifier
+CGFloat firstCol;
+
+- (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height
 {
 	GridTableCell *cell = (GridTableCell *)[super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
+
+	firstCol = ((PSColumn *)[columns objectAtIndex:0]).width;
+	CGFloat totalCol = firstCol;
+
+	cell.textLabel.text = proc.name;
+	NSString *full = [[[proc.args objectAtIndex:0] copy] autorelease];
+	for (int i = 1; i < proc.args.count; i++)
+		full = [full stringByAppendingFormat:@" %@", [proc.args objectAtIndex:i]];
+	cell.detailTextLabel.text = full;
 //	cell.detailTextLabel.text = @"Detailed description of command line parameters";
 //	cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
+//	cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
+	cell.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 
-	CGFloat col = 890;
-	UIView *divider = [[[UIView alloc] initWithFrame:CGRectMake(col, 0, 1, height)] autorelease];
-	divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
-	[cell.contentView addSubview:divider];
+	for (int i = 1; i < columns.count; i++) {
+		UIView *divider = [[[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, height)] autorelease];
+		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
+		[cell.contentView addSubview:divider];
 
+		PSColumn *col = [columns objectAtIndex:i];
+		UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(totalCol + 10, 0, col.width - 11, height)] autorelease];
+		label.font = [UIFont systemFontOfSize:12.0];
+		label.text = [col getDataForProc:proc];
+		label.backgroundColor = [UIColor clearColor];
+//		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
+		[cell.contentView addSubview:label];
+		totalCol += col.width;
+	}
 	return cell;
 }
 
-- (void)addColumn:(CGFloat)position
++ (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height
 {
-	[columns addObject:[NSNumber numberWithFloat:position]];
+	return [[[GridTableCell alloc] initWithId:reuseIdentifier proc:proc columns:columns height:height] autorelease];
 }
 
 //- (void)drawRect:(CGRect)rect
@@ -41,7 +65,7 @@
 {
 	[super layoutSubviews];
 	CGRect frame = self.detailTextLabel.frame;
-	frame.size.width = 880;
+	frame.size.width = firstCol - 10;
 	self.detailTextLabel.frame = frame;
 }
 

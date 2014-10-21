@@ -1,11 +1,13 @@
 #import "RootViewController.h"
 #import "GridCell.h"
+#import "Column.h"
 #import "Proc.h"
 
 @interface RootViewController()
 {
 	NSMutableArray *procs;
     NSTimer *timer;
+	NSArray *columns;
 }
 @end
 
@@ -120,13 +122,14 @@
 	// Uncomment the following line to display an Edit button in the navigation bar for this view controller.
 	//self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	//self.tableView.rowHeight = 30;
-
 	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
 		target:self action:@selector(refreshProcs)];
 	self.navigationItem.rightBarButtonItem = anotherButton;
 	[anotherButton release];
 
-	// array of struct kinfo_proc
+	// array of PSColumns
+	columns = [[PSColumn psColumnsArray] retain];
+	// array of PSProcs
 	procs = [[NSMutableArray alloc] init];
 	[self refreshProcsList];
 	for (PSProc *proc in procs)
@@ -188,39 +191,13 @@
 // Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	PSProc *proc;
 	if (indexPath.row >= procs.count)
 		return nil;
-	proc = [procs objectAtIndex:(indexPath.row)];
-
+	PSProc *proc = [procs objectAtIndex:(indexPath.row)];
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
-
 	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-	if (cell == nil) {
-		cell = [[[GridTableCell alloc] initWithHeight:tableView.rowHeight Id:CellIdentifier] autorelease];
-		
-		cell.textLabel.text = [NSString stringWithFormat:@"Process #%u/%u [%X] %d: %@",
-			proc.pid, proc.ppid, proc.flags, proc.display, proc.name];
-
-		NSString *full = [[proc.args objectAtIndex:0] copy];
-		for (int i = 1; i < proc.args.count; i++)
-			full = [full stringByAppendingFormat:@" %@", [proc.args objectAtIndex:i]];
-		cell.detailTextLabel.text = full;
-		//[full release];
-
-		cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
-		cell.indentationLevel = proc.ppid <= 1 ? 0 : 1;
-		
-		/*
-		UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(shift, skew, col - shift, skew)] autorelease];
-		label.tag = 1;
-		label.font = [UIFont systemFontOfSize:12.0];
-		label.text = [NSString stringWithFormat:@"Process #%u command line parameters", indexPath.row];
-		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
-		[cell.contentView addSubview:label];
-		*/
-	}
-	//[CellIdentifier release];
+	if (cell == nil)
+		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:columns height:tableView.rowHeight];
 	return cell;
 }
 
@@ -313,6 +290,7 @@
 		[timer invalidate];
 	[timer release];
 	[procs release];
+	[columns release];
 }
 
 - (void)dealloc
@@ -321,6 +299,7 @@
 		[timer invalidate];
 	[timer release];
 	[procs release];
+	[columns release];
 	[super dealloc];
 }
 
