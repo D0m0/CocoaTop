@@ -4,13 +4,13 @@
 
 @implementation GridTableCell
 
-CGFloat firstCol;
+//CGFloat firstCol;
 
 - (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height
 {
 	GridTableCell *cell = (GridTableCell *)[super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
 
-	firstCol = ((PSColumn *)[columns objectAtIndex:0]).width;
+	CGFloat firstCol = 600;//((PSColumn *)[columns objectAtIndex:0]).width;
 	CGFloat totalCol = firstCol;
 
 	cell.textLabel.text = proc.name;
@@ -18,18 +18,23 @@ CGFloat firstCol;
 	for (int i = 1; i < proc.args.count; i++)
 		full = [full stringByAppendingFormat:@" %@", [proc.args objectAtIndex:i]];
 	cell.detailTextLabel.text = full;
-//	cell.detailTextLabel.text = @"Detailed description of command line parameters";
 //	cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 //	cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 	cell.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 
+	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
+	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	for (int i = 1; i < columns.count; i++) {
-		UIView *divider = [[[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, height)] autorelease];
+		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, height)];
+		[self.dividers addObject:divider];
+		//[divider release];
 		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 		[cell.contentView addSubview:divider];
 
 		PSColumn *col = [columns objectAtIndex:i];
-		UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(totalCol + 10, 0, col.width - 11, height)] autorelease];
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 10, 0, col.width - 11, height)];
+		[self.labels addObject:label];
+		//[label release];
 		label.font = [UIFont systemFontOfSize:12.0];
 		label.text = [col getDataForProc:proc];
 		label.backgroundColor = [UIColor clearColor];
@@ -65,8 +70,15 @@ CGFloat firstCol;
 {
 	[super layoutSubviews];
 	CGRect frame = self.detailTextLabel.frame;
-	frame.size.width = firstCol - 10;
+	frame.size.width = 600;//firstCol - 10;
 	self.detailTextLabel.frame = frame;
+}
+
+- (void)dealloc
+{
+	[self.labels release];
+	[self.dividers release];
+	[super dealloc];
 }
 
 @end

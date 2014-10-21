@@ -6,9 +6,10 @@
 @interface RootViewController()
 {
 	NSMutableArray *procs;
-    NSTimer *timer;
-	NSArray *columns;
+	NSTimer *timer;
+//	NSArray *columns;
 }
+@property (retain) NSArray *columns;
 @end
 
 @implementation RootViewController
@@ -128,7 +129,7 @@
 	[anotherButton release];
 
 	// array of PSColumns
-	columns = [[PSColumn psColumnsArray] retain];
+	self.columns = [[PSColumn psColumnsArray] retain];
 	// array of PSProcs
 	procs = [[NSMutableArray alloc] init];
 	[self refreshProcsList];
@@ -197,7 +198,7 @@
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
 	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil)
-		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:columns height:tableView.rowHeight];
+		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns height:tableView.rowHeight];
 	return cell;
 }
 
@@ -290,7 +291,8 @@
 		[timer invalidate];
 	[timer release];
 	[procs release];
-	[columns release];
+//	[columns release];
+	self.columns = nil;
 }
 
 - (void)dealloc
@@ -299,7 +301,7 @@
 		[timer invalidate];
 	[timer release];
 	[procs release];
-	[columns release];
+//	[columns release];
 	[super dealloc];
 }
 

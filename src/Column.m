@@ -17,7 +17,8 @@
 
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width id:(int)cid sort:(NSComparator)sort
 {
-	return [[[PSColumn alloc] initWithName:name descr:descr align:align width:width id:cid sort:sort] autorelease];
+//	return [[[PSColumn alloc] initWithName:name descr:descr align:align width:width id:cid sort:sort] autorelease];
+	return [[PSColumn alloc] initWithName:name descr:descr align:align width:width id:cid sort:sort];
 }
 
 + (NSArray *)psColumnsArray
