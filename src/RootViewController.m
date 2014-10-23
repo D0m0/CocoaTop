@@ -5,10 +5,10 @@
 
 @interface RootViewController()
 {
-	NSMutableArray *procs;
 }
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
+@property (retain) NSMutableArray *procs;
 @end
 
 @implementation RootViewController
@@ -70,10 +70,10 @@
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
 
 	// Remove terminated processes
-	[procs filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
+	[self.procs filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
 		return obj.display != ProcDisplayTerminated;
 	}]];
-	for (PSProc *proc in procs)
+	for (PSProc *proc in self.procs)
 		proc.display = ProcDisplayTerminated;
 	// Get buffer size
 	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
@@ -84,18 +84,18 @@
 	if (!err) {
 		nentries = bufSize / sizeof(struct kinfo_proc);
 		for (i = 0; i < nentries; i++) {
-			NSUInteger idx = [procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+			NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 				return ((PSProc *)obj).pid == kp[i].kp_proc.p_pid;
 			}];
 			if (idx == NSNotFound)
-				[procs addObject:[PSProc psProcWithKinfo:&kp[i] args:[self getArgsByKinfo:&kp[i]]]];
+				[self.procs addObject:[PSProc psProcWithKinfo:&kp[i] args:[self getArgsByKinfo:&kp[i]]]];
 			else
-				[[procs objectAtIndex:idx] updateWithKinfo:&kp[i]];
+				[[self.procs objectAtIndex:idx] updateWithKinfo:&kp[i]];
 		}
 	}
 	free(kp);
 	// Sort by pid
-	[procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) {
+	[self.procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) {
 		return a.pid - b.pid;
 	}];
 	return err;
@@ -107,7 +107,7 @@
 	[self.tableView reloadData];
 	// If there's a new process, scroll to it
 //TODO: make it configurable!!!
-	NSUInteger idx = [procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+	NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		return ((PSProc *)obj).display == ProcDisplayStarted;
 	}];
 	if (idx != NSNotFound)
@@ -130,11 +130,11 @@
 	// array of PSColumns
 	self.columns = [[PSColumn psColumnsArray] retain];
 	// array of PSProcs
-	procs = [[NSMutableArray alloc] init];
+	self.procs = [NSMutableArray arrayWithCapacity:100];
 	[self refreshProcsList];
-	for (PSProc *proc in procs)
+	for (PSProc *proc in self.procs)
 		proc.display = ProcDisplayNormal;
-	timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
+	self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
 		target:self selector:@selector(refreshProcs) userInfo:nil repeats:YES];
 }
 
@@ -184,15 +184,15 @@
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return procs.count;		// section 1: system processes, section 2: user processes
+	return self.procs.count;		// section 1: system processes, section 2: user processes
 }
 
 // Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if (indexPath.row >= procs.count)
+	if (indexPath.row >= self.procs.count)
 		return nil;
-	PSProc *proc = [procs objectAtIndex:(indexPath.row)];
+	PSProc *proc = [self.procs objectAtIndex:(indexPath.row)];
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
 	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil)
@@ -202,7 +202,7 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	PSProc *proc = [procs objectAtIndex:(indexPath.row)];
+	PSProc *proc = [self.procs objectAtIndex:(indexPath.row)];
 	if (proc.display == ProcDisplayTerminated)
 		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
 	else if (proc.display == ProcDisplayStarted)
@@ -285,18 +285,18 @@
 - (void)viewDidUnload
 {
 	// Relinquish ownership of anything that can be recreated in viewDidLoad or on demand.
-	if (timer.isValid)
-		[timer invalidate];
-	[procs release];
+	if (self.timer.isValid)
+		[self.timer invalidate];
+	self.procs = nil;
 	self.columns = nil;
 }
 
 - (void)dealloc
 {
-	if (timer.isValid)
-		[timer invalidate];
+	if (self.timer.isValid)
+		[self.timer invalidate];
 	[_timer release];
-	[procs release];
+	[_procs release];
 	[_columns release];
 	[super dealloc];
 }
