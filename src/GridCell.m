@@ -4,14 +4,11 @@
 
 @implementation GridTableCell
 
-//CGFloat firstCol;
+CGFloat firstCol;
 
 - (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height
 {
 	GridTableCell *cell = (GridTableCell *)[super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
-
-	CGFloat firstCol = 600;//((PSColumn *)[columns objectAtIndex:0]).width;
-	CGFloat totalCol = firstCol;
 
 	cell.textLabel.text = proc.name;
 	NSString *full = [[[proc.args objectAtIndex:0] copy] autorelease];
@@ -21,6 +18,10 @@
 //	cell.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 //	cell.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 	cell.indentationLevel = proc.ppid <= 1 ? 0 : 1;
+
+	// Remember first column width
+	firstCol = ((PSColumn *)[columns objectAtIndex:0]).width;
+	CGFloat totalCol = firstCol;
 
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
@@ -70,7 +71,7 @@
 {
 	[super layoutSubviews];
 	CGRect frame = self.detailTextLabel.frame;
-	frame.size.width = 600;//firstCol - 10;
+	frame.size.width = firstCol - 10;
 	self.detailTextLabel.frame = frame;
 }
 

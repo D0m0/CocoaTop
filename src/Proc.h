@@ -16,10 +16,12 @@ typedef enum {
 @property (assign) display_t display;
 @property (assign) pid_t pid;
 @property (assign) pid_t ppid;
+@property (assign) int prio;
 @property (assign) int flags;
 @property (retain) NSString *name;
 @property (retain) NSArray *args;
 - (instancetype)initWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args;
-+ (instancetype)psprocWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args;
++ (instancetype)psProcWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args;
+- (void)updateWithKinfo:(struct kinfo_proc *)proc;
 
 @end

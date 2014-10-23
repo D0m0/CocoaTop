@@ -8,15 +8,22 @@
 		self.display = ProcDisplayStarted;
 		self.pid = proc->kp_proc.p_pid;
 		self.ppid = proc->kp_eproc.e_ppid;
+		self.prio = proc->kp_proc.p_priority;
 		self.flags = proc->kp_proc.p_flag;
-//		self.name = [NSString stringWithCString:proc->kp_proc.p_comm encoding:NSASCIIStringEncoding];
 		self.args = args;
 		self.name = [[args objectAtIndex:0] lastPathComponent];
     }
 	return self;
 }
 
-+ (instancetype)psprocWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args
+- (void)updateWithKinfo:(struct kinfo_proc *)proc
+{
+	self.display = ProcDisplayUser;
+	self.prio = proc->kp_proc.p_priority;
+	self.flags = proc->kp_proc.p_flag;
+}
+
++ (instancetype)psProcWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args
 {
 	return [[[PSProc alloc] initWithKinfo:proc args:args] autorelease];
 }

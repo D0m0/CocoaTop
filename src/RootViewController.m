@@ -89,9 +89,9 @@
 				return ((PSProc *)obj).pid == kp[i].kp_proc.p_pid;
 			}];
 			if (idx == NSNotFound)
-				[procs addObject:[PSProc psprocWithKinfo:&kp[i] args:[self getArgsByKinfo:&kp[i]]]];
+				[procs addObject:[PSProc psProcWithKinfo:&kp[i] args:[self getArgsByKinfo:&kp[i]]]];
 			else
-				((PSProc *)[procs objectAtIndex:idx]).display = ProcDisplayUser;
+				[[procs objectAtIndex:idx] updateWithKinfo:&kp[i]];
 		}
 	}
 	free(kp);
@@ -291,7 +291,6 @@
 		[timer invalidate];
 	[timer release];
 	[procs release];
-//	[columns release];
 	self.columns = nil;
 }
 
@@ -301,7 +300,7 @@
 		[timer invalidate];
 	[timer release];
 	[procs release];
-//	[columns release];
+	[_columns release];
 	[super dealloc];
 }
 
