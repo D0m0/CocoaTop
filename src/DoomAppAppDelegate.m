@@ -5,23 +5,16 @@
 
 @implementation DoomAppAppDelegate
 
-@synthesize window;
-@synthesize navigationController;
-
-
-#pragma mark -
-#pragma mark Application lifecycle
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
 	// Create UIWindow
-	window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+	self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 	
 	// Override point for customization after application launch.
 	
 	// Allocate the navigation controller
 	RootViewController* rootViewController = [[RootViewController alloc] init];
-	navigationController = [[UINavigationController alloc] initWithRootViewController:rootViewController];
+	self.navigationController = [[UINavigationController alloc] initWithRootViewController:rootViewController];
 	[rootViewController release];
 	
 	// Set the navigation controller as the window's root view controller and display.
@@ -75,9 +68,6 @@
 }
 
 
-#pragma mark -
-#pragma mark Memory management
-
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
 {
 	/*
@@ -88,11 +78,10 @@
 
 - (void)dealloc
 {
-	[navigationController release];
-	[window release];
+	[_navigationController release];
+	[_window release];
 	[super dealloc];
 }
 
 
 @end
-

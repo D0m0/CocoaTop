@@ -20,8 +20,22 @@ typedef enum {
 @property (assign) int flags;
 @property (retain) NSString *name;
 @property (retain) NSArray *args;
-- (instancetype)initWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args;
-+ (instancetype)psProcWithKinfo:(struct kinfo_proc *)proc args:(NSArray *)args;
-- (void)updateWithKinfo:(struct kinfo_proc *)proc;
+- (instancetype)initWithKinfo:(struct kinfo_proc *)ki;
++ (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki;
+- (void)updateWithKinfo:(struct kinfo_proc *)ki;
++ (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki;
+
+@end
+
+@interface PSProcArray : NSObject
+{
+}
+@property (retain) NSMutableArray *procs;
++ (instancetype)psProcArray;
+- (int)refresh;
+- (void)setAllDisplayed:(display_t)display;
+- (NSUInteger)indexOfDisplayed:(display_t)display;
+- (NSUInteger)count;
+- (PSProc *)procAtIndex:(NSUInteger)index;
 
 @end

@@ -77,8 +77,8 @@ CGFloat firstCol;
 
 - (void)dealloc
 {
-	[self.labels release];
-	[self.dividers release];
+	[_labels release];
+	[_dividers release];
 	[super dealloc];
 }
 

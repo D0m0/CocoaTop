@@ -65,8 +65,8 @@ return p->p_pctcpu / (1.0 - exp(p->p_swtime * log(fxtofl(ccpu))));
 
 - (void)dealloc
 {
-	[self.name release];
-	[self.descr release];
+	[_name release];
+	[_descr release];
 	[super dealloc];
 }
 
