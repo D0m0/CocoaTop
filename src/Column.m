@@ -23,7 +23,7 @@
 
 + (NSArray *)psColumnsArray
 {
-	return [[NSArray arrayWithObjects:
+	return [NSArray arrayWithObjects:
 		[PSColumn psColumnWithName:@"Command" descr:@"Command line" align:NSTextAlignmentLeft width:600 id:0
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }],
 		[PSColumn psColumnWithName:@"PID" descr:@"Process ID" align:NSTextAlignmentLeft width:50 id:1
@@ -35,7 +35,7 @@
 		[PSColumn psColumnWithName:@"Prio" descr:@"Process Priority" align:NSTextAlignmentLeft width:50 id:4
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.prio - b.prio; }],
 // %CPU TIME Threads Ports MRegions RPrivate RShared RSize VSize
-	nil] autorelease];
+	nil];
 }
 
 /*

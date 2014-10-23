@@ -128,7 +128,7 @@
 	[anotherButton release];
 
 	// array of PSColumns
-	self.columns = [[PSColumn psColumnsArray] retain];
+	self.columns = [PSColumn psColumnsArray];
 	// array of PSProcs
 	self.procs = [NSMutableArray arrayWithCapacity:100];
 	[self refreshProcsList];
