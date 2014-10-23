@@ -6,10 +6,9 @@
 @interface RootViewController()
 {
 	NSMutableArray *procs;
-	NSTimer *timer;
-//	NSArray *columns;
 }
 @property (retain) NSArray *columns;
+@property (retain) NSTimer *timer;
 @end
 
 @implementation RootViewController
@@ -135,9 +134,8 @@
 	[self refreshProcsList];
 	for (PSProc *proc in procs)
 		proc.display = ProcDisplayNormal;
-	timer = [[NSTimer scheduledTimerWithTimeInterval:1.0f 
-		target:self selector:@selector(refreshProcs)
-		userInfo:nil repeats:YES] retain];
+	timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
+		target:self selector:@selector(refreshProcs) userInfo:nil repeats:YES];
 }
 
 /*
@@ -289,7 +287,6 @@
 	// Relinquish ownership of anything that can be recreated in viewDidLoad or on demand.
 	if (timer.isValid)
 		[timer invalidate];
-	[timer release];
 	[procs release];
 	self.columns = nil;
 }
@@ -298,7 +295,7 @@
 {
 	if (timer.isValid)
 		[timer invalidate];
-	[timer release];
+	[_timer release];
 	[procs release];
 	[_columns release];
 	[super dealloc];
