@@ -6,7 +6,7 @@
 
 CGFloat firstCol;
 
-- (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height
+- (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size
 {
 	GridTableCell *cell = (GridTableCell *)[super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
 
@@ -20,20 +20,20 @@ CGFloat firstCol;
 	cell.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 
 	// Remember first column width
-	firstCol = ((PSColumn *)[columns objectAtIndex:0]).width;
+	firstCol = MIN(((PSColumn *)[columns objectAtIndex:0]).width, size.width);
 	CGFloat totalCol = firstCol;
 
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
-	for (int i = 1; i < columns.count; i++) {
-		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, height)];
+	for (int i = 1; i < columns.count && totalCol < size.width; i++) {
+		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
 		[self.dividers addObject:divider];
 		//[divider release];
 		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 		[cell.contentView addSubview:divider];
 
 		PSColumn *col = [columns objectAtIndex:i];
-		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 10, 0, col.width - 11, height)];
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 10, 0, col.width - 11, size.height)];
 		[self.labels addObject:label];
 		//[label release];
 		label.font = [UIFont systemFontOfSize:12.0];
@@ -46,9 +46,9 @@ CGFloat firstCol;
 	return cell;
 }
 
-+ (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height
++ (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size
 {
-	return [[[GridTableCell alloc] initWithId:reuseIdentifier proc:proc columns:columns height:height] autorelease];
+	return [[[GridTableCell alloc] initWithId:reuseIdentifier proc:proc columns:columns size:size] autorelease];
 }
 
 //- (void)drawRect:(CGRect)rect

@@ -53,20 +53,17 @@
 {
 	[super viewWillAppear:animated];
 }
-*/
-/*
+
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
 }
-*/
-/*
+
 - (void)viewWillDisappear:(BOOL)animated
 {
 	[super viewWillDisappear:animated];
 }
-*/
-/*
+
 - (void)viewDidDisappear:(BOOL)animated
 {
 	[super viewDidDisappear:animated];
@@ -74,7 +71,7 @@
 */
 
 /*
- // Override to allow orientations other than the default portrait orientation.
+// Override to allow orientations other than the default portrait orientation.
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	// Return YES for supported orientations.
@@ -88,13 +85,14 @@
 // Customize the number of sections in the table view.
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-	return 1;  // 2 - system + user!
+	return 1;
 }
 
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return self.procs.count;		// section 1: system processes, section 2: user processes
+//TODO: section 1: system processes, section 2: user processes
+	return self.procs.count;
 }
 
 // Customize the appearance of table view cells.
@@ -106,16 +104,16 @@
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
 	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil)
-		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns height:tableView.rowHeight];
+		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns size:CGSizeMake(tableView.frame.size.width, tableView.rowHeight)];
 	return cell;
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	PSProc *proc = [self.procs procAtIndex:indexPath.row];
-	if (proc.display == ProcDisplayTerminated)
+	display_t display = [self.procs procAtIndex:indexPath.row].display;
+	if (display == ProcDisplayTerminated)
 		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
-	else if (proc.display == ProcDisplayStarted)
+	else if (display == ProcDisplayStarted)
 		cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
 	else if (indexPath.row & 1)
 		cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
@@ -147,6 +145,7 @@
 
 /*
 // Override to support rearranging the table view.
+//TODO: Refresh on rotate!!!
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
 {
 	//
@@ -189,7 +188,7 @@
 	// Releases the view if it doesn't have a superview.
 	[super didReceiveMemoryWarning];
 	
-	// Relinquish ownership any cached data, images, etc that aren't in use.
+	// Relinquish ownership of any cached data, images, etc that aren't in use.
 }
 
 - (void)viewDidUnload
