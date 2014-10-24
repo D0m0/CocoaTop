@@ -7,7 +7,8 @@
 
 @interface PSProc : NSObject
 {
-@public struct task_basic_info tasks_info;
+@public BOOL taskInfoValid;
+@public struct task_basic_info taskInfo;
 @public struct task_thread_times_info times;
 }
 typedef enum {

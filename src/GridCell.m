@@ -25,7 +25,7 @@ CGFloat firstCol;
 
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
-	for (int i = 1; i < columns.count && totalCol < size.width; i++) {
+	for (int i = 1; i < columns.count /*&& totalCol < size.width*/; i++) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
 		[self.dividers addObject:divider];
 		//[divider release];
@@ -33,9 +33,9 @@ CGFloat firstCol;
 		[cell.contentView addSubview:divider];
 
 		PSColumn *col = [columns objectAtIndex:i];
-		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 10, 0, col.width - 11, size.height)];
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
 		[self.labels addObject:label];
-		//[label release];
+		label.textAlignment = col.align;
 		label.font = [UIFont systemFontOfSize:12.0];
 		label.text = [col getDataForProc:proc];
 		label.backgroundColor = [UIColor clearColor];

@@ -19,6 +19,8 @@
 - (void)refreshProcs
 {
 	[self.procs refresh];
+	// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
+	// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	[self.tableView reloadData];
 	// If there's a new process, scroll to it
 //TODO: make it configurable!!!
@@ -68,16 +70,30 @@
 {
 	[super viewDidDisappear:animated];
 }
-*/
 
-/*
 // Override to allow orientations other than the default portrait orientation.
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	// Return YES for supported orientations.
 	return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
- */
+
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+	if ((fromInterfaceOrientation == UIInterfaceOrientationPortrait ||
+		fromInterfaceOrientation == UIInterfaceOrientationPortraitUpsideDown) &&
+		(self.interfaceOrientation == UIInterfaceOrientationPortrait ||
+		self.interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown))
+		return;
+	if ((fromInterfaceOrientation == UIInterfaceOrientationLandscapeLeft ||
+		fromInterfaceOrientation == UIInterfaceOrientationLandscapeRight) &&
+		(self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft ||
+		self.interfaceOrientation == UIInterfaceOrientationLandscapeRight))
+		return;
+	// Size changed - need to redraw
+	[self.tableView setNeedsDisplay];
+}
+*/
 
 #pragma mark -
 #pragma mark Table view data source
@@ -103,6 +119,7 @@
 	PSProc *proc = [self.procs procAtIndex:indexPath.row];
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
 	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+//TODO: Replace tableView.frame.size.width with maximum screen dimension?
 	if (cell == nil)
 		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns size:CGSizeMake(tableView.frame.size.width, tableView.rowHeight)];
 	return cell;

@@ -21,14 +21,15 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 		kern_return_t err;
 		err = task_for_pid(mach_task_self(), self.pid, &task);
 		if (err == KERN_SUCCESS) {
+			taskInfoValid = YES;
 			info_count = TASK_BASIC_INFO_COUNT;
-			if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS)
-				;
+			if (task_info(task, TASK_BASIC_INFO, (task_info_t)&taskInfo, &info_count) != KERN_SUCCESS)
+				taskInfoValid = NO;
 			info_count = TASK_THREAD_TIMES_INFO_COUNT;
 			if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS)
-				;
+				taskInfoValid = NO;
 		} else
-			tasks_info.virtual_size = err;
+			taskInfoValid = NO;
 	}
 	return self;
 }
@@ -118,6 +119,7 @@ int get_task_info (KINFO *ki)
 	}
 //	switch(ki->tasks_info.policy) {
 //	... see tasks.c
+
 	ki->invalid_tinfo=0;
 	ki->cpu_usage=0;
 	error = task_threads(ki->task, &ki->thread_list, &ki->thread_count);
