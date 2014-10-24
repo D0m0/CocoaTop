@@ -30,10 +30,14 @@
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pid - b.pid; }],
 		[PSColumn psColumnWithName:@"PPID" descr:@"Parent PID" align:NSTextAlignmentLeft width:50 id:2
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ppid - b.ppid; }],
-		[PSColumn psColumnWithName:@"Flags" descr:@"Process Flags" align:NSTextAlignmentLeft width:100 id:3
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.flags - b.flags; }],
-		[PSColumn psColumnWithName:@"Prio" descr:@"Process Priority" align:NSTextAlignmentLeft width:50 id:4
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.prio - b.prio; }],
+//		[PSColumn psColumnWithName:@"Flags" descr:@"Process Flags" align:NSTextAlignmentLeft width:100 id:3
+//			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.flags - b.flags; }],
+//		[PSColumn psColumnWithName:@"Prio" descr:@"Process Priority" align:NSTextAlignmentLeft width:50 id:4
+//			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.prio - b.prio; }],
+		[PSColumn psColumnWithName:@"VSize" descr:@"Virtual Size" align:NSTextAlignmentLeft width:90 id:5
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->tasks_info.virtual_size - b->tasks_info.virtual_size; }],
+		[PSColumn psColumnWithName:@"RSize" descr:@"Resident Size" align:NSTextAlignmentLeft width:90 id:6
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->tasks_info.resident_size - b->tasks_info.resident_size; }],
 // %CPU TIME Threads Ports MRegions RPrivate RShared RSize VSize
 	nil];
 }
@@ -59,6 +63,8 @@ return p->p_pctcpu / (1.0 - exp(p->p_swtime * log(fxtofl(ccpu))));
 	case 2: return [NSString stringWithFormat:@"%u", proc.ppid];
 	case 3: return [NSString stringWithFormat:@"%08X", proc.flags];
 	case 4: return [NSString stringWithFormat:@"%u", proc.prio];
+	case 5: return proc->tasks_info.virtual_size ? [NSString stringWithFormat:@"%uK", proc->tasks_info.virtual_size/1024] : @"N/A";;
+	case 6: return proc->tasks_info.resident_size ? [NSString stringWithFormat:@"%uK", proc->tasks_info.resident_size/1024] : @"N/A";
 	default: return @"N/A";
 	}
 }

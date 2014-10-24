@@ -1,5 +1,8 @@
 #import "Proc.h"
 
+extern kern_return_t task_for_pid(task_port_t task, pid_t pid, task_port_t *target);
+extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_info_t info, unsigned int *info_count);
+
 @implementation PSProc
 
 - (instancetype)initWithKinfo:(struct kinfo_proc *)ki
@@ -12,7 +15,21 @@
 		self.flags = ki->kp_proc.p_flag;
 		self.args = [PSProc getArgsByKinfo:ki];
 		self.name = [[self.args objectAtIndex:0] lastPathComponent];
-    }
+
+		task_port_t task;
+		unsigned int info_count;
+		kern_return_t err;
+		err = task_for_pid(mach_task_self(), self.pid, &task);
+		if (err == KERN_SUCCESS) {
+			info_count = TASK_BASIC_INFO_COUNT;
+			if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS)
+				;
+			info_count = TASK_THREAD_TIMES_INFO_COUNT;
+			if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS)
+				;
+		} else
+			tasks_info.virtual_size = err;
+	}
 	return self;
 }
 
@@ -56,7 +73,6 @@
 				if (!*cp) break;
 			for (; cp < &argsbuf[size]; cp++)
 				if (*cp) break;
-
 			for (sp = cp; cp < &argsbuf[size] && c < nargs; cp++)
 				if (*cp == '\0') c++;
 			if (sp != cp) {
@@ -72,6 +88,73 @@
 	ki->kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
 	return [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
 }
+
+
+
+/*
+int get_task_info (KINFO *ki) 
+{
+	kern_return_t	error;
+	unsigned int	info_count = TASK_BASIC_INFO_COUNT;
+	unsigned int	thread_info_count = THREAD_BASIC_INFO_COUNT;
+	pid_t			pid;
+	int				j, err = 0;
+
+	ki->state = STATE_MAX;
+	pid = KI_PROC(ki)->p_pid;
+	if (task_for_pid(mach_task_self(), pid, &ki->task) != KERN_SUCCESS)
+		return(1);
+	info_count = TASK_BASIC_INFO_COUNT;
+	error = task_info(ki->task, TASK_BASIC_INFO, (task_info_t)&ki->tasks_info, &info_count);
+	if (error != KERN_SUCCESS) {
+		ki->invalid_tinfo=1;
+		return(1);
+	}
+	info_count = TASK_THREAD_TIMES_INFO_COUNT;
+	error = task_info(ki->task, TASK_THREAD_TIMES_INFO, (task_info_t)&ki->times, &info_count);
+	if (error != KERN_SUCCESS) {
+		ki->invalid_tinfo=1;
+		return(1);
+	}
+//	switch(ki->tasks_info.policy) {
+//	... see tasks.c
+	ki->invalid_tinfo=0;
+	ki->cpu_usage=0;
+	error = task_threads(ki->task, &ki->thread_list, &ki->thread_count);
+	if (error != KERN_SUCCESS) {
+		mach_port_deallocate(mach_task_self(),ki->task);
+		return(1);
+	}
+	err=0;
+	ki->swapped = 1;
+	ki->thval = malloc(ki->thread_count * sizeof(struct thread_values));
+	for (j = 0; j < ki->thread_count; j++) {
+		int tstate;
+		thread_info_count = THREAD_BASIC_INFO_COUNT;
+		error = thread_info(ki->thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&ki->thval[j].tb, &thread_info_count);
+		if (error != KERN_SUCCESS)
+			err=1;
+		error = thread_schedinfo(ki, ki->thread_list[j], ki->thval[j].tb.policy, &ki->thval[j].schedinfo);
+		if (error != KERN_SUCCESS)
+			err=1;
+		ki->cpu_usage += ki->thval[j].tb.cpu_usage;
+		tstate = mach_state_order(ki->thval[j].tb.run_state, ki->thval[j].tb.sleep_time);
+		if (tstate < ki->state)
+			ki->state = tstate;
+		if ((ki->thval[j].tb.flags & TH_FLAGS_SWAPPED ) == 0)
+			ki->swapped = 0;
+		mach_port_deallocate(mach_task_self(), ki->thread_list[j]);
+	}
+	ki->invalid_thinfo = err;
+	// Deallocate the list of threads
+	error = vm_deallocate(mach_task_self(), (vm_address_t)(ki->thread_list), sizeof(*ki->thread_list) * ki->thread_count);
+	if (error != KERN_SUCCESS)
+		...
+	mach_port_deallocate(mach_task_self(),ki->task);
+	return(0);
+}
+*/
+
 
 - (void)dealloc
 {

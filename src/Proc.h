@@ -1,8 +1,14 @@
 #import <sys/sysctl.h>
+#import <mach/mach_types.h>
+#import <mach/mach_init.h>
+#import <mach/task_info.h>
+#import <mach/thread_info.h>
 #import <UIKit/UIKit.h>
 
 @interface PSProc : NSObject
 {
+@public struct task_basic_info tasks_info;
+@public struct task_thread_times_info times;
 }
 typedef enum {
 	ProcDisplaySystem,
@@ -30,6 +36,7 @@ typedef enum {
 @interface PSProcArray : NSObject
 {
 }
+
 @property (retain) NSMutableArray *procs;
 + (instancetype)psProcArray;
 - (int)refresh;

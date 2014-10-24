@@ -7,8 +7,8 @@
 }
 @property (retain) NSMutableArray *labels;
 @property (retain) NSMutableArray *dividers;
-- (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height;
-+ (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns height:(CGFloat)height;
+- (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size;
++ (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size;
 //- (void)drawRect:(CGRect)rect;
 - (void)layoutSubviews;
 
