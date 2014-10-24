@@ -1,8 +1,5 @@
-#import <sys/sysctl.h>
 #import <mach/mach_types.h>
-#import <mach/mach_init.h>
-#import <mach/task_info.h>
-#import <mach/thread_info.h>
+#import <sys/sysctl.h>
 #import <UIKit/UIKit.h>
 
 @interface PSProc : NSObject
@@ -25,11 +22,14 @@ typedef enum {
 @property (assign) pid_t ppid;
 @property (assign) int prio;
 @property (assign) int flags;
+@property (assign) int pcpu;
+@property (assign) int threads;
 @property (retain) NSString *name;
 @property (retain) NSArray *args;
 - (instancetype)initWithKinfo:(struct kinfo_proc *)ki;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki;
 - (void)updateWithKinfo:(struct kinfo_proc *)ki;
+- (void)updateWithKinfo2:(struct kinfo_proc *)ki;
 + (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki;
 
 @end

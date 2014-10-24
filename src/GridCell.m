@@ -39,6 +39,7 @@ CGFloat firstCol;
 		label.font = [UIFont systemFontOfSize:12.0];
 		label.text = [col getDataForProc:proc];
 		label.backgroundColor = [UIColor clearColor];
+		label.tag = i;
 //		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 		[cell.contentView addSubview:label];
 		totalCol += col.width;
@@ -49,6 +50,16 @@ CGFloat firstCol;
 + (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size
 {
 	return [[[GridTableCell alloc] initWithId:reuseIdentifier proc:proc columns:columns size:size] autorelease];
+}
+
+- (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns
+{
+	for (int i = 1; i < columns.count; i++) {
+		PSColumn *col = [columns objectAtIndex:i];
+		UILabel *label = (UILabel *)[self viewWithTag:i];
+		if (col.refresh)
+			label.text = [col getDataForProc:proc];
+	}
 }
 
 //- (void)drawRect:(CGRect)rect

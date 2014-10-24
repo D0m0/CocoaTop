@@ -122,6 +122,8 @@
 //TODO: Replace tableView.frame.size.width with maximum screen dimension?
 	if (cell == nil)
 		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns size:CGSizeMake(tableView.frame.size.width, tableView.rowHeight)];
+	else
+		[cell updateWithProc:proc columns:self.columns];
 	return cell;
 }
 

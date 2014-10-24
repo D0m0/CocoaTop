@@ -1,4 +1,9 @@
 #import "Proc.h"
+#import <mach/mach_init.h>
+#import <mach/task_info.h>
+#import <mach/thread_info.h>
+#import <mach/mach_interface.h>
+#import <mach/mach_port.h>
 
 extern kern_return_t task_for_pid(task_port_t task, pid_t pid, task_port_t *target);
 extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_info_t info, unsigned int *info_count);
@@ -15,21 +20,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 		self.flags = ki->kp_proc.p_flag;
 		self.args = [PSProc getArgsByKinfo:ki];
 		self.name = [[self.args objectAtIndex:0] lastPathComponent];
-
-		task_port_t task;
-		unsigned int info_count;
-		kern_return_t err;
-		err = task_for_pid(mach_task_self(), self.pid, &task);
-		if (err == KERN_SUCCESS) {
-			taskInfoValid = YES;
-			info_count = TASK_BASIC_INFO_COUNT;
-			if (task_info(task, TASK_BASIC_INFO, (task_info_t)&taskInfo, &info_count) != KERN_SUCCESS)
-				taskInfoValid = NO;
-			info_count = TASK_THREAD_TIMES_INFO_COUNT;
-			if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS)
-				taskInfoValid = NO;
-		} else
-			taskInfoValid = NO;
+		[self updateWithKinfo2:ki];
 	}
 	return self;
 }
@@ -44,6 +35,51 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	self.display = ProcDisplayUser;
 	self.prio = ki->kp_proc.p_priority;
 	self.flags = ki->kp_proc.p_flag;
+	[self updateWithKinfo2:ki];
+}
+
+- (void)updateWithKinfo2:(struct kinfo_proc *)ki
+{
+		task_port_t task;
+		unsigned int info_count;
+		self.threads = 0;
+		if (task_for_pid(mach_task_self(), ki->kp_proc.p_pid, &task) == KERN_SUCCESS) {
+			taskInfoValid = YES;
+			info_count = TASK_BASIC_INFO_COUNT;
+			if (task_info(task, TASK_BASIC_INFO, (task_info_t)&taskInfo, &info_count) != KERN_SUCCESS)
+				taskInfoValid = NO;
+			info_count = TASK_THREAD_TIMES_INFO_COUNT;
+			if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS)
+				taskInfoValid = NO;
+
+//			kern_return_t				error;
+			unsigned int				thread_count;
+			thread_port_array_t			thread_list;
+			struct thread_basic_info	thval;
+
+			self.pcpu = 0;
+			if (task_threads(task, &thread_list, &thread_count) == KERN_SUCCESS) {
+				self.threads = thread_count;
+//				err=0;
+//				ki->swapped = 1;
+				for (unsigned int j = 0; j < thread_count; j++) {
+					info_count = THREAD_BASIC_INFO_COUNT;
+					if (thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&thval, &info_count) == KERN_SUCCESS)
+						self.pcpu += thval.cpu_usage;
+//					int tstate = mach_state_order(thval.run_state, thval.sleep_time);
+//					if (tstate < ki->state)
+//						ki->state = tstate;
+//					if ((thval.flags & TH_FLAGS_SWAPPED ) == 0)
+//						ki->swapped = 0;
+					mach_port_deallocate(mach_task_self(), thread_list[j]);
+				}
+//				ki->invalid_thinfo = err;
+				// Deallocate the list of threads
+				vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(*thread_list) * thread_count);
+			}
+			mach_port_deallocate(mach_task_self(), task);
+		} else
+			taskInfoValid = NO;
 }
 
 + (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki

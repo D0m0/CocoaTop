@@ -16,9 +16,13 @@
 @property (assign) NSComparator sort;
 // Id
 @property (assign) int cid;
+// Need to refresh
+@property (assign) BOOL refresh;
 
-- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width id:(int)cid sort:(NSComparator)sort;
-+ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width id:(int)cid sort:(NSComparator)sort;
+- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
+	width:(NSInteger)width refresh:(BOOL)refresh id:(int)cid sort:(NSComparator)sort;
++ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
+	width:(NSInteger)width refresh:(BOOL)refresh id:(int)cid sort:(NSComparator)sort;
 + (NSArray *)psColumnsArray;
 - (NSString *)getDataForProc:(PSProc *)proc;
 
