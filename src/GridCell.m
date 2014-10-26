@@ -1,4 +1,3 @@
-//#import <QuartzCore/QuartzCore.h>
 #import "GridCell.h"
 #import "Proc.h"
 #import "Column.h"
@@ -6,74 +5,65 @@
 @implementation GridTableCell
 
 /*
+#import <Foundation/NSPathUtilities.h>
+
+  NSArray *Array = NSSearchPathForDirectoriesInDomains(NSCachesDirectory);
+  DicPath = nil;
+  if (Array.count) {
+    DicPath = [[Array objectAtIndex:0] stringByAppendingPathComponent:@"com.apple.mobile.installation.plist"];
+
+    DicFile = [NSDictionary dictionaryWithContentsOfFile:DicPath];
+    DicKeySyst = [DicFile objectForKey:@"System"];
+    DicKeyUser = [DicFile objectForKey:@"User"];
+    AppInfoArray = [NSMutableArray array];
+
+    AllKeysUser = objc_msgSend(DicKeyUser, "allKeys");
+    UserCount = objc_msgSend(AllKeysUser, "countByEnumeratingWithState:objects:count:", &v41, &v40, 16);
+    if ( UserCount ) {
+        NextUserKey = *(_DWORD *)(v42 + 4 * v27);
+        NextUserObj = [DicKeyUser objectForKey:NextUserKey];
+        AppInfo = [[ACApplicationInfoAdBlocker alloc] initWithMobileInstallationCacheAppDict:NextUserObj appType:1]
+        [AppInfoArray addObject:AppInfo];
+        [AppInfo release];
+
+        if ( ++v27 >= (unsigned int)UserCount ) {
+          UserCount = objc_msgSend(AllKeysUser, "countByEnumeratingWithState:objects:count:", &v41, &v40, 16);
+          if ( !UserCount ) break;
+        }
+    }
+    Context = 0;
+    AppInfoSorted = [AppInfoArray sortedArrayUsingFunction:alphabeticAppInfoSort context:Context];
+    self.AppInformationArray = AppInfoSorted;
+  }
+
 
 // ACApplicationInfoAdBlocker - (id)initWithMobileInstallationCacheAppDict:(id) appType:(int) 
 id __cdecl -[ACApplicationInfoAdBlocker initWithMobileInstallationCacheAppDict:appType:](struct ACApplicationInfoAdBlocker *self, SEL a2, id appDict, int appType)
 {
-	NSFileManager *fileManager = [NSFileManager defaultManager];
-	void *BundleIconFiles;
-	void *BundleIconFile;
-
 	if (self = [super init]) {
 		self.bundleIdentifier = [appDict valueForKey:@"CFBundleIdentifier"];
 		self.bundleName = [appDict valueForKey:@"CFBundleName"];
 		self.path = [appDict valueForKey:@"Path"];
-		BundleIconFile = [appDict valueForKey:@"CFBundleIconFile"];
-		BundleIconFiles = [appDict valueForKey:@"CFBundleIconFiles"];
-		if ([BundleIconFile isKindOfClass:[NSString class]] != 1) {
-			if ([BundleIconFile isKindOfClass:[NSString class]] == 1 && !BundleIconFiles)
-				BundleIconFiles = [appDict valueForKey:@"CFBundleIconFile"];
-			BundleIconFile = 0;
-			if ([BundleIconFiles isKindOfClass:[NSArray class]]) {
-				if ([BundleIconFiles respondsToSelector:@"lastObject"]) {
-					if ([BundleIconFiles respondsToSelector:@"count"]) {
-						if (BundleIconFiles.count) {
-							BundleIconFile = [BundleIconFiles objectAtIndex:0];
-							if ([BundleIconFile isKindOfClass:[NSArray class]] == 1)
-								BundleIconFile = [BundleIconFile objectAtIndex:0];
-						}
-					}
-				}
-			}
+		id IconFile = [appDict valueForKey:@"CFBundleIconFile"];
+		if (![IconFile isKindOfClass:[NSString class]]) {
+			IconFile = [appDict valueForKey:@"CFBundleIconFiles"];
+			while ([IconFile isKindOfClass:[NSArray class]])
+				IconFile = [IconFile lastObject];
 		}
-		if (BundleIconFile &&
-			[fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-			// Bred...
-			if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]])
-				BundleIconFile = objc_msgSend(BundleIconFile, "stringByAppendingString:", @".png");
-		} else {
-			BundleIconFile = @"Icon@2x.png";
-			if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-				BundleIconFile = @"icon@2x.png";
-				if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-					BundleIconFile = @"Icon.png";
-					if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-						BundleIconFile = @"icon.png";
-						if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-							BundleIconFile = @Icon-Small-50.png";
-							if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-								BundleIconFile = @"Icon-Small.png";
-								if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-									BundleIconFile = @"icon@2x~iphone.png";
-									if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-										BundleIconFile = @"icon~iphone.png";
-										if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]]) {
-											BundleIconFile = @"icon~ipad.png";
-											if (![fileManager fileExistsAtPath:[self.path stringByAppendingPathComponent:BundleIconFile]])
-												BundleIconFile = @"icon-114.png";
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+		NSFileManager *fileMgr = [NSFileManager defaultManager];
+		if ([IconFile isKindOfClass:[NSString class]])
+		for (NSString *Icon in [NSArray arrayWithObjects:IconFile, [IconFile stringByAppendingString:@".png"], nil])
+			if ([fileMgr fileExistsAtPath:[self.path stringByAppendingPathComponent:Icon]]) {
+				self.iconPath = [self.path stringByAppendingPathComponent:Icon];
+				break;
 			}
-		}
-		self.iconPath = [self.path stringByAppendingPathComponent:BundleIconFile];
-		if (![fileManager fileExistsAtPath:self.iconPath])
-			self.iconPath = nil;
-		self.icon = nil;
+		if (!self.iconPath)
+		for (NSString *Icon in [NSArray arrayWithObjects:@"Icon@2x.png", @"icon@2x.png", @"Icon.png", @"icon.png", @Icon-Small-50.png",
+			@"Icon-Small.png", @"icon@2x~iphone.png", @"icon~iphone.png", @"icon~ipad.png", @"icon-114.png", nil])
+			if ([fileMgr fileExistsAtPath:[self.path stringByAppendingPathComponent:Icon]]) {
+				self.iconPath = [self.path stringByAppendingPathComponent:Icon];
+				break;
+			}
 		self.displayName = [appDict valueForKey:@"CFBundleDisplayName"];
 		if (!self.displayName)
 			if (self.bundleName)
