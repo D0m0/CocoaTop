@@ -21,6 +21,9 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 		self.args = [PSProc getArgsByKinfo:ki];
 		self.name = [[self.args objectAtIndex:0] lastPathComponent];
 		[self updateWithKinfo2:ki];
+		@autoreleasepool {
+			self.icon = [PSProc getIconForApp:[self.args objectAtIndex:0] size:80];
+		}
 	}
 	return self;
 }
@@ -126,7 +129,32 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	return [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
 }
 
++ (UIImage *)roundCorneredImage:(UIImage *)orig size:(NSInteger)dim radius:(CGFloat)r
+{
+	CGSize size = (CGSize){dim, dim};
+	UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+	[[UIBezierPath bezierPathWithRoundedRect:(CGRect){CGPointZero, size} cornerRadius:r] addClip];
+	[orig drawInRect:(CGRect){CGPointZero, size}];
+	UIImage* result = UIGraphicsGetImageFromCurrentImageContext();
+	UIGraphicsEndImageContext();
+	return result;
+}
 
++ (UIImage *)getIconForApp:(NSString *)fullpath size:(NSInteger)dim
+{
+	NSArray *path = [fullpath pathComponents];
+	if (path.count > 5
+		&& ![(NSString *)[path objectAtIndex:1] compare:@"var"]
+		&& ![(NSString *)[path objectAtIndex:2] compare:@"mobile"]
+		&& ![(NSString *)[path objectAtIndex:3] compare:@"Applications"]
+	) {
+		NSString *icon = [NSString stringWithFormat:@"/var/mobile/Applications/%@/iTunesArtwork", [path objectAtIndex:4]];
+		UIImage *image = [UIImage imageWithContentsOfFile:icon];
+		if (image)
+			return [PSProc roundCorneredImage:image size:dim radius:dim/5];
+	}
+	return nil;
+}
 
 /*
 int get_task_info (KINFO *ki) 
@@ -198,6 +226,7 @@ int get_task_info (KINFO *ki)
 {
 	[_name release];
 	[_args release];
+	[_icon release];
 	[super dealloc];
 }
 

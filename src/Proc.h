@@ -26,11 +26,13 @@ typedef enum {
 @property (assign) int threads;
 @property (retain) NSString *name;
 @property (retain) NSArray *args;
+@property (retain) UIImage *icon;
 - (instancetype)initWithKinfo:(struct kinfo_proc *)ki;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki;
 - (void)updateWithKinfo:(struct kinfo_proc *)ki;
 - (void)updateWithKinfo2:(struct kinfo_proc *)ki;
 + (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki;
++ (UIImage *)getIconForApp:(NSString *)fullpath size:(NSInteger)dim;
 
 @end
 
