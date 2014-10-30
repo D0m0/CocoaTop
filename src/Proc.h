@@ -16,7 +16,6 @@ typedef enum {
 	ProcDisplayTerminated,
 	ProcDisplayRemove
 } display_t;
-
 @property (assign) display_t display;
 @property (assign) pid_t pid;
 @property (assign) pid_t ppid;
@@ -32,15 +31,15 @@ typedef enum {
 - (void)updateWithKinfo:(struct kinfo_proc *)ki;
 - (void)updateWithKinfo2:(struct kinfo_proc *)ki;
 + (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki;
-+ (UIImage *)getIconForApp:(NSString *)fullpath size:(NSInteger)dim;
+//+ (UIImage *)getIconForApp:(NSString *)fullpath size:(NSInteger)dim;
 
 @end
 
 @interface PSProcArray : NSObject
 {
 }
-
 @property (retain) NSMutableArray *procs;
+@property (retain) NSArray *appIcons;
 + (instancetype)psProcArray;
 - (int)refresh;
 - (void)setAllDisplayed:(display_t)display;

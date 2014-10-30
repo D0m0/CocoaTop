@@ -1,4 +1,5 @@
 #import "Proc.h"
+#import "AppIcon.h"
 #import <mach/mach_init.h>
 #import <mach/task_info.h>
 #import <mach/thread_info.h>
@@ -21,9 +22,9 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 		self.args = [PSProc getArgsByKinfo:ki];
 		self.name = [[self.args objectAtIndex:0] lastPathComponent];
 		[self updateWithKinfo2:ki];
-		@autoreleasepool {
-			self.icon = [PSProc getIconForApp:[self.args objectAtIndex:0] size:80];
-		}
+//		@autoreleasepool {
+//			self.icon = [PSProc getIconForApp:[self.args objectAtIndex:0] size:80];
+//		}
 	}
 	return self;
 }
@@ -128,7 +129,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	ki->kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
 	return [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
 }
-
+/*
 + (UIImage *)roundCorneredImage:(UIImage *)orig size:(NSInteger)dim radius:(CGFloat)r
 {
 	CGSize size = (CGSize){dim, dim};
@@ -155,7 +156,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	}
 	return nil;
 }
-
+*/
 /*
 int get_task_info (KINFO *ki) 
 {
@@ -236,8 +237,10 @@ int get_task_info (KINFO *ki)
 
 - (instancetype)initProcArray
 {
-	if (self = [super init])
+	if (self = [super init]) {
 		self.procs = [NSMutableArray arrayWithCapacity:200];
+		self.appIcons = [PSAppIcon psAppIconArray];
+	}
 	return self;
 }
 
@@ -271,9 +274,11 @@ int get_task_info (KINFO *ki)
 			NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 				return ((PSProc *)obj).pid == kp[i].kp_proc.p_pid;
 			}];
-			if (idx == NSNotFound)
-				[self.procs addObject:[PSProc psProcWithKinfo:&kp[i]]];
-			else
+			if (idx == NSNotFound) {
+				PSProc *proc = [PSProc psProcWithKinfo:&kp[i]];
+				proc.icon = [PSAppIcon getIconFromArray:self.appIcons forApp:[proc.args objectAtIndex:0] size:80];
+				[self.procs addObject:proc];
+			} else
 				[[self.procs objectAtIndex:idx] updateWithKinfo:&kp[i]];
 		}
 	}
@@ -311,6 +316,7 @@ int get_task_info (KINFO *ki)
 - (void)dealloc
 {
 	[_procs release];
+	[_appIcons release];
 	[super dealloc];
 }
 
