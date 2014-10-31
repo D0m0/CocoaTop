@@ -41,7 +41,9 @@
 					}
 			}
 			if (![fileMgr fileExistsAtPath:self.icon])
-				self.icon = nil;
+				self.icon = @"dhdhhd";
+			if (![self.icon compare:@""])
+				self.icon = @"bababa";
 		}
 	}
 	return self;
@@ -55,18 +57,26 @@
 + (NSArray *)psAppIconArray
 {
 	NSMutableArray *AppIconArray = [NSMutableArray array];
-	@autoreleasepool {
+//	@autoreleasepool {
 		NSDictionary *DicFile = [NSDictionary dictionaryWithContentsOfFile:
 			[[self psGetAppInfoPath] stringByAppendingPathComponent:@"com.apple.mobile.installation.plist"]];
 		NSDictionary *DicKeySyst = [DicFile objectForKey:@"System"];
-		for (NSDictionary *App in DicKeySyst)
-			[AppIconArray addObject:[PSAppIcon psAppIconWithAppKey:App]];
-		NSDictionary *DicKeyUser = [DicFile objectForKey:@"User"];
+/*		if (DicKeySyst)//[DicKeySyst.allKeys respondsToSelector:@selector(objectForKey)])
+		{
+			UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:@"OK" message:NSStringFromClass([DicKeySyst class])
+				delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+			[alertView show];
+		}
+*/		if (DicKeySyst)
+		for (id App in DicKeySyst)
+			[AppIconArray addObject:[PSAppIcon psAppIconWithAppKey:[DicKeySyst objectForKey:App]]];
+/*		NSDictionary *DicKeyUser = [DicFile objectForKey:@"User"];
 		for (NSDictionary *App in DicKeyUser)
 			[AppIconArray addObject:[PSAppIcon psAppIconWithAppKey:App]];
 //		AppInfoSorted = [AppInfoArray sortedArrayUsingFunction:alphabeticAppInfoSort context:Context];
 //		self.AppInformationArray = AppInfoSorted;
-	}
+*/
+//	}
 	return AppIconArray;
 }
 
@@ -79,6 +89,29 @@
 	UIImage* result = UIGraphicsGetImageFromCurrentImageContext();
 	UIGraphicsEndImageContext();
 	return result;
+}
+
++ (NSString *)getIconFileFromArray:(NSArray *)appIconArray forApp:(NSString *)fullPath
+{
+	NSString *appPath = [fullPath stringByDeletingLastPathComponent];
+	// Search for path
+//	return [NSString stringWithFormat:@"%u", appIconArray.count];
+	for (PSAppIcon *ic in appIconArray) {
+		if (![ic.path compare:appPath])
+			return ic.icon;
+	}
+	return appPath;
+	NSArray *result = nil;//[appIconArray filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"([self.path compare:%@])", appPath]];
+	if (0){//result.count) {
+		PSAppIcon *ic = [result objectAtIndex:0];
+		appPath = ic.icon;
+	} else {
+		appPath = [appPath stringByDeletingLastPathComponent];
+		if ([[appPath stringByDeletingLastPathComponent] compare:@"/var/mobile/Applications"])
+			return [fullPath lastPathComponent];
+		appPath = [appPath stringByAppendingPathComponent:@"iTunesArtwork"];
+	}
+	return appPath;
 }
 
 + (UIImage *)getIconFromArray:(NSArray *)appIconArray forApp:(NSString *)fullPath size:(NSInteger)dim;

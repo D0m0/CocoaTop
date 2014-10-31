@@ -10,6 +10,7 @@
 - (instancetype)initWithAppKey:(NSDictionary *)app;
 + (instancetype)psAppIconWithAppKey:(NSDictionary *)app;
 + (NSArray *)psAppIconArray;
++ (NSString *)getIconFileFromArray:(NSArray *)appIconArray forApp:(NSString *)fullPath;
 + (UIImage *)getIconFromArray:(NSArray *)appIconArray forApp:(NSString *)fullPath size:(NSInteger)dim;
 
 @end

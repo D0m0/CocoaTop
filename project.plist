@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>LastAccess</key>
-	<date>2014-10-24T22:11:49Z</date>
+	<date>2014-10-27T21:23:18Z</date>
 	<key>author</key>
 	<string>Doomer</string>
 	<key>bundleIdentifier</key>
@@ -42,6 +42,18 @@
 	</array>
 	<key>sourceFiles</key>
 	<array>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>AppIcon.h</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>AppIcon.m</string>
+		</dict>
 		<dict>
 			<key>folder</key>
 			<false/>

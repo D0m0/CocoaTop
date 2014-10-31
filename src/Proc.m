@@ -276,7 +276,8 @@ int get_task_info (KINFO *ki)
 			}];
 			if (idx == NSNotFound) {
 				PSProc *proc = [PSProc psProcWithKinfo:&kp[i]];
-				proc.icon = [PSAppIcon getIconFromArray:self.appIcons forApp:[proc.args objectAtIndex:0] size:80];
+				proc.name = [PSAppIcon getIconFileFromArray:self.appIcons forApp:[proc.args objectAtIndex:0]];
+//				proc.icon = [PSAppIcon getIconFromArray:self.appIcons forApp:[proc.args objectAtIndex:0] size:80];
 				[self.procs addObject:proc];
 			} else
 				[[self.procs objectAtIndex:idx] updateWithKinfo:&kp[i]];
