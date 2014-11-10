@@ -83,7 +83,12 @@
 - (void)layoutSubviews
 {
 	[super layoutSubviews];
-	CGRect frame = self.detailTextLabel.frame;
+	CGRect frame = self.textLabel.frame;
+	frame.origin.x = 10;
+	frame.size.width = firstCol - 10;
+	self.textLabel.frame = frame;
+	frame = self.detailTextLabel.frame;
+	frame.origin.x = 10;
 	frame.size.width = firstCol - 10;
 	self.detailTextLabel.frame = frame;
 }

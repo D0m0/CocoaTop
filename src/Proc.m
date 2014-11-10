@@ -91,7 +91,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	NSArray		*args = nil;
 	int			nargs, c = 0;
 	static int	argmax = 0;
-	char		*argsbuf, *sp, *ap, *cp;
+	char		*argsbuf, *sp, *cp;
 	int			mib[3] = {CTL_KERN, KERN_PROCARGS2, ki->kp_proc.p_pid};
 	size_t		size;
 
