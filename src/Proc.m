@@ -11,27 +11,39 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 
 @implementation PSProc
 
-- (instancetype)initWithKinfo:(struct kinfo_proc *)ki
+- (instancetype)initWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size
 {
 	if (self = [super init]) {
-		self.display = ProcDisplayStarted;
-		self.pid = ki->kp_proc.p_pid;
-		self.ppid = ki->kp_eproc.e_ppid;
-		self.prio = ki->kp_proc.p_priority;
-		self.flags = ki->kp_proc.p_flag;
-		self.args = [PSProc getArgsByKinfo:ki];
-		self.name = [[self.args objectAtIndex:0] lastPathComponent];
-		[self updateWithKinfo2:ki];
-//		@autoreleasepool {
-//			self.icon = [PSProc getIconForApp:[self.args objectAtIndex:0] size:80];
-//		}
+		@autoreleasepool {
+			self.display = ProcDisplayStarted;
+			self.pid = ki->kp_proc.p_pid;
+			self.ppid = ki->kp_eproc.e_ppid;
+			self.prio = ki->kp_proc.p_priority;
+			self.flags = ki->kp_proc.p_flag;
+			self.args = [PSProc getArgsByKinfo:ki];
+			NSString *executable = [self.args objectAtIndex:0];
+			self.name = [executable lastPathComponent];
+			NSString *path = [executable stringByDeletingLastPathComponent];
+			self.app = [PSAppIcon getAppByPath:path];
+			if (self.app) {
+				NSString *bundle = [self.app valueForKey:@"CFBundleIdentifier"];
+				if (bundle) {
+					self.name = bundle;
+					self.icon = [PSAppIcon getIconForApp:self.app bundle:bundle path:path size:size];
+				}
+			}
+			[self updateWithKinfo2:ki];
+//	self.name = [app valueForKey:@"CFBundleIdentifier"];
+//	self.bundleName = [app valueForKey:@"CFBundleName"];
+//	self.displayName = [app valueForKey:@"CFBundleDisplayName"];
+		}
 	}
 	return self;
 }
 
-+ (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki
++ (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size
 {
-	return [[[PSProc alloc] initWithKinfo:ki] autorelease];
+	return [[[PSProc alloc] initWithKinfo:ki iconSize:size] autorelease];
 }
 
 - (void)updateWithKinfo:(struct kinfo_proc *)ki
@@ -129,105 +141,13 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	ki->kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
 	return [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
 }
-/*
-+ (UIImage *)roundCorneredImage:(UIImage *)orig size:(NSInteger)dim radius:(CGFloat)r
-{
-	CGSize size = (CGSize){dim, dim};
-	UIGraphicsBeginImageContextWithOptions(size, NO, 0);
-	[[UIBezierPath bezierPathWithRoundedRect:(CGRect){CGPointZero, size} cornerRadius:r] addClip];
-	[orig drawInRect:(CGRect){CGPointZero, size}];
-	UIImage* result = UIGraphicsGetImageFromCurrentImageContext();
-	UIGraphicsEndImageContext();
-	return result;
-}
-
-+ (UIImage *)getIconForApp:(NSString *)fullpath size:(NSInteger)dim
-{
-	NSArray *path = [fullpath pathComponents];
-	if (path.count > 5
-		&& ![(NSString *)[path objectAtIndex:1] compare:@"var"]
-		&& ![(NSString *)[path objectAtIndex:2] compare:@"mobile"]
-		&& ![(NSString *)[path objectAtIndex:3] compare:@"Applications"]
-	) {
-		NSString *icon = [NSString stringWithFormat:@"/var/mobile/Applications/%@/iTunesArtwork", [path objectAtIndex:4]];
-		UIImage *image = [UIImage imageWithContentsOfFile:icon];
-		if (image)
-			return [PSProc roundCorneredImage:image size:dim radius:dim/5];
-	}
-	return nil;
-}
-*/
-/*
-int get_task_info (KINFO *ki) 
-{
-	kern_return_t	error;
-	unsigned int	info_count = TASK_BASIC_INFO_COUNT;
-	unsigned int	thread_info_count = THREAD_BASIC_INFO_COUNT;
-	pid_t			pid;
-	int				j, err = 0;
-
-	ki->state = STATE_MAX;
-	pid = KI_PROC(ki)->p_pid;
-	if (task_for_pid(mach_task_self(), pid, &ki->task) != KERN_SUCCESS)
-		return(1);
-	info_count = TASK_BASIC_INFO_COUNT;
-	error = task_info(ki->task, TASK_BASIC_INFO, (task_info_t)&ki->tasks_info, &info_count);
-	if (error != KERN_SUCCESS) {
-		ki->invalid_tinfo=1;
-		return(1);
-	}
-	info_count = TASK_THREAD_TIMES_INFO_COUNT;
-	error = task_info(ki->task, TASK_THREAD_TIMES_INFO, (task_info_t)&ki->times, &info_count);
-	if (error != KERN_SUCCESS) {
-		ki->invalid_tinfo=1;
-		return(1);
-	}
-//	switch(ki->tasks_info.policy) {
-//	... see tasks.c
-
-	ki->invalid_tinfo=0;
-	ki->cpu_usage=0;
-	error = task_threads(ki->task, &ki->thread_list, &ki->thread_count);
-	if (error != KERN_SUCCESS) {
-		mach_port_deallocate(mach_task_self(),ki->task);
-		return(1);
-	}
-	err=0;
-	ki->swapped = 1;
-	ki->thval = malloc(ki->thread_count * sizeof(struct thread_values));
-	for (j = 0; j < ki->thread_count; j++) {
-		int tstate;
-		thread_info_count = THREAD_BASIC_INFO_COUNT;
-		error = thread_info(ki->thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&ki->thval[j].tb, &thread_info_count);
-		if (error != KERN_SUCCESS)
-			err=1;
-		error = thread_schedinfo(ki, ki->thread_list[j], ki->thval[j].tb.policy, &ki->thval[j].schedinfo);
-		if (error != KERN_SUCCESS)
-			err=1;
-		ki->cpu_usage += ki->thval[j].tb.cpu_usage;
-		tstate = mach_state_order(ki->thval[j].tb.run_state, ki->thval[j].tb.sleep_time);
-		if (tstate < ki->state)
-			ki->state = tstate;
-		if ((ki->thval[j].tb.flags & TH_FLAGS_SWAPPED ) == 0)
-			ki->swapped = 0;
-		mach_port_deallocate(mach_task_self(), ki->thread_list[j]);
-	}
-	ki->invalid_thinfo = err;
-	// Deallocate the list of threads
-	error = vm_deallocate(mach_task_self(), (vm_address_t)(ki->thread_list), sizeof(*ki->thread_list) * ki->thread_count);
-	if (error != KERN_SUCCESS)
-		...
-	mach_port_deallocate(mach_task_self(),ki->task);
-	return(0);
-}
-*/
-
 
 - (void)dealloc
 {
 	[_name release];
 	[_args release];
 	[_icon release];
+	[_app release];
 	[super dealloc];
 }
 
@@ -235,18 +155,18 @@ int get_task_info (KINFO *ki)
 
 @implementation PSProcArray
 
-- (instancetype)initProcArray
+- (instancetype)initProcArrayWithIconSize:(CGFloat)size
 {
 	if (self = [super init]) {
 		self.procs = [NSMutableArray arrayWithCapacity:200];
-		self.appIcons = [PSAppIcon psAppIconArray];
+		self.iconSize = size;
 	}
 	return self;
 }
 
-+ (instancetype)psProcArray
++ (instancetype)psProcArrayWithIconSize:(CGFloat)size
 {
-	return [[[PSProcArray alloc] initProcArray] autorelease];
+	return [[[PSProcArray alloc] initProcArrayWithIconSize:size] autorelease];
 }
 
 - (int)refresh
@@ -274,12 +194,9 @@ int get_task_info (KINFO *ki)
 			NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 				return ((PSProc *)obj).pid == kp[i].kp_proc.p_pid;
 			}];
-			if (idx == NSNotFound) {
-				PSProc *proc = [PSProc psProcWithKinfo:&kp[i]];
-				proc.name = [PSAppIcon getIconFileFromArray:self.appIcons forApp:[proc.args objectAtIndex:0]];
-//				proc.icon = [PSAppIcon getIconFromArray:self.appIcons forApp:[proc.args objectAtIndex:0] size:80];
-				[self.procs addObject:proc];
-			} else
+			if (idx == NSNotFound)
+				[self.procs addObject:[PSProc psProcWithKinfo:&kp[i] iconSize:self.iconSize]];
+			else
 				[[self.procs objectAtIndex:idx] updateWithKinfo:&kp[i]];
 		}
 	}
@@ -317,7 +234,6 @@ int get_task_info (KINFO *ki)
 - (void)dealloc
 {
 	[_procs release];
-	[_appIcons release];
 	[super dealloc];
 }
 

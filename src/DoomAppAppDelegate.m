@@ -1,6 +1,7 @@
 
 #import "DoomAppAppDelegate.h"
 #import "RootViewController.h"
+#import "SetupViewController.h"
 
 
 @implementation DoomAppAppDelegate
@@ -16,7 +17,7 @@
 	RootViewController* rootViewController = [[RootViewController alloc] init];
 	self.navigationController = [[UINavigationController alloc] initWithRootViewController:rootViewController];
 	[rootViewController release];
-	
+
 	// Set the navigation controller as the window's root view controller and display.
 	self.window.rootViewController = self.navigationController;
 	[self.window makeKeyAndVisible];

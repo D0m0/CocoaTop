@@ -26,12 +26,12 @@ typedef enum {
 @property (retain) NSString *name;
 @property (retain) NSArray *args;
 @property (retain) UIImage *icon;
-- (instancetype)initWithKinfo:(struct kinfo_proc *)ki;
-+ (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki;
+@property (retain) NSDictionary *app;
+- (instancetype)initWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
++ (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
 - (void)updateWithKinfo:(struct kinfo_proc *)ki;
 - (void)updateWithKinfo2:(struct kinfo_proc *)ki;
 + (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki;
-//+ (UIImage *)getIconForApp:(NSString *)fullpath size:(NSInteger)dim;
 
 @end
 
@@ -39,8 +39,8 @@ typedef enum {
 {
 }
 @property (retain) NSMutableArray *procs;
-@property (retain) NSArray *appIcons;
-+ (instancetype)psProcArray;
+@property (assign) CGFloat iconSize;
++ (instancetype)psProcArrayWithIconSize:(CGFloat)size;
 - (int)refresh;
 - (void)setAllDisplayed:(display_t)display;
 - (NSUInteger)indexOfDisplayed:(display_t)display;

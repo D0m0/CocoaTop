@@ -1,4 +1,5 @@
 #import "RootViewController.h"
+#import "SetupViewController.h"
 #import "GridCell.h"
 #import "Column.h"
 #import "Proc.h"
@@ -15,6 +16,13 @@
 
 #pragma mark -
 #pragma mark View lifecycle
+
+- (void)openSettings
+{
+	SetupViewController* setupViewController = [[SetupViewController alloc] initWithColumns:self.columns];
+	[self.navigationController pushViewController:setupViewController animated:YES];
+	[setupViewController release];
+}
 
 - (void)refreshProcs
 {
@@ -37,36 +45,42 @@
 	// Uncomment the following line to display an Edit button in the navigation bar for this view controller.
 	//self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	//self.tableView.rowHeight = 30;
-	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
-		target:self action:@selector(refreshProcs)];
+//	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
+//		target:self action:@selector(refreshProcs)];
+	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStylePlain
+		target:self action:@selector(openSettings)];
 	self.navigationItem.rightBarButtonItem = anotherButton;
 	[anotherButton release];
+	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+	[super viewWillAppear:animated];
 
 	self.columns = [PSColumn psColumnsArray];
-	self.procs = [PSProcArray psProcArray];
 	[self.procs refresh];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
 	self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
 		target:self selector:@selector(refreshProcs) userInfo:nil repeats:YES];
 }
 
-/*
-- (void)viewWillAppear:(BOOL)animated
+- (void)viewDidDisappear:(BOOL)animated
 {
-	[super viewWillAppear:animated];
+	[super viewWillDisappear:animated];
+
+	if (self.timer.isValid)
+		[self.timer invalidate];
+	self.columns = nil;
 }
 
+/*
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
-{
-	[super viewWillDisappear:animated];
-}
-
-- (void)viewDidDisappear:(BOOL)animated
 {
 	[super viewDidDisappear:animated];
 }
@@ -162,22 +176,7 @@
 }
 */
 
-/*
-// Override to support rearranging the table view.
 //TODO: Refresh on rotate!!!
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-	//
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-	// Return NO if you do not want the item to be re-orderable.
-	return YES;
-}
-*/
 
 #pragma mark -
 #pragma mark Table view delegate
@@ -206,7 +205,7 @@
 {
 	// Releases the view if it doesn't have a superview.
 	[super didReceiveMemoryWarning];
-	
+	NSLog(@"didReceiveMemoryWarning");
 	// Relinquish ownership of any cached data, images, etc that aren't in use.
 }
 
