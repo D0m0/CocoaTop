@@ -10,20 +10,23 @@
 
 + (NSString *)getIconFileForApp:(NSDictionary *)app
 {
-	for (NSString *Key in [NSArray arrayWithObjects:@"CFBundleIcons~ipad", @"CFBundleIcons", @"CFBundleIconFiles", @"CFBundleIconFile", nil]) {
-		id Value = [app valueForKey:Key];
-		while ([Value isKindOfClass:[NSDictionary class]]) {
-			id        Try = [Value valueForKey:@"CFBundlePrimaryIcon"];
-			if (!Try) Try = [Value valueForKey:@"CFBundleIconFiles"];
-			if (!Try) Try = [Value valueForKey:@"CFBundleIconFile"];
-			if (!Try) break;
-			Value = Try;
+	@try {
+		for (NSString *Key in [NSArray arrayWithObjects:@"CFBundleIcons~ipad", @"CFBundleIcons", @"CFBundleIconFiles", @"CFBundleIconFile", nil]) {
+			id Value = [app valueForKey:Key];
+			while ([Value isKindOfClass:[NSDictionary class]]) {
+				id        Try = [Value valueForKey:@"CFBundlePrimaryIcon"];
+				if (!Try) Try = [Value valueForKey:@"CFBundleIconFiles"];
+				if (!Try) Try = [Value valueForKey:@"CFBundleIconFile"];
+				if (!Try) break;
+				Value = Try;
+			}
+			while ([Value isKindOfClass:[NSArray class]] && [Value count])
+				Value = [Value objectAtIndex:0];
+			if ([Value isKindOfClass:[NSString class]])
+				return Value;
 		}
-		while ([Value isKindOfClass:[NSArray class]])
-			Value = [Value objectAtIndex:0];
-		if ([Value isKindOfClass:[NSString class]])
-			return Value;
 	}
+	@finally {}
 	return nil;
 }
 
@@ -66,17 +69,20 @@
 	NSString *iconFile = [PSAppIcon getIconFileForApp:app];
 	if (!iconFile)
 		return nil;
-//	if ([UIImage respondsToSelector:@selector(_applicationIconImageForBundleIdentifier:roleIdentifier:format:scale:)])
-//		return [UIImage _applicationIconImageForBundleIdentifier:bundle roleIdentifier:nil format:1 scale:[UIScreen mainScreen].scale];
-//	else if ([UIImage respondsToSelector:@selector(_applicationIconImageForBundleIdentifier:format:scale:)])
-//		return [UIImage _applicationIconImageForBundleIdentifier:bundle format:1 scale:[UIScreen mainScreen].scale];
 	NSString *iconPath = [PSAppIcon getIconFileForPath:path iconFile:iconFile];
 	if (!iconPath)
 		return nil;
 	UIImage *image = [UIImage imageWithContentsOfFile:iconPath];
 	if (!image)
 		return nil;
-	return [PSAppIcon roundCorneredImage:image size:dim radius:dim/5];
+//	NSLog(@"Icon(%fx%f) = %@", image.size.width, image.size.height, iconPath);
+	if (image.size.height * image.scale < 58) {
+		if ([UIImage respondsToSelector:@selector(_applicationIconImageForBundleIdentifier:roleIdentifier:format:scale:)])
+			return [UIImage _applicationIconImageForBundleIdentifier:bundle roleIdentifier:nil format:1 scale:[UIScreen mainScreen].scale];
+		else if ([UIImage respondsToSelector:@selector(_applicationIconImageForBundleIdentifier:format:scale:)])
+			return [UIImage _applicationIconImageForBundleIdentifier:bundle format:1 scale:[UIScreen mainScreen].scale];
+	}
+	return [PSAppIcon roundCorneredImage:image size:dim radius:dim/4.5];
 }
 
 @end

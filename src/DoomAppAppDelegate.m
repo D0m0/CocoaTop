@@ -1,8 +1,6 @@
 
 #import "DoomAppAppDelegate.h"
 #import "RootViewController.h"
-#import "SetupViewController.h"
-
 
 @implementation DoomAppAppDelegate
 
