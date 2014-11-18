@@ -1,6 +1,11 @@
 #import <Foundation/NSPathUtilities.h>
 #import "AppIcon.h"
 
+@interface UIImage (Private)
++ (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)bundle roleIdentifier:(id)role format:(int)format scale:(CGFloat)scale;
++ (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)bundle format:(int)format scale:(CGFloat)scale;
+@end
+
 @implementation PSAppIcon
 
 + (NSDictionary *)getAppByPath:(NSString *)path
@@ -11,12 +16,11 @@
 + (NSString *)getIconFileForApp:(NSDictionary *)app
 {
 	@try {
-		for (NSString *Key in [NSArray arrayWithObjects:@"CFBundleIcons~ipad", @"CFBundleIcons", @"CFBundleIconFiles", @"CFBundleIconFile", nil]) {
-			id Value = [app valueForKey:Key];
+		for (NSString *Key in @[@"CFBundleIcons~ipad", @"CFBundleIcons", @"CFBundleIconFiles", @"CFBundleIconFile"]) {
+			id Value = [app valueForKey:Key], Try = nil;
 			while ([Value isKindOfClass:[NSDictionary class]]) {
-				id        Try = [Value valueForKey:@"CFBundlePrimaryIcon"];
-				if (!Try) Try = [Value valueForKey:@"CFBundleIconFiles"];
-				if (!Try) Try = [Value valueForKey:@"CFBundleIconFile"];
+				for (NSString *Key2 in @[@"CFBundlePrimaryIcon", @"CFBundleIconFiles", @"CFBundleIconFile"])
+					if ((Try = [Value valueForKey:Key2])) break;
 				if (!Try) break;
 				Value = Try;
 			}
@@ -40,7 +44,7 @@
 	for (NSString *Icon in iconNames) {
 		iconFull = [path stringByAppendingPathComponent:Icon];
 		if (![iconFull pathExtension].length) {
-			for (NSString *IconExt in [NSArray arrayWithObjects:@"@2x~ipad.png", @"@2x.png", @"@2x~iphone.png", @"~ipad.png", @"~iphone.png", @".png", nil])
+			for (NSString *IconExt in @[@"@2x~ipad.png", @"@2x.png", @"@2x~iphone.png", @"~ipad.png", @"~iphone.png", @".png"])
 				if ([fileMgr fileExistsAtPath:[iconFull stringByAppendingString:IconExt]])
 					return [iconFull stringByAppendingString:IconExt];
 		}

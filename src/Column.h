@@ -15,7 +15,7 @@
 // Sort comparator
 @property (assign) NSComparator sort;
 // Id
-@property (assign) int cid;
+@property (assign) NSNumber* cid;
 // Need to refresh
 @property (assign) BOOL refresh;
 

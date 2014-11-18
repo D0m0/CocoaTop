@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>LastAccess</key>
-	<date>2014-10-27T21:23:18Z</date>
+	<date>2014-11-18T19:12:10Z</date>
 	<key>author</key>
-	<string>Doomer</string>
+	<string>Domo</string>
 	<key>bundleIdentifier</key>
-	<string>com.yourcompany.DoomApp</string>
+	<string>com.domo.doomapp</string>
 	<key>executable</key>
-	<string>DoomApp</string>
+	<string>DoomApp_</string>
 	<key>external</key>
 	<dict>
 		<key>include</key>
@@ -119,6 +119,18 @@
 			<false/>
 			<key>name</key>
 			<string>RootViewController.m</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>SetupViewController.h</string>
+		</dict>
+		<dict>
+			<key>folder</key>
+			<false/>
+			<key>name</key>
+			<string>SetupViewController.m</string>
 		</dict>
 	</array>
 </dict>

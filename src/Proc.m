@@ -197,7 +197,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 			if (idx == NSNotFound)
 				[self.procs addObject:[PSProc psProcWithKinfo:&kp[i] iconSize:self.iconSize]];
 			else
-				[[self.procs objectAtIndex:idx] updateWithKinfo:&kp[i]];
+				[self.procs[idx] updateWithKinfo:&kp[i]];
 		}
 	}
 	free(kp);
@@ -223,12 +223,12 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 
 - (NSUInteger)count
 {
-	return [self.procs count];
+	return self.procs.count;
 }
 
 - (PSProc *)procAtIndex:(NSUInteger)index
 {
-	return (PSProc *)[self.procs objectAtIndex:index];
+	return (PSProc *)self.procs[index];
 }
 
 - (void)dealloc

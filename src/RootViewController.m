@@ -52,6 +52,10 @@
 	self.navigationItem.rightBarButtonItem = anotherButton;
 	[anotherButton release];
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
+	
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	// Default column order
+	[defaults registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -151,14 +155,6 @@
 	else if (indexPath.row & 1)
 		cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
 }
-
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-	// Return NO if you do not want the specified item to be editable.
-	return YES;
-}
-*/
 
 /*
 // Override to support editing the table view.

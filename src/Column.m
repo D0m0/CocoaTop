@@ -11,7 +11,7 @@
 		self.width = width;
 		self.sort = sort;
 		self.refresh = refresh;
-		self.cid = cid;
+		self.cid = [NSNumber numberWithInt:cid];
     }
 	return self;
 }
@@ -23,7 +23,7 @@
 
 + (NSArray *)psColumnsArray
 {
-	return [NSArray arrayWithObjects:
+	return @[
 		[PSColumn psColumnWithName:@"Command" descr:@"Command line" align:NSTextAlignmentLeft width:600 refresh:NO id:0
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }],
 		[PSColumn psColumnWithName:@"PID" descr:@"Process ID" align:NSTextAlignmentRight width:50 refresh:NO id:1
@@ -41,9 +41,9 @@
 		[PSColumn psColumnWithName:@"%CPU" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 refresh:YES id:7
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pcpu - b.pcpu; }],
 		[PSColumn psColumnWithName:@"Threads" descr:@"Thread Count" align:NSTextAlignmentRight width:40 refresh:YES id:8
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.threads - b.threads; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.threads - b.threads; }]
 // TIME Ports MRegions RPrivate RShared
-	nil];
+	];
 }
 
 /*
@@ -61,7 +61,7 @@ return p->p_pctcpu / (1.0 - exp(p->p_swtime * log(fxtofl(ccpu))));
 
 - (NSString *)getDataForProc:(PSProc *)proc
 {
-	switch (self.cid) {
+	switch (self.cid.intValue) {
 	case 0: return proc.name;
 	case 1: return [NSString stringWithFormat:@"%u", proc.pid];
 	case 2: return [NSString stringWithFormat:@"%u", proc.ppid];
