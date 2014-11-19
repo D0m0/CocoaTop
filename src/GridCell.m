@@ -40,7 +40,7 @@
 		[label release];
 		label.textAlignment = col.align;
 		label.font = [UIFont systemFontOfSize:12.0];
-		label.text = [col getDataForProc:proc];
+		label.text = col.getData(proc);
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = i;
 		[cell.contentView addSubview:label];
@@ -60,7 +60,7 @@
 		PSColumn *col = [columns objectAtIndex:i];
 		UILabel *label = (UILabel *)[self viewWithTag:i];
 		if (col.refresh)
-			label.text = [col getDataForProc:proc];
+			label.text = col.getData(proc);
 	}
 }
 

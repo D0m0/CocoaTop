@@ -1,6 +1,8 @@
 #import <UIKit/UIKit.h>
 #import "Proc.h"
 
+typedef NSString *(^PSColumnData)(PSProc *proc);
+
 @interface PSColumn : NSObject
 {
 }
@@ -12,19 +14,19 @@
 @property (assign) NSTextAlignment align;
 // Minimal column width
 @property (assign) NSInteger width;
+// Data displayer
+@property (assign) PSColumnData getData;
 // Sort comparator
 @property (assign) NSComparator sort;
-// Id
-@property (assign) NSNumber* cid;
 // Need to refresh
 @property (assign) BOOL refresh;
 
 - (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
-	width:(NSInteger)width refresh:(BOOL)refresh id:(int)cid sort:(NSComparator)sort;
+	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
-	width:(NSInteger)width refresh:(BOOL)refresh id:(int)cid sort:(NSComparator)sort;
-+ (NSArray *)psColumnsArray;
-+ (NSArray *)psAllColumnsArray;
+	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;
++ (NSArray *)psGetAllColumns;
++ (NSMutableArray *)psGetShownColumns;
 - (NSString *)getDataForProc:(PSProc *)proc;
 
 @end

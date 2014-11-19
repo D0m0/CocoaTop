@@ -8,19 +8,10 @@
 @property (retain)UITableView *tableView;
 @property (retain)NSMutableArray *in;
 @property (retain)NSMutableArray *out;
-@property (retain)NSArray *cols;
 
 @end
 
 @implementation SetupViewController
-
-- (instancetype)initWithColumns:(NSArray *)columns
-{
-	if (self = [super init]) {
-		self.cols = columns;
-	}
-	return self;
-}
 
 - (void)viewDidLoad
 {
@@ -37,67 +28,25 @@
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-
-	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-	// Default column order
-	NSArray *conf = [defaults arrayForKey:@"Columns"];
-		
-	self.in = [NSMutableArray array];
+	self.in = [PSColumn psGetShownColumns];
 	self.out = [NSMutableArray array];
-
-	for (NSNumber* num in conf) {
-		// NSDictionary: key=cid value=PSColumn ?????
-		NSUInteger idx = [self.cols indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-			return ((PSColumn *)obj).cid == num;
-		}];
-		if (idx != NSNotFound)
-			[self.in addObject:self.cols[idx]];
-	}
-	for (PSColumn* col in self.cols)
+	for (PSColumn* col in [PSColumn psGetAllColumns])
 		if (![self.in containsObject:col])
 			[self.out addObject:col];
-
 	ar[0] = self.in;
 	ar[1] = self.out;
-//	[self initTableItem];
-
 	[self.tableView reloadData];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
 {
-	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-	NSMutableArray *cols = [NSMutableArray array];
+	NSArray *allCols = [PSColumn psGetAllColumns];
+	NSMutableArray *order = [NSMutableArray array];
 	for (PSColumn* col in self.in)
-		[cols addObject:col.cid];
-	[defaults setObject:cols forKey:@"Columns"];
-//	[defaults setObject:@[@0, @1, @2, @3, @4, @5] forKey:@"Columns"];
+		[order addObject:[NSNumber numberWithUnsignedInteger:[allCols indexOfObject:col]]];
+	[[NSUserDefaults standardUserDefaults] setObject:order forKey:@"Columns"];
 }
 
-/*
-- (void)initTableItem
-{
-	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-	// Default column order
-	NSArray *conf = [defaults arrayForKey:@"Columns"]];
-
-	self.in = [NSMutableArray array];
-	for (NSNumber* num in conf)
-		[self.in addObject:[NSString stringWithFormat:@"col %@", num]];
-//	[self.in addObject:@"Bo"];
-//	[self.in addObject:@"Br"];
-//	[self.in addObject:@"Ch"];
-//	[self.in addObject:@"Co"];
-//	[self.in addObject:@"E"];
-//	[self.in addObject:@"Pa"];
-//	[self.in addObject:@"Pe"];
-//	[self.in addObject:@"U"];
-//	[self.in addObject:@"V"];
-	self.out = [NSMutableArray array];
-	ar[0] = self.in;
-	ar[1] = self.out;
-}
-*/
 - (void)didReceiveMemoryWarning
 {
 	[super didReceiveMemoryWarning];

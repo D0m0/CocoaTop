@@ -19,7 +19,7 @@
 
 - (void)openSettings
 {
-	SetupViewController* setupViewController = [[SetupViewController alloc] initWithColumns:[PSColumn psAllColumnsArray]];
+	SetupViewController* setupViewController = [[SetupViewController alloc] init];
 	[self.navigationController pushViewController:setupViewController animated:YES];
 	[setupViewController release];
 }
@@ -52,17 +52,15 @@
 	self.navigationItem.rightBarButtonItem = anotherButton;
 	[anotherButton release];
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
-	
-	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 	// Default column order
-	[defaults registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
+	[[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
 
-	self.columns = [PSColumn psColumnsArray];
+	self.columns = [PSColumn psGetShownColumns];
 	[self.procs refresh];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
 	self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
