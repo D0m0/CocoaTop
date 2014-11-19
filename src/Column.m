@@ -21,6 +21,31 @@
 	return [[PSColumn alloc] initWithName:name descr:descr align:align width:width refresh:refresh id:cid sort:sort];
 }
 
++ (NSArray *)psAllColumnsArray
+{
+	return @[
+		[PSColumn psColumnWithName:@"Command" descr:@"Command line" align:NSTextAlignmentLeft width:600 refresh:NO id:0
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }],
+		[PSColumn psColumnWithName:@"PID" descr:@"Process ID" align:NSTextAlignmentRight width:50 refresh:NO id:1
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pid - b.pid; }],
+		[PSColumn psColumnWithName:@"PPID" descr:@"Parent PID" align:NSTextAlignmentRight width:50 refresh:NO id:2
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ppid - b.ppid; }],
+		[PSColumn psColumnWithName:@"Flags" descr:@"Process Flags" align:NSTextAlignmentLeft width:100 refresh:YES id:3
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.flags - b.flags; }],
+		[PSColumn psColumnWithName:@"Prio" descr:@"Process Priority" align:NSTextAlignmentLeft width:50 refresh:YES id:4
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.prio - b.prio; }],
+		[PSColumn psColumnWithName:@"VSize" descr:@"Virtual Size" align:NSTextAlignmentRight width:65 refresh:YES id:5
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->taskInfo.virtual_size - b->taskInfo.virtual_size; }],
+		[PSColumn psColumnWithName:@"RSize" descr:@"Resident Size" align:NSTextAlignmentRight width:65 refresh:YES id:6
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->taskInfo.resident_size - b->taskInfo.resident_size; }],
+		[PSColumn psColumnWithName:@"%CPU" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 refresh:YES id:7
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pcpu - b.pcpu; }],
+		[PSColumn psColumnWithName:@"Threads" descr:@"Thread Count" align:NSTextAlignmentRight width:40 refresh:YES id:8
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.threads - b.threads; }]
+// TIME Ports MRegions RPrivate RShared
+	];
+}
+
 + (NSArray *)psColumnsArray
 {
 	return @[

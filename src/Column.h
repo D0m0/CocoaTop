@@ -24,6 +24,7 @@
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
 	width:(NSInteger)width refresh:(BOOL)refresh id:(int)cid sort:(NSComparator)sort;
 + (NSArray *)psColumnsArray;
++ (NSArray *)psAllColumnsArray;
 - (NSString *)getDataForProc:(PSProc *)proc;
 
 @end

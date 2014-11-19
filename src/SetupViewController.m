@@ -28,7 +28,6 @@
 //	[self.view setBackgroundColor:[UIColor whiteColor]];
 	self.tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height - 44)
 		style:UITableViewStyleGrouped];
-//	[self initTableItem];
 	[self.view addSubview:self.tableView];
 	self.tableView.dataSource = self;
 	self.tableView.delegate = self;
@@ -43,19 +42,24 @@
 	// Default column order
 	NSArray *conf = [defaults arrayForKey:@"Columns"];
 		
-		self.in = [NSMutableArray array];
-		self.out = [NSMutableArray array];
-		for (NSNumber* num in conf) {
-			NSUInteger idx = [self.cols indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-				return ((PSColumn *)obj).cid == num;
-			}];
-			if (idx == NSNotFound)
-				[self.out addObject:[NSString stringWithFormat:@"col %@", num]];
-			else
-				[self.in addObject:[NSString stringWithFormat:@"col %@: %@", num, ((PSColumn *)self.cols[idx]).descr]];
-		}
+	self.in = [NSMutableArray array];
+	self.out = [NSMutableArray array];
+
+	for (NSNumber* num in conf) {
+		// NSDictionary: key=cid value=PSColumn ?????
+		NSUInteger idx = [self.cols indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+			return ((PSColumn *)obj).cid == num;
+		}];
+		if (idx != NSNotFound)
+			[self.in addObject:self.cols[idx]];
+	}
+	for (PSColumn* col in self.cols)
+		if (![self.in containsObject:col])
+			[self.out addObject:col];
+
 	ar[0] = self.in;
 	ar[1] = self.out;
+//	[self initTableItem];
 
 	[self.tableView reloadData];
 }
@@ -63,7 +67,11 @@
 - (void)viewDidDisappear:(BOOL)animated
 {
 	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-	[defaults setObject:@[@0, @1, @2, @3, @4, @5] forKey:@"Columns"];
+	NSMutableArray *cols = [NSMutableArray array];
+	for (PSColumn* col in self.in)
+		[cols addObject:col.cid];
+	[defaults setObject:cols forKey:@"Columns"];
+//	[defaults setObject:@[@0, @1, @2, @3, @4, @5] forKey:@"Columns"];
 }
 
 /*
@@ -122,7 +130,7 @@
 	if (cell == nil) {
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
 	}
-	cell.textLabel.text = [ar[indexPath.section] objectAtIndex:indexPath.row];
+	cell.textLabel.text = ((PSColumn *)[ar[indexPath.section] objectAtIndex:indexPath.row]).descr;
 	return cell;
 }
 
@@ -132,15 +140,24 @@
 	return UITableViewCellEditingStyleNone;
 }
 
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
+- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)src
 {
-	return YES;
-//	return indexPath.section == 0 && indexPath.row == 0 ? NO : YES;
+	return src.section == 0 && src.row == 0 ? NO : YES;
+//	return (src.section == 0 && src.row == 0) || (src.section > 1) ? NO : YES;
+}
+
+- (NSIndexPath *)tableView:(UITableView *)tableView targetIndexPathForMoveFromRowAtIndexPath:(NSIndexPath *)src toProposedIndexPath:(NSIndexPath *)dst
+{
+	if (dst.section == 0 && dst.row == 0)
+		return [NSIndexPath indexPathForRow:1 inSection:0];
+//	if (dst.section > 1)
+//		return [NSIndexPath indexPathForRow:[tableView numberOfRowsInSection:1]-1 inSection:1];
+	return dst;
 }
 
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)src toIndexPath:(NSIndexPath *)dst
 {
-	NSString *save = [ar[src.section] objectAtIndex:src.row];
+	id save = [ar[src.section] objectAtIndex:src.row];
 	[ar[src.section] removeObjectAtIndex:src.row];
 	[ar[dst.section] insertObject:save atIndex:dst.row];
 }

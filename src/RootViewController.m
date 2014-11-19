@@ -19,7 +19,7 @@
 
 - (void)openSettings
 {
-	SetupViewController* setupViewController = [[SetupViewController alloc] initWithColumns:self.columns];
+	SetupViewController* setupViewController = [[SetupViewController alloc] initWithColumns:[PSColumn psAllColumnsArray]];
 	[self.navigationController pushViewController:setupViewController animated:YES];
 	[setupViewController release];
 }
@@ -93,7 +93,7 @@
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	// Return YES for supported orientations.
-	return (interfaceOrientation == UIInterfaceOrientationPortrait);
+	return YES;//(interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
