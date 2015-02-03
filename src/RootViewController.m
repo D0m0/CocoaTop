@@ -19,7 +19,7 @@
 
 - (void)openSettings
 {
-	SetupViewController* setupViewController = [[SetupViewController alloc] init];
+	SetupViewController* setupViewController = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped];
 	[self.navigationController pushViewController:setupViewController animated:YES];
 	[setupViewController release];
 }
@@ -47,6 +47,33 @@
 	//self.tableView.rowHeight = 30;
 //	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
 //		target:self action:@selector(refreshProcs)];
+
+/*
+	UIView *tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 50)];
+ 
+	[tableHeaderView setBackgroundColor:[UIColor blueColor]];
+ 
+	UIView *tableFooterView = [[UIView alloc] initWIthFrame:CGRectMake(0,0, 320,50)];
+	[tableFooterView setBackgroundColor:[UIColor blueColor]];
+ 
+	UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10,10,320,25)];
+	headerLabel.text = @"Header view";
+	headerLabel.textColor = [UIColor whiteColor];
+	headerLabel.font = [UIFont boldSystemFontOfSize:22];
+	headerLabel.backgroundColor = [UIColor clearColor];
+ 
+	UILabel *footerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10,10,320,25)];
+	footerLabel.text = @"Footer view";
+	footerLabel.textColor = [UIColor whiteColor];
+	footerLabel.font = [UIFont boldSystemFontOfSIze:22];
+	footerLabel.backgroundColor = [UIColor clearColor];
+ 
+	[tableHeaderView addSubview:headerLabel];
+	[tableFooterView addSubview:footerLabel];
+ 
+	[self.tableView setTableHeaderView:tableHeaderView];
+	[self.tableView setTableFooterView:tableFooterView];
+*/
 	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStylePlain
 		target:self action:@selector(openSettings)];
 	self.navigationItem.rightBarButtonItem = anotherButton;

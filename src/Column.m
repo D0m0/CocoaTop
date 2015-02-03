@@ -8,7 +8,7 @@
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		allColumns = [@[
-		[PSColumn psColumnWithName:@"Command" descr:@"Command line" align:NSTextAlignmentLeft width:600 refresh:NO
+		[PSColumn psColumnWithName:@"Command line" descr:@"Command line" align:NSTextAlignmentLeft width:600 refresh:NO
 			data:^NSString*(PSProc *proc) { return proc.name; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }],
 		[PSColumn psColumnWithName:@"PID" descr:@"Process ID" align:NSTextAlignmentRight width:50 refresh:NO
@@ -23,18 +23,18 @@
 		[PSColumn psColumnWithName:@"Prio" descr:@"Process Priority" align:NSTextAlignmentLeft width:50 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.prio]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.prio - b.prio; }],
-		[PSColumn psColumnWithName:@"VSize" descr:@"Virtual Size" align:NSTextAlignmentRight width:65 refresh:YES
+		[PSColumn psColumnWithName:@"VMem" descr:@"Virtual Size" align:NSTextAlignmentRight width:65 refresh:YES
 			data:^NSString*(PSProc *proc) { return !proc->taskInfoValid ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->taskInfo.virtual_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->taskInfo.virtual_size - b->taskInfo.virtual_size; }],
-		[PSColumn psColumnWithName:@"RSize" descr:@"Resident Size" align:NSTextAlignmentRight width:65 refresh:YES
+		[PSColumn psColumnWithName:@"RMem" descr:@"Resident Size" align:NSTextAlignmentRight width:65 refresh:YES
 			data:^NSString*(PSProc *proc) { return !proc->taskInfoValid ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->taskInfo.resident_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->taskInfo.resident_size - b->taskInfo.resident_size; }],
 		[PSColumn psColumnWithName:@"%CPU" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%.1f", (float)proc.pcpu/10]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pcpu - b.pcpu; }],
-		[PSColumn psColumnWithName:@"Threads" descr:@"Thread Count" align:NSTextAlignmentRight width:40 refresh:YES
+		[PSColumn psColumnWithName:@"Thr" descr:@"Thread Count" align:NSTextAlignmentRight width:40 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.threads]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.threads - b.threads; }]
 		// TIME Ports MRegions RPrivate RShared

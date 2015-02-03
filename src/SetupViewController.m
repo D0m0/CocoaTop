@@ -5,7 +5,6 @@
 {
 	NSMutableArray *ar[2];
 }
-@property (retain)UITableView *tableView;
 @property (retain)NSMutableArray *in;
 @property (retain)NSMutableArray *out;
 
@@ -16,13 +15,7 @@
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-//	[self.view setBackgroundColor:[UIColor whiteColor]];
-	self.tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height - 44)
-		style:UITableViewStyleGrouped];
-	[self.view addSubview:self.tableView];
-	self.tableView.dataSource = self;
-	self.tableView.delegate = self;
-	[self.tableView setEditing:YES];
+	self.tableView.editing = YES;
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -38,7 +31,7 @@
 	[self.tableView reloadData];
 }
 
-- (void)viewDidDisappear:(BOOL)animated
+- (void)viewWillDisappear:(BOOL)animated
 {
 	NSArray *allCols = [PSColumn psGetAllColumns];
 	NSMutableArray *order = [NSMutableArray array];
@@ -75,10 +68,10 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+	// Reuse a single cell
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
-	if (cell == nil) {
+	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
-	}
 	cell.textLabel.text = ((PSColumn *)[ar[indexPath.section] objectAtIndex:indexPath.row]).descr;
 	return cell;
 }
@@ -115,14 +108,12 @@
 {
 	self.in = nil;
 	self.out = nil;
-	self.tableView = nil;
 }
 
 - (void)dealloc
 {
 	[_in release];
 	[_out release];
-	[_tableView release];
 	[super dealloc];
 }
 

@@ -1,6 +1,5 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SetupViewController : UIViewController<UITableViewDataSource, UITableViewDelegate>
-	//UITableViewController
+@interface SetupViewController : UITableViewController
 @end
