@@ -30,6 +30,12 @@
     <ClInclude Include="src\AppIcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\SetupViewController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Column.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\DoomAppAppDelegate.m">
@@ -48,6 +54,12 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="src\AppIcon.m">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\SetupViewController.m">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\Column.m">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
