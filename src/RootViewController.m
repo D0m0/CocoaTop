@@ -42,42 +42,13 @@
 {
 	[super viewDidLoad];
 
-	// Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-	//self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	//self.tableView.rowHeight = 30;
 //	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
 //		target:self action:@selector(refreshProcs)];
-
-/*
-	UIView *tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 50)];
- 
-	[tableHeaderView setBackgroundColor:[UIColor blueColor]];
- 
-	UIView *tableFooterView = [[UIView alloc] initWIthFrame:CGRectMake(0,0, 320,50)];
-	[tableFooterView setBackgroundColor:[UIColor blueColor]];
- 
-	UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10,10,320,25)];
-	headerLabel.text = @"Header view";
-	headerLabel.textColor = [UIColor whiteColor];
-	headerLabel.font = [UIFont boldSystemFontOfSize:22];
-	headerLabel.backgroundColor = [UIColor clearColor];
- 
-	UILabel *footerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10,10,320,25)];
-	footerLabel.text = @"Footer view";
-	footerLabel.textColor = [UIColor whiteColor];
-	footerLabel.font = [UIFont boldSystemFontOfSIze:22];
-	footerLabel.backgroundColor = [UIColor clearColor];
- 
-	[tableHeaderView addSubview:headerLabel];
-	[tableFooterView addSubview:footerLabel];
- 
-	[self.tableView setTableHeaderView:tableHeaderView];
-	[self.tableView setTableFooterView:tableFooterView];
-*/
-	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStylePlain
-		target:self action:@selector(openSettings)];
-	self.navigationItem.rightBarButtonItem = anotherButton;
-	[anotherButton release];
+//	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"\u2699" style:UIBarButtonItemStylePlain
+//		target:self action:@selector(openSettings)];
+//	self.navigationItem.rightBarButtonItem = anotherButton;
+//	[anotherButton release];
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
@@ -88,6 +59,8 @@
 	[super viewWillAppear:animated];
 
 	self.columns = [PSColumn psGetShownColumns];
+	self.tableView.tableHeaderView = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.frame.size.width, self.tableView.rowHeight)];
+
 	[self.procs refresh];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
 	self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
@@ -100,6 +73,7 @@
 
 	if (self.timer.isValid)
 		[self.timer invalidate];
+	self.tableView.tableHeaderView = nil;
 	self.columns = nil;
 }
 

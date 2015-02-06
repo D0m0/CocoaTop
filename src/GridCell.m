@@ -101,3 +101,50 @@
 }
 
 @end
+
+
+@implementation GridHeaderView
+
+- (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size
+{
+	GridHeaderView *head = (GridHeaderView *)[super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
+	[head setBackgroundColor:[UIColor darkGrayColor]];
+	// Get column widths
+	CGFloat totalCol = 0;
+	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
+	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
+	for (int i = 0; i < columns.count /*&& totalCol < size.width*/; i++) {
+		PSColumn *col = [columns objectAtIndex:i];
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
+		[self.labels addObject:label];
+		[label release];
+		label.textAlignment = col.align;
+		label.font = [UIFont boldSystemFontOfSize:16.0];
+		label.text = col.name;
+		label.textColor = [UIColor whiteColor];
+		label.backgroundColor = [UIColor clearColor];
+		[head addSubview:label];
+		totalCol += col.width;
+
+		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
+		[self.dividers addObject:divider];
+		[divider release];
+		divider.backgroundColor = [UIColor whiteColor];//colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
+		[head addSubview:divider];
+	}
+	return head;
+}
+
++ (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size
+{
+	return [[[GridHeaderView alloc] initWithColumns:columns size:size] autorelease];
+}
+
+- (void)dealloc
+{
+	[_labels release];
+	[_dividers release];
+	[super dealloc];
+}
+
+@end

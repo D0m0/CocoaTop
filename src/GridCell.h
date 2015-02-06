@@ -15,3 +15,14 @@
 - (void)layoutSubviews;
 
 @end
+
+
+@interface GridHeaderView : UIView
+{
+}
+@property (retain) NSMutableArray *labels;
+@property (retain) NSMutableArray *dividers;
+- (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size;
++ (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size;
+
+@end
