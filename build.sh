@@ -1,0 +1,3 @@
+cd doomapp
+make
+exit

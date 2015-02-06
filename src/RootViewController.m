@@ -59,8 +59,6 @@
 	[super viewWillAppear:animated];
 
 	self.columns = [PSColumn psGetShownColumns];
-	self.tableView.tableHeaderView = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.frame.size.width, self.tableView.rowHeight)];
-
 	[self.procs refresh];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
 	self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
@@ -73,7 +71,6 @@
 
 	if (self.timer.isValid)
 		[self.timer invalidate];
-	self.tableView.tableHeaderView = nil;
 	self.columns = nil;
 }
 
@@ -118,14 +115,22 @@
 // Customize the number of sections in the table view.
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
+//TODO: section 1: system processes, section 2: user processes
 	return 1;
 }
 
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-//TODO: section 1: system processes, section 2: user processes
 	return self.procs.count;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+	UITableViewHeaderFooterView *head = (UITableViewHeaderFooterView *)[tableView dequeueReusableHeaderFooterViewWithIdentifier:@"Grid"];
+	if (head == nil)
+		head = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(tableView.frame.size.width, tableView.sectionHeaderHeight)];
+	return head;
 }
 
 // Customize the appearance of table view cells.

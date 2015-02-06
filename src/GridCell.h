@@ -17,7 +17,7 @@
 @end
 
 
-@interface GridHeaderView : UIView
+@interface GridHeaderView : UITableViewHeaderFooterView
 {
 }
 @property (retain) NSMutableArray *labels;

@@ -107,8 +107,7 @@
 
 - (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size
 {
-	GridHeaderView *head = (GridHeaderView *)[super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
-	[head setBackgroundColor:[UIColor darkGrayColor]];
+	GridHeaderView *head = (GridHeaderView *)[super initWithReuseIdentifier:@"Grid"];
 	// Get column widths
 	CGFloat totalCol = 0;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
@@ -121,16 +120,16 @@
 		label.textAlignment = col.align;
 		label.font = [UIFont boldSystemFontOfSize:16.0];
 		label.text = col.name;
-		label.textColor = [UIColor whiteColor];
+		label.textColor = [UIColor blackColor];
 		label.backgroundColor = [UIColor clearColor];
-		[head addSubview:label];
+		[head.contentView addSubview:label];
 		totalCol += col.width;
 
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
 		[self.dividers addObject:divider];
 		[divider release];
-		divider.backgroundColor = [UIColor whiteColor];//colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
-		[head addSubview:divider];
+		divider.backgroundColor = [UIColor darkGrayColor];
+		[head.contentView addSubview:divider];
 	}
 	return head;
 }
