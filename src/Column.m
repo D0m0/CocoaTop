@@ -54,11 +54,11 @@ NSString *psProcessTty(PSProc *proc)
 		[PSColumn psColumnWithName:@"Prio" descr:@"Mach Actual Threads Priority" align:NSTextAlignmentLeft width:42 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.prio]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.prio - b.prio; }],
-		[PSColumn psColumnWithName:@"VSize" descr:@"Virtual Address Space Usage" align:NSTextAlignmentRight width:65 refresh:YES
+		[PSColumn psColumnWithName:@"VSize" descr:@"Virtual Address Space Usage" align:NSTextAlignmentRight width:70 refresh:YES
 			data:^NSString*(PSProc *proc) { return !proc->basic.virtual_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.virtual_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->basic.virtual_size - b->basic.virtual_size; }],
-		[PSColumn psColumnWithName:@"RMem" descr:@"Resident Memory Usage" align:NSTextAlignmentRight width:65 refresh:YES
+		[PSColumn psColumnWithName:@"RMem" descr:@"Resident Memory Usage" align:NSTextAlignmentRight width:70 refresh:YES
 			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->basic.resident_size - b->basic.resident_size; }],
@@ -93,10 +93,10 @@ NSString *psProcessTty(PSProc *proc)
 		[PSColumn psColumnWithName:@"TTY" descr:@"Terminal" align:NSTextAlignmentLeft width:65 refresh:NO
 			data:^NSString*(PSProc *proc) { return psProcessTty(proc); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.tdev - b.tdev; }],
-		[PSColumn psColumnWithName:@"User" descr:@"User Id" align:NSTextAlignmentLeft width:90 refresh:NO
+		[PSColumn psColumnWithName:@"User" descr:@"User Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:user_from_uid(proc.uid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.uid - b.uid; }],
-		[PSColumn psColumnWithName:@"Group" descr:@"Groud Id" align:NSTextAlignmentLeft width:90 refresh:NO
+		[PSColumn psColumnWithName:@"Group" descr:@"Groud Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.gid - b.gid; }]
 		// TIME Ports MRegions RPrivate RShared
