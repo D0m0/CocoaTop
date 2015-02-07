@@ -15,7 +15,7 @@
 	self.detailTextLabel.text = full;
 //	self.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 //	self.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
-	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
+//	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 	// Remember first column width
 	firstCol = MIN(((PSColumn *)[columns objectAtIndex:0]).width, size.width);
 	CGFloat totalCol = firstCol;
@@ -124,12 +124,6 @@
 		label.backgroundColor = [UIColor clearColor];
 		[self.contentView addSubview:label];
 		totalCol += col.width;
-
-		//UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
-		//[self.dividers addObject:divider];
-		//[divider release];
-		//divider.backgroundColor = [UIColor darkGrayColor];
-		//[self.contentView addSubview:divider];
 	}
 	return self;
 }

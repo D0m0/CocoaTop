@@ -72,6 +72,9 @@ int mach_state_order(int s, long sleep_time)
 	self.priobase = ki->kp_proc.p_priority;
 	self.flags = ki->kp_proc.p_flag;
 	self.nice = ki->kp_proc.p_nice;
+	self.tdev = ki->kp_eproc.e_tdev;
+	self.uid = ki->kp_eproc.e_ucred.cr_uid;
+	self.gid = ki->kp_eproc.e_pcred.p_rgid;
 	memcpy(&events_prev, &events, sizeof(events_prev));
 	// Extended process status
 	self.exflags = 0;
@@ -211,6 +214,7 @@ int mach_state_order(int s, long sleep_time)
 				if (*cp) break;
 			for (sp = cp; cp < &argsbuf[size] && c < nargs; cp++)
 				if (*cp == '\0') c++;
+			while (sp < cp && sp[0] == '/' && sp[1] == '/') sp++;
 			if (sp != cp) {
 				args = [[[[NSString alloc] initWithBytes:sp length:(cp-sp)
 					encoding:NSUTF8StringEncoding] autorelease]		// NSASCIIStringEncoding?

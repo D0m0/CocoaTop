@@ -1,4 +1,6 @@
 #import "Column.h"
+#import <pwd.h>
+#import <grp.h>
 
 @implementation PSColumn
 
@@ -21,6 +23,14 @@ NSString *psProcessStateString(PSProc *proc)
 	if (proc.exflags & PSPROC_EXFLAGS_SYSPROC)		// 'L' P_SYSTEM | P_NOSWAP | P_PHYSIO (Sys proc: no sigs, stats or swap)
 		*pst++ = 'L';
 	return [NSString stringWithCharacters:st length:(pst - st)];
+}
+
+NSString *psProcessTty(PSProc *proc)
+{
+	char *ttname = 0;
+	if (proc.tdev != NODEV)
+		ttname = devname(proc.tdev, S_IFCHR);
+	return [NSString stringWithCString:(ttname ? ttname : "??") encoding:NSASCIIStringEncoding];
 }
 
 + (NSArray *)psGetAllColumns
@@ -77,9 +87,18 @@ NSString *psProcessStateString(PSProc *proc)
 		[PSColumn psColumnWithName:@"CSw" descr:@"Context Switches" align:NSTextAlignmentRight width:52 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw - proc->events_prev.csw]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a->events.csw - a->events_prev.csw) - (b->events.csw - b->events_prev.csw); }],
-		[PSColumn psColumnWithName:@"Time" descr:@"Process time" align:NSTextAlignmentRight width:85 refresh:YES
+		[PSColumn psColumnWithName:@"Time" descr:@"Process time" align:NSTextAlignmentRight width:75 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%lld:%02lld.%02lld", proc.ptime / 6000, (proc.ptime / 100) % 60, proc.ptime % 100]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ptime - b.ptime; }]
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ptime - b.ptime; }],
+		[PSColumn psColumnWithName:@"TTY" descr:@"Terminal" align:NSTextAlignmentLeft width:65 refresh:NO
+			data:^NSString*(PSProc *proc) { return psProcessTty(proc); }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.tdev - b.tdev; }],
+		[PSColumn psColumnWithName:@"User" descr:@"User Id" align:NSTextAlignmentLeft width:90 refresh:NO
+			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:user_from_uid(proc.uid, 0) encoding:NSASCIIStringEncoding]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.uid - b.uid; }],
+		[PSColumn psColumnWithName:@"Group" descr:@"Groud Id" align:NSTextAlignmentLeft width:90 refresh:NO
+			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.gid - b.gid; }]
 		// TIME Ports MRegions RPrivate RShared
 		] retain];
 	});

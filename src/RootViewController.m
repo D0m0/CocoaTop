@@ -17,13 +17,6 @@
 #pragma mark -
 #pragma mark View lifecycle
 
-- (void)openSettings
-{
-	SetupViewController* setupViewController = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped];
-	[self.navigationController pushViewController:setupViewController animated:YES];
-	[setupViewController release];
-}
-
 - (void)refreshProcs
 {
 	[self.procs refresh];
@@ -38,19 +31,21 @@
 			atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
 }
 
+- (void)openSettings
+{
+	SetupViewController* setupViewController = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped];
+	[self.navigationController pushViewController:setupViewController animated:YES];
+	[setupViewController release];
+}
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-
-	//self.tableView.rowHeight = 30;
-//	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
-//		target:self action:@selector(refreshProcs)];
-//	'GEAR' (U+2699)		'GEAR WITHOUT HUB' (U+26ED)
-	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"\u26ED" style:UIBarButtonItemStylePlain
+//	'GEAR' (\u2699)		'GEAR WITHOUT HUB' (\u26ED)
+	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Columns" style:UIBarButtonItemStylePlain
 		target:self action:@selector(openSettings)];
 	self.navigationItem.rightBarButtonItem = anotherButton;
 	[anotherButton release];
-
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
@@ -162,24 +157,6 @@
 		cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
 }
 
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-	if (editingStyle == UITableViewCellEditingStyleDelete)
-	{
-		// Delete the row from the data source.
-		[tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
-	}
-	else if (editingStyle == UITableViewCellEditingStyleInsert)
-	{
-		// Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
-	}
-}
-*/
-
-//TODO: Refresh on rotate!!!
-
 #pragma mark -
 #pragma mark Table view delegate
 
@@ -197,7 +174,6 @@
 		UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:cell.textLabel.text message:cell.detailTextLabel.text delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
 		[alertView show];
 	}
-	// Configure the cell.
 }
 
 #pragma mark -
