@@ -78,16 +78,16 @@ NSString *psProcessTty(PSProc *proc)
 		[PSColumn psColumnWithName:@"Nice" descr:@"Process Nice Value" align:NSTextAlignmentRight width:42 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.nice]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.nice - b.nice; }],
-		[PSColumn psColumnWithName:@"Mach" descr:@"Mach system calls" align:NSTextAlignmentRight width:52 refresh:YES
+		[PSColumn psColumnWithName:@"Mach" descr:@"Mach System Calls" align:NSTextAlignmentRight width:52 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_mach - proc->events_prev.syscalls_mach]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a->events.syscalls_mach - a->events_prev.syscalls_mach) - (b->events.syscalls_mach - b->events_prev.syscalls_mach); }],
-		[PSColumn psColumnWithName:@"Unix" descr:@"Unix system calls" align:NSTextAlignmentRight width:52 refresh:YES
+		[PSColumn psColumnWithName:@"Unix" descr:@"Unix System Calls" align:NSTextAlignmentRight width:52 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_unix - proc->events_prev.syscalls_unix]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a->events.syscalls_unix - a->events_prev.syscalls_unix) - (b->events.syscalls_unix - b->events_prev.syscalls_unix); }],
 		[PSColumn psColumnWithName:@"CSw" descr:@"Context Switches" align:NSTextAlignmentRight width:52 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw - proc->events_prev.csw]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a->events.csw - a->events_prev.csw) - (b->events.csw - b->events_prev.csw); }],
-		[PSColumn psColumnWithName:@"Time" descr:@"Process time" align:NSTextAlignmentRight width:75 refresh:YES
+		[PSColumn psColumnWithName:@"Time" descr:@"Process Time" align:NSTextAlignmentRight width:75 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%lld:%02lld.%02lld", proc.ptime / 6000, (proc.ptime / 100) % 60, proc.ptime % 100]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ptime - b.ptime; }],
 		[PSColumn psColumnWithName:@"TTY" descr:@"Terminal" align:NSTextAlignmentLeft width:65 refresh:NO
