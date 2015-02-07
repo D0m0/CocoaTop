@@ -27,6 +27,5 @@ typedef NSString *(^PSColumnData)(PSProc *proc);
 	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;
 + (NSArray *)psGetAllColumns;
 + (NSMutableArray *)psGetShownColumns;
-- (NSString *)getDataForProc:(PSProc *)proc;
 
 @end

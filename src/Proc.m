@@ -18,13 +18,12 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 			self.display = ProcDisplayStarted;
 			self.pid = ki->kp_proc.p_pid;
 			self.ppid = ki->kp_eproc.e_ppid;
-			self.prio = ki->kp_proc.p_priority;
-			self.flags = ki->kp_proc.p_flag;
 			self.args = [PSProc getArgsByKinfo:ki];
 			NSString *executable = [self.args objectAtIndex:0];
 			self.name = [executable lastPathComponent];
 			NSString *path = [executable stringByDeletingLastPathComponent];
 			self.app = [PSAppIcon getAppByPath:path];
+			memset(&events, 0, sizeof(events));
 			if (self.app) {
 				NSString *bundle = [self.app valueForKey:@"CFBundleIdentifier"];
 				if (bundle) {
@@ -32,7 +31,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 					self.icon = [PSAppIcon getIconForApp:self.app bundle:bundle path:path size:size];
 				}
 			}
-			[self updateWithKinfo2:ki];
+			[self updateWithKinfoEx:ki];
 //	self.name = [app valueForKey:@"CFBundleIdentifier"];
 //	self.bundleName = [app valueForKey:@"CFBundleName"];
 //	self.displayName = [app valueForKey:@"CFBundleDisplayName"];
@@ -49,53 +48,137 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 - (void)updateWithKinfo:(struct kinfo_proc *)ki
 {
 	self.display = ProcDisplayUser;
-	self.prio = ki->kp_proc.p_priority;
-	self.flags = ki->kp_proc.p_flag;
-	[self updateWithKinfo2:ki];
+	[self updateWithKinfoEx:ki];
 }
 
-- (void)updateWithKinfo2:(struct kinfo_proc *)ki
+// Thread states are sorted by priority, top priority becomes a "task state"
+int mach_state_order(int s, long sleep_time)
+{      
+	switch (s) {
+	case TH_STATE_RUNNING:			return 2;
+	case TH_STATE_UNINTERRUPTIBLE:	return 3;
+	case TH_STATE_WAITING:			return sleep_time <= 20 ? 4 : 5;
+	case TH_STATE_STOPPED:			return 6;
+	case TH_STATE_HALTED:			return 7;  
+	default:						return 8; 
+	}
+}
+
+- (void)updateWithKinfoEx:(struct kinfo_proc *)ki
 {
-		task_port_t task;
-		unsigned int info_count;
-		self.threads = 0;
-		if (task_for_pid(mach_task_self(), ki->kp_proc.p_pid, &task) == KERN_SUCCESS) {
-			taskInfoValid = YES;
-			info_count = TASK_BASIC_INFO_COUNT;
-			if (task_info(task, TASK_BASIC_INFO, (task_info_t)&taskInfo, &info_count) != KERN_SUCCESS)
-				taskInfoValid = NO;
-			info_count = TASK_THREAD_TIMES_INFO_COUNT;
-			if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS)
-				taskInfoValid = NO;
-
-//			kern_return_t				error;
-			unsigned int				thread_count;
-			thread_port_array_t			thread_list;
-			struct thread_basic_info	thval;
-
-			self.pcpu = 0;
-			if (task_threads(task, &thread_list, &thread_count) == KERN_SUCCESS) {
-				self.threads = thread_count;
-//				err=0;
-//				ki->swapped = 1;
-				for (unsigned int j = 0; j < thread_count; j++) {
-					info_count = THREAD_BASIC_INFO_COUNT;
-					if (thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&thval, &info_count) == KERN_SUCCESS)
-						self.pcpu += thval.cpu_usage;
-//					int tstate = mach_state_order(thval.run_state, thval.sleep_time);
-//					if (tstate < ki->state)
-//						ki->state = tstate;
-//					if ((thval.flags & TH_FLAGS_SWAPPED ) == 0)
-//						ki->swapped = 0;
-					mach_port_deallocate(mach_task_self(), thread_list[j]);
-				}
-//				ki->invalid_thinfo = err;
-				// Deallocate the list of threads
-				vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(*thread_list) * thread_count);
+	time_value_t total_time = {0};
+	task_port_t task;
+	unsigned int info_count;
+	self.priobase = ki->kp_proc.p_priority;
+	self.flags = ki->kp_proc.p_flag;
+	self.nice = ki->kp_proc.p_nice;
+	memcpy(&events_prev, &events, sizeof(events_prev));
+	// Extended process status
+	self.exflags = 0;
+	if (self.nice < 0)
+		self.exflags |= PSPROC_EXFLAGS_NOTNICE;
+	else if (self.nice > 0)
+		self.exflags |= PSPROC_EXFLAGS_NICE;
+	if (self.flags & P_TRACED)
+		self.exflags |= PSPROC_EXFLAGS_TRACED;
+	if (self.flags & P_WEXIT && ki->kp_proc.p_stat != SZOMB)
+		self.exflags |= PSPROC_EXFLAGS_WEXIT;
+	if (self.flags & P_PPWAIT)
+		self.exflags |= PSPROC_EXFLAGS_PPWAIT;
+	if (self.flags & (P_SYSTEM | P_NOSWAP | P_PHYSIO))
+		self.exflags |= PSPROC_EXFLAGS_SYSPROC;
+	// Task info
+	self.threads = 0;
+	self.prio = 0;
+	self.pcpu = 0;
+	self.state = PSPROC_STATE_MAX;
+	// Priority process states
+	if (ki->kp_proc.p_stat == SSTOP) self.state = 0;
+	if (ki->kp_proc.p_stat == SZOMB) self.state = 1;
+	if (task_for_pid(mach_task_self(), ki->kp_proc.p_pid, &task) == KERN_SUCCESS) {
+		// Basic task info
+		info_count = TASK_BASIC_INFO_COUNT;
+		if (task_info(task, TASK_BASIC_INFO, (task_info_t)&basic, &info_count) == KERN_SUCCESS) {
+			// Time
+			total_time = basic.user_time;
+			time_value_add(&total_time, &basic.system_time);
+			// Task scheduler info
+			struct policy_rr_base sched = {0};			// this struct is compatible with all task scheduling policies
+			switch (basic.policy) {
+			case POLICY_TIMESHARE:
+				info_count = POLICY_TIMESHARE_INFO_COUNT;
+				if (task_info(task, TASK_SCHED_TIMESHARE_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
+					self.priobase = sched.base_priority;
+				break;
+			case POLICY_RR:
+				info_count = POLICY_RR_INFO_COUNT;
+				if (task_info(task, TASK_SCHED_RR_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
+					self.priobase = sched.base_priority;
+				break;
+			case POLICY_FIFO:
+				info_count = POLICY_FIFO_INFO_COUNT;
+				if (task_info(task, TASK_SCHED_FIFO_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
+					self.priobase = sched.base_priority;
+				break;
 			}
-			mach_port_deallocate(mach_task_self(), task);
-		} else
-			taskInfoValid = NO;
+		}
+		// Task times
+		struct task_thread_times_info times;
+		info_count = TASK_THREAD_TIMES_INFO_COUNT;
+		if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS) {
+			memset(&times, 0, sizeof(times));
+		}
+		time_value_add(&total_time, &times.user_time);
+		time_value_add(&total_time, &times.system_time);
+		// Task events
+		info_count = TASK_EVENTS_INFO_COUNT;
+		if (task_info(task, TASK_EVENTS_INFO, (task_info_t)&events, &info_count) != KERN_SUCCESS) {
+			memset(&events, 0, sizeof(events));
+		} else if (!events_prev.csw)
+			memcpy(&events_prev, &events, sizeof(events_prev));
+		// Enumerate all threads to acquire detailed info
+		unsigned int				thread_count;
+		thread_port_array_t			thread_list;
+		struct thread_basic_info	thval;
+		if (task_threads(task, &thread_list, &thread_count) == KERN_SUCCESS) {
+			self.threads = thread_count;
+			for (unsigned int j = 0; j < thread_count; j++) {
+				info_count = THREAD_BASIC_INFO_COUNT;
+				if (thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&thval, &info_count) == KERN_SUCCESS) {
+					self.pcpu += thval.cpu_usage;
+					// Actual process priority will be the largest priority of a thread
+					struct policy_timeshare_info sched;		// this struct is compatible with all scheduler policies
+					switch (thval.policy) {
+					case POLICY_TIMESHARE:
+						info_count = POLICY_TIMESHARE_INFO_COUNT;
+						if (thread_info(thread_list[j], THREAD_SCHED_TIMESHARE_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+							if (self.prio < sched.cur_priority) self.prio = sched.cur_priority;
+						break;
+					case POLICY_RR:
+						info_count = POLICY_RR_INFO_COUNT;
+						if (thread_info(thread_list[j], THREAD_SCHED_RR_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+							if (self.prio < sched.base_priority) self.prio = sched.base_priority;
+						break;
+					case POLICY_FIFO:
+						info_count = POLICY_FIFO_INFO_COUNT;
+						if (thread_info(thread_list[j], THREAD_SCHED_FIFO_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+							if (self.prio < sched.base_priority) self.prio = sched.base_priority;
+						break;
+					}
+				}
+				// Task state is formed from all thread states
+				int thstate = mach_state_order(thval.run_state, thval.sleep_time);
+				if (self.state > thstate)
+					self.state = thstate;
+				mach_port_deallocate(mach_task_self(), thread_list[j]);
+			}
+			// Deallocate the list of threads
+			vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(*thread_list) * thread_count);
+		}
+		mach_port_deallocate(mach_task_self(), task);
+	}
+	// Roundup time: 100's of a second
+	self.ptime = total_time.seconds * 100 + (total_time.microseconds + 5000) / 10000;
 }
 
 + (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki

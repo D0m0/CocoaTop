@@ -46,10 +46,10 @@
 //	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
 //		target:self action:@selector(refreshProcs)];
 //	'GEAR' (U+2699)		'GEAR WITHOUT HUB' (U+26ED)
-//	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"\u2699" style:UIBarButtonItemStylePlain
-//		target:self action:@selector(openSettings)];
-//	self.navigationItem.rightBarButtonItem = anotherButton;
-//	[anotherButton release];
+	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"\u26ED" style:UIBarButtonItemStylePlain
+		target:self action:@selector(openSettings)];
+	self.navigationItem.rightBarButtonItem = anotherButton;
+	[anotherButton release];
 
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	// Default column order
