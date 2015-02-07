@@ -28,7 +28,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 			if (self.app) {
 				NSString *bundle = [self.app valueForKey:@"CFBundleIdentifier"];
 				if (bundle) {
-					self.name = [self.app valueForKey:@"CFBundleDisplayName"];//bundle;
+					self.name = bundle;//[self.app valueForKey:@"CFBundleDisplayName"];
 					self.icon = [PSAppIcon getIconForApp:self.app bundle:bundle path:path size:size];
 				}
 			}

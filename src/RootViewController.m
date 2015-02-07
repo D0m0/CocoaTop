@@ -45,10 +45,12 @@
 	//self.tableView.rowHeight = 30;
 //	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Refresh" style:UIBarButtonItemStylePlain
 //		target:self action:@selector(refreshProcs)];
+//	'GEAR' (U+2699)		'GEAR WITHOUT HUB' (U+26ED)
 //	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"\u2699" style:UIBarButtonItemStylePlain
 //		target:self action:@selector(openSettings)];
 //	self.navigationItem.rightBarButtonItem = anotherButton;
 //	[anotherButton release];
+
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
@@ -59,6 +61,7 @@
 	[super viewWillAppear:animated];
 
 	self.columns = [PSColumn psGetShownColumns];
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.frame.size.width, self.tableView.sectionHeaderHeight)];
 	[self.procs refresh];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
 	self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
@@ -71,6 +74,7 @@
 
 	if (self.timer.isValid)
 		[self.timer invalidate];
+	self.header = nil;
 	self.columns = nil;
 }
 
@@ -119,18 +123,16 @@
 	return 1;
 }
 
+// Section header will be used as a grid header
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+	return self.header;
+}
+
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
 	return self.procs.count;
-}
-
-- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{
-	UITableViewHeaderFooterView *head = (UITableViewHeaderFooterView *)[tableView dequeueReusableHeaderFooterViewWithIdentifier:@"Grid"];
-	if (head == nil)
-		head = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(tableView.frame.size.width, tableView.sectionHeaderHeight)];
-	return head;
 }
 
 // Customize the appearance of table view cells.
@@ -140,7 +142,7 @@
 		return nil;
 	PSProc *proc = [self.procs procAtIndex:indexPath.row];
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
-	GridTableCell *cell = (GridTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 //TODO: Replace tableView.frame.size.width with maximum screen dimension?
 	if (cell == nil)
 		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns size:CGSizeMake(tableView.frame.size.width, tableView.rowHeight)];

@@ -32,7 +32,8 @@
 				[NSByteCountFormatter stringFromByteCount:proc->taskInfo.resident_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a->taskInfo.resident_size - b->taskInfo.resident_size; }],
 		[PSColumn psColumnWithName:@"%" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 refresh:YES
-			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%.1f", (float)proc.pcpu/10]; }
+			data:^NSString*(PSProc *proc) { return !proc.pcpu ? @"-" :
+				[NSString stringWithFormat:@"%.1f", (float)proc.pcpu/10]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pcpu - b.pcpu; }],
 		[PSColumn psColumnWithName:@"Thr" descr:@"Thread Count" align:NSTextAlignmentRight width:40 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.threads]; }
@@ -66,7 +67,7 @@
 		self.getData = data;
 		self.sort = sort;
 		self.refresh = refresh;
-    }
+	}
 	return self;
 }
 
