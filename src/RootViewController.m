@@ -11,6 +11,7 @@
 @property (retain) NSTimer *timer;
 @property (retain) PSProcArray *procs;
 @property (retain) PSColumn *sorter;
+@property (retain) UILabel *status;
 @property (assign) BOOL sortdesc;
 @end
 
@@ -29,6 +30,9 @@
 	// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	[self.tableView reloadData];
+	self.status.text = [NSString stringWithFormat:@"\u2699 CPU Usage: 1%% | Physical Memory: 40%% | Processes: %u | Threads: 1000", self.procs.count];
+	// Uptime, CPU Freq, Cores, Cache L1/L2
+
 	// If there's a new process, scroll to it
 //TODO: make it configurable!!!
 	NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
@@ -52,6 +56,15 @@
 		target:self action:@selector(openSettings)];
 	self.navigationItem.rightBarButtonItem = anotherButton;
 	[anotherButton release];
+
+	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 100, 40)];	//anotherButton.frame.size.height
+	self.status.backgroundColor = [UIColor clearColor];
+//	self.status.text = [NSString stringWithFormat:@"Procs: %u", 0];
+	UIBarButtonItem *cpuLoad = [[UIBarButtonItem alloc] initWithCustomView:self.status];
+//	[self.status release];
+	self.navigationItem.leftBarButtonItem = cpuLoad;	//leftBarButtonItems NSArray
+	[cpuLoad release];
+
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	// Default column order
