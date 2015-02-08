@@ -1,5 +1,6 @@
 #import "RootViewController.h"
-#import "SetupViewController.h"
+#import "Setup.h"
+#import "SetupColumns.h"
 #import "GridCell.h"
 #import "Column.h"
 #import "Proc.h"
@@ -48,16 +49,26 @@
 	[setupViewController release];
 }
 
+- (void)openColSettings
+{
+	SetupColsViewController* setupColsViewController = [[SetupColsViewController alloc] initWithStyle:UITableViewStyleGrouped];
+	[self.navigationController pushViewController:setupColsViewController animated:YES];
+	[setupColsViewController release];
+}
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
 //	'GEAR' (\u2699)		'GEAR WITHOUT HUB' (\u26ED)
-	UIBarButtonItem *anotherButton = [[UIBarButtonItem alloc] initWithTitle:@"Columns" style:UIBarButtonItemStylePlain
+	UIBarButtonItem *setupButton = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStylePlain
 		target:self action:@selector(openSettings)];
-	self.navigationItem.rightBarButtonItem = anotherButton;
-	[anotherButton release];
+	UIBarButtonItem *setupColsButton = [[UIBarButtonItem alloc] initWithTitle:@"Columns" style:UIBarButtonItemStylePlain
+		target:self action:@selector(openColSettings)];
+	self.navigationItem.rightBarButtonItems = @[setupButton, setupColsButton];
+	[setupButton release];
+	[setupColsButton release];
 
-	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 100, 40)];	//anotherButton.frame.size.height
+	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 100, 40)];
 	self.status.backgroundColor = [UIColor clearColor];
 //	self.status.text = [NSString stringWithFormat:@"Procs: %u", 0];
 	UIBarButtonItem *cpuLoad = [[UIBarButtonItem alloc] initWithCustomView:self.status];

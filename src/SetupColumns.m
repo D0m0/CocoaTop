@@ -1,7 +1,7 @@
-#import "SetupViewController.h"
+#import "SetupColumns.h"
 #import "Column.h"
 
-@interface SetupViewController()
+@interface SetupColsViewController()
 {
 	NSMutableArray *ar[2];
 }
@@ -10,7 +10,7 @@
 
 @end
 
-@implementation SetupViewController
+@implementation SetupColsViewController
 
 - (void)viewDidLoad
 {
