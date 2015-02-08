@@ -6,22 +6,22 @@
 
 NSString *psProcessStateString(PSProc *proc)
 {
-	static const char states[] = PSPROC_STATES;
-	unichar st[16], *pst = st;
+	static const char states[] = "DZRUSITH?";
+	unichar st[8], *pst = st;
 
 	*pst++ = states[proc.state];
-	if (proc.exflags & PSPROC_EXFLAGS_NICE)			// 'v' p_nice > 0	U+02C5
-		*pst++ = L'\u25BE';
-	if (proc.exflags & PSPROC_EXFLAGS_NOTNICE)		// '^' p_nice < 0	U+02C4
-		*pst++ = L'\u25B4';
-	if (proc.exflags & PSPROC_EXFLAGS_TRACED)		// 't' P_TRACED (Debugged process being traced)
+	if (proc.nice < 0)
+		*pst++ = L'\u25B4';	// ^
+	else if (proc.nice > 0)
+		*pst++ = L'\u25BE';	// v
+	if (proc.flags & P_TRACED)
 		*pst++ = 't';
-	if (proc.exflags & PSPROC_EXFLAGS_WEXIT)		// 'z' P_WEXIT (Working on exiting)
+	if (proc.flags & P_WEXIT && proc.state != 1)
 		*pst++ = 'z';
-	if (proc.exflags & PSPROC_EXFLAGS_PPWAIT)		// 'w' P_PPWAIT (Parent waiting for chld exec/exit)
+	if (proc.flags & P_PPWAIT)
 		*pst++ = 'w';
-	if (proc.exflags & PSPROC_EXFLAGS_SYSPROC)		// 'L' P_SYSTEM | P_NOSWAP | P_PHYSIO (Sys proc: no sigs, stats or swap)
-		*pst++ = 'L';
+	if (proc.flags & (P_SYSTEM | P_NOSWAP | P_PHYSIO))
+		*pst++ = 'K';
 	return [NSString stringWithCharacters:st length:(pst - st)];
 }
 
@@ -88,7 +88,7 @@ NSString *psProcessTty(PSProc *proc)
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw - proc->events_prev.csw]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a->events.csw - a->events_prev.csw) - (b->events.csw - b->events_prev.csw); }],
 		[PSColumn psColumnWithName:@"Time" descr:@"Process Time" align:NSTextAlignmentRight width:75 refresh:YES
-			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%lld:%02lld.%02lld", proc.ptime / 6000, (proc.ptime / 100) % 60, proc.ptime % 100]; }
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u:%02u.%02u", proc.ptime / 6000, (proc.ptime / 100) % 60, proc.ptime % 100]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ptime - b.ptime; }],
 		[PSColumn psColumnWithName:@"TTY" descr:@"Terminal" align:NSTextAlignmentLeft width:65 refresh:NO
 			data:^NSString*(PSProc *proc) { return psProcessTty(proc); }

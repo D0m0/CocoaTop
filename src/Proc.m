@@ -51,6 +51,8 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	[self updateWithKinfoEx:ki];
 }
 
+#define PSPROC_STATE_MAX 8
+
 // Thread states are sorted by priority, top priority becomes a "task state"
 int mach_state_order(int s, long sleep_time)
 {      
@@ -60,7 +62,7 @@ int mach_state_order(int s, long sleep_time)
 	case TH_STATE_WAITING:			return sleep_time <= 20 ? 4 : 5;
 	case TH_STATE_STOPPED:			return 6;
 	case TH_STATE_HALTED:			return 7;  
-	default:						return 8; 
+	default:						return PSPROC_STATE_MAX; 
 	}
 }
 
@@ -76,20 +78,6 @@ int mach_state_order(int s, long sleep_time)
 	self.uid = ki->kp_eproc.e_ucred.cr_uid;
 	self.gid = ki->kp_eproc.e_pcred.p_rgid;
 	memcpy(&events_prev, &events, sizeof(events_prev));
-	// Extended process status
-	self.exflags = 0;
-	if (self.nice < 0)
-		self.exflags |= PSPROC_EXFLAGS_NOTNICE;
-	else if (self.nice > 0)
-		self.exflags |= PSPROC_EXFLAGS_NICE;
-	if (self.flags & P_TRACED)
-		self.exflags |= PSPROC_EXFLAGS_TRACED;
-	if (self.flags & P_WEXIT && ki->kp_proc.p_stat != SZOMB)
-		self.exflags |= PSPROC_EXFLAGS_WEXIT;
-	if (self.flags & P_PPWAIT)
-		self.exflags |= PSPROC_EXFLAGS_PPWAIT;
-	if (self.flags & (P_SYSTEM | P_NOSWAP | P_PHYSIO))
-		self.exflags |= PSPROC_EXFLAGS_SYSPROC;
 	// Task info
 	self.threads = 0;
 	self.prio = 0;
