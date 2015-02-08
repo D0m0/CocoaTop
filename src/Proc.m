@@ -116,17 +116,26 @@ int mach_state_order(int s, long sleep_time)
 		// Task times
 		struct task_thread_times_info times;
 		info_count = TASK_THREAD_TIMES_INFO_COUNT;
-		if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS) {
+		if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS)
 			memset(&times, 0, sizeof(times));
-		}
 		time_value_add(&total_time, &times.user_time);
 		time_value_add(&total_time, &times.system_time);
 		// Task events
 		info_count = TASK_EVENTS_INFO_COUNT;
-		if (task_info(task, TASK_EVENTS_INFO, (task_info_t)&events, &info_count) != KERN_SUCCESS) {
+		if (task_info(task, TASK_EVENTS_INFO, (task_info_t)&events, &info_count) != KERN_SUCCESS)
 			memset(&events, 0, sizeof(events));
-		} else if (!events_prev.csw)
+		else if (!events_prev.csw)	// Fill in events_prev on first update
 			memcpy(&events_prev, &events, sizeof(events_prev));
+		// Task ports
+		mach_msg_type_number_t ncnt, tcnt;
+		mach_port_name_array_t names;
+		mach_port_type_array_t types;
+		if (mach_port_names(task, &names, &ncnt, &types, &tcnt) == KERN_SUCCESS) {
+			vm_deallocate(mach_task_self(), (vm_address_t)names, ncnt * sizeof(*names));
+			vm_deallocate(mach_task_self(), (vm_address_t)types, tcnt * sizeof(*types));
+			self.ports = ncnt;
+		} else
+			self.ports = 0;
 		// Enumerate all threads to acquire detailed info
 		unsigned int				thread_count;
 		thread_port_array_t			thread_list;

@@ -30,6 +30,7 @@ typedef enum {
 @property (assign) int state;
 @property (assign) int pcpu;
 @property (assign) int threads;
+@property (assign) int ports;
 @property (retain) NSString *name;
 @property (retain) NSArray *args;
 @property (retain) UIImage *icon;
