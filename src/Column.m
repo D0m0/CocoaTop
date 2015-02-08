@@ -99,7 +99,7 @@ NSString *psProcessTty(PSProc *proc)
 		[PSColumn psColumnWithName:@"Group" descr:@"Groud Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.gid - b.gid; }]
-		// TIME Ports MRegions RPrivate RShared
+		// Ports MRegions RPrivate RShared
 		] retain];
 	});
 	return allColumns;

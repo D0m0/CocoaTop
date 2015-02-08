@@ -288,11 +288,12 @@ int mach_state_order(int s, long sleep_time)
 		}
 	}
 	free(kp);
-	// Sort by pid
-	[self.procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) {
-		return a.pid - b.pid;
-	}];
 	return err;
+}
+
+- (void)sortWithComparator:(NSComparator)comp
+{
+	[self.procs sortUsingComparator:comp];
 }
 
 - (void)setAllDisplayed:(display_t)display

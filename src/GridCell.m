@@ -114,14 +114,16 @@
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	for (int i = 0; i < columns.count /*&& totalCol < size.width*/; i++) {
 		PSColumn *col = [columns objectAtIndex:i];
-		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, col.width - 4, size.height)];
 		[self.labels addObject:label];
 		[label release];
-		label.textAlignment = col.align;
+		label.textAlignment = NSTextAlignmentCenter;//col.align;
 		label.font = [UIFont boldSystemFontOfSize:16.0];
+		label.adjustsFontSizeToFitWidth = YES;
 		label.text = col.name;
 		label.textColor = [UIColor blackColor];
 		label.backgroundColor = [UIColor clearColor];
+		label.tag = i+1;
 		[self.contentView addSubview:label];
 		totalCol += col.width;
 	}

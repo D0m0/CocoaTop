@@ -10,6 +10,8 @@
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
 @property (retain) PSProcArray *procs;
+@property (retain) PSColumn *sorter;
+@property (assign) BOOL sortdesc;
 @end
 
 @implementation RootViewController
@@ -20,6 +22,10 @@
 - (void)refreshProcs
 {
 	[self.procs refresh];
+	if (self.sortdesc) {
+		[self.procs sortWithComparator:^NSComparisonResult(PSProc *a, PSProc *b) { return self.sorter.sort(b, a); }];
+	} else
+		[self.procs sortWithComparator:self.sorter.sort];
 	// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	[self.tableView reloadData];
@@ -47,8 +53,35 @@
 	self.navigationItem.rightBarButtonItem = anotherButton;
 	[anotherButton release];
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
+	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
+}
+
+- (void)sortHeader:(UIGestureRecognizer *)gestureRecognizer
+{
+	CGPoint loc = [gestureRecognizer locationInView:self.header];
+	for (int i = 0; i < self.columns.count; i++) {
+		PSColumn *col = [self.columns objectAtIndex:i];
+		if (loc.x < col.width) {
+			NSUInteger idx = [self.columns indexOfObject:self.sorter];
+			if (idx == NSNotFound) idx = 0;
+			UILabel *label = (UILabel *)[self.header viewWithTag:idx+1];
+			if (self.sorter != col) {
+				label.textColor = [UIColor blackColor];
+				label.text = self.sorter.name;
+				self.sorter = col;
+				self.sortdesc = NO;
+			} else	// Sort descending
+				self.sortdesc = !self.sortdesc;
+			label = (UILabel *)[self.header viewWithTag:i+1];
+			label.textColor = [UIColor whiteColor];
+			label.text = [col.name stringByAppendingString:(self.sortdesc ? @"\u25BC" : @"\u25B2")];
+			[self refreshProcs];
+			break;
+		}
+		loc.x -= col.width;
+	}
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -56,8 +89,11 @@
 	[super viewWillAppear:animated];
 
 	self.columns = [PSColumn psGetShownColumns];
+	self.sorter = [self.columns objectAtIndex:1];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.frame.size.width, self.tableView.sectionHeaderHeight)];
+	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self.procs refresh];
+	[self.procs sortWithComparator:self.sorter.sort];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
 	self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
 		target:self selector:@selector(refreshProcs) userInfo:nil repeats:YES];

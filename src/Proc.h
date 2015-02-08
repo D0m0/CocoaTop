@@ -61,6 +61,7 @@ typedef enum {
 @property (assign) CGFloat iconSize;
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size;
 - (int)refresh;
+- (void)sortWithComparator:(NSComparator)comp;
 - (void)setAllDisplayed:(display_t)display;
 - (NSUInteger)indexOfDisplayed:(display_t)display;
 - (NSUInteger)count;
