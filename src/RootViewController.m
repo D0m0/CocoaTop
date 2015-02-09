@@ -35,7 +35,6 @@
 	// Uptime, CPU Freq, Cores, Cache L1/L2
 
 	// If there's a new process, scroll to it
-//TODO: make it configurable!!!
 	NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
 	if (idx != NSNotFound)
 		[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
