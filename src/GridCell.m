@@ -7,7 +7,6 @@
 - (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size
 {
 	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
-
 	self.textLabel.text = proc.name;
 	NSString *full = [[[proc.args objectAtIndex:0] copy] autorelease];
 	for (int i = 1; i < proc.args.count; i++)
@@ -83,14 +82,20 @@
 - (void)layoutSubviews
 {
 	[super layoutSubviews];
-	CGRect frame = self.textLabel.frame;
-	frame.origin.x += 5;
-	frame.size.width = firstCol - frame.origin.x;
-	self.textLabel.frame = frame;
+	CGRect frame;
+	frame = self.contentView.frame;
+		frame.origin.x = 5;
+		self.contentView.frame = frame;
+	frame = self.textLabel.frame;
+		frame.origin.x = self.imageView.frame.size.width;
+		if (frame.origin.x) frame.origin.x += 5;
+		frame.size.width = firstCol - 5;
+		self.textLabel.frame = frame;
 	frame = self.detailTextLabel.frame;
-	frame.origin.x += 5;
-	frame.size.width = firstCol - frame.origin.x;
-	self.detailTextLabel.frame = frame;
+		frame.origin.x = self.imageView.frame.size.width;
+		if (frame.origin.x) frame.origin.x += 5;
+		frame.size.width = firstCol - 5;
+		self.detailTextLabel.frame = frame;
 }
 
 - (void)dealloc

@@ -70,7 +70,6 @@
 
 	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 100, 40)];
 	self.status.backgroundColor = [UIColor clearColor];
-//	self.status.text = [NSString stringWithFormat:@"Procs: %u", 0];
 	UIBarButtonItem *cpuLoad = [[UIBarButtonItem alloc] initWithCustomView:self.status];
 //	[self.status release];
 	self.navigationItem.leftBarButtonItem = cpuLoad;	//leftBarButtonItems NSArray
