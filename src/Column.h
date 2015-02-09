@@ -21,8 +21,6 @@ typedef NSString *(^PSColumnData)(PSProc *proc);
 // Need to refresh
 @property (assign) BOOL refresh;
 
-- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
-	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
 	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;
 + (NSArray *)psGetAllColumns;

@@ -35,11 +35,8 @@ typedef enum {
 @property (retain) NSArray *args;
 @property (retain) UIImage *icon;
 @property (retain) NSDictionary *app;
-- (instancetype)initWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
 - (void)updateWithKinfo:(struct kinfo_proc *)ki;
-- (void)updateWithKinfoEx:(struct kinfo_proc *)ki;
-+ (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki;
 
 @end
 
