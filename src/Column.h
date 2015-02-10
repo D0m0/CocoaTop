@@ -26,6 +26,6 @@ typedef NSString *(^PSColumnData)(PSProc *proc);
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
 	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;
 + (NSArray *)psGetAllColumns;
-+ (NSMutableArray *)psGetShownColumns;
++ (NSMutableArray *)psGetShownColumnsWithWidth:(NSUInteger *)width;
 
 @end

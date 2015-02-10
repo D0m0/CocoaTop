@@ -15,13 +15,13 @@
 //	self.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 //	self.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 //	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
-	// Remember first column width
-	firstCol = MIN(((PSColumn *)columns[0]).width, size.width);
-	CGFloat totalCol = firstCol;
+	// Calculate first column width
+	firstColWidth = size.width - 5;
+	CGFloat totalCol = firstColWidth;
 	// Get application icon
 	if (proc.icon) {
 		[self.imageView initWithImage:proc.icon];
-		firstCol -= size.height; //proc.icon.size.width;
+		firstColWidth -= size.height; //proc.icon.size.width;
 	}
 	// Get other columns
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
@@ -85,12 +85,12 @@
 	frame = self.textLabel.frame;
 		frame.origin.x = self.imageView.frame.size.width;
 		if (frame.origin.x) frame.origin.x += 5;
-		frame.size.width = firstCol - 5;
+		frame.size.width = firstColWidth - 5;
 		self.textLabel.frame = frame;
 	frame = self.detailTextLabel.frame;
 		frame.origin.x = self.imageView.frame.size.width;
 		if (frame.origin.x) frame.origin.x += 5;
-		frame.size.width = firstCol - 5;
+		frame.size.width = firstColWidth - 5;
 		self.detailTextLabel.frame = frame;
 }
 
@@ -125,7 +125,7 @@
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = col.tag;
 		[self.contentView addSubview:label];
-		totalCol += col.width;
+		totalCol += col.tag == 1 ? size.width : col.width;
 	}
 	return self;
 }

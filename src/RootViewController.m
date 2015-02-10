@@ -7,6 +7,7 @@
 
 @interface RootViewController()
 {
+	NSUInteger firstColWidth;
 }
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
@@ -84,8 +85,9 @@
 {
 	CGPoint loc = [gestureRecognizer locationInView:self.header];
 	for (PSColumn *col in self.columns) {
-		if (loc.x > col.width) {
-			loc.x -= col.width;
+		NSUInteger width = col.tag == 1 ? firstColWidth : col.width;
+		if (loc.x > width) {
+			loc.x -= width;
 			continue;
 		}
 		if (self.sorter != col) {
@@ -108,10 +110,11 @@
 {
 	[super viewWillAppear:animated];
 
-	self.columns = [PSColumn psGetShownColumns];
+	firstColWidth = self.tableView.frame.size.width;
+	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
 // TODO: Initial sort column
 	self.sorter = self.columns[1];
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.frame.size.width, self.tableView.sectionHeaderHeight)];
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self.procs refresh];
 	[self.procs sortWithComparator:self.sorter.sort];
@@ -197,7 +200,7 @@
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 //TODO: Replace tableView.frame.size.width with maximum screen dimension?
 	if (cell == nil)
-		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns size:CGSizeMake(tableView.frame.size.width, tableView.rowHeight)];
+		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns size:CGSizeMake(firstColWidth, tableView.rowHeight)];
 	else
 		[cell updateWithProc:proc columns:self.columns];
 	return cell;

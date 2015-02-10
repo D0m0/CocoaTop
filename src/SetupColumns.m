@@ -21,7 +21,8 @@
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	self.in = [PSColumn psGetShownColumns];
+	NSUInteger width = 100000000;
+	self.in = [PSColumn psGetShownColumnsWithWidth:&width];
 	self.out = [NSMutableArray array];
 	for (PSColumn* col in [PSColumn psGetAllColumns])
 		if (![self.in containsObject:col])

@@ -4,7 +4,7 @@
 
 @interface GridTableCell : UITableViewCell
 {
-	CGFloat firstCol;
+	CGFloat firstColWidth;
 }
 @property (retain) NSMutableArray *labels;
 @property (retain) NSMutableArray *dividers;
