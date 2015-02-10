@@ -17,10 +17,10 @@
 {
 	@try {
 		for (NSString *Key in @[@"CFBundleIcons~ipad", @"CFBundleIcons", @"CFBundleIconFiles", @"CFBundleIconFile"]) {
-			id Value = [app valueForKey:Key], Try = nil;
+			id Value = app[Key], Try = nil;
 			while ([Value isKindOfClass:[NSDictionary class]]) {
 				for (NSString *Key2 in @[@"CFBundlePrimaryIcon", @"CFBundleIconFiles", @"CFBundleIconFile"])
-					if ((Try = [Value valueForKey:Key2])) break;
+					if ((Try = Value[Key2])) break;
 				if (!Try) break;
 				Value = Try;
 			}

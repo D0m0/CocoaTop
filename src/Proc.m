@@ -25,16 +25,16 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 			self.app = [PSAppIcon getAppByPath:path];
 			memset(&events, 0, sizeof(events));
 			if (self.app) {
-				NSString *bundle = [self.app valueForKey:@"CFBundleIdentifier"];
+				NSString *bundle = self.app[@"CFBundleIdentifier"];
 				if (bundle) {
-					self.name = bundle;//[self.app valueForKey:@"CFBundleDisplayName"];
+					self.name = bundle;//self.app[@"CFBundleDisplayName"];
 					self.icon = [PSAppIcon getIconForApp:self.app bundle:bundle path:path size:size];
 				}
 			}
 			[self updateWithKinfoEx:ki];
-//	self.name = [app valueForKey:@"CFBundleIdentifier"];
-//	self.bundleName = [app valueForKey:@"CFBundleName"];
-//	self.displayName = [app valueForKey:@"CFBundleDisplayName"];
+//	self.name = self.app[@"CFBundleIdentifier"];
+//	self.bundleName = self.app[@"CFBundleName"];
+//	self.displayName = self.app[@"CFBundleDisplayName"];
 		}
 	}
 	return self;
