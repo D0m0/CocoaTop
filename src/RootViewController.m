@@ -8,6 +8,7 @@
 @interface RootViewController()
 {
 	NSUInteger firstColWidth;
+	NSInteger colState;
 }
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
@@ -57,6 +58,7 @@
 
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
+	colState = 0;
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
 }
@@ -110,12 +112,14 @@
 {
 	[super viewWillAppear:animated];
 
-	firstColWidth = self.tableView.frame.size.width;
+	firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
-// TODO: Initial sort column
-	self.sorter = self.columns[1];
+	// Column state has changed - recreate all table cells
+	colState++;
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+// TODO: Initial sort column
+	self.sorter = self.columns[1];
 	[self.procs refresh];
 	[self.procs sortWithComparator:self.sorter.sort];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
@@ -150,23 +154,25 @@
 	// Return YES for supported orientations.
 	return YES;//(interfaceOrientation == UIInterfaceOrientationPortrait);
 }
-
+*/
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
-	if ((fromInterfaceOrientation == UIInterfaceOrientationPortrait ||
-		fromInterfaceOrientation == UIInterfaceOrientationPortraitUpsideDown) &&
-		(self.interfaceOrientation == UIInterfaceOrientationPortrait ||
-		self.interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown))
+	if ((fromInterfaceOrientation == UIInterfaceOrientationPortrait || fromInterfaceOrientation == UIInterfaceOrientationPortraitUpsideDown) &&
+		(self.interfaceOrientation == UIInterfaceOrientationPortrait || self.interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown))
 		return;
-	if ((fromInterfaceOrientation == UIInterfaceOrientationLandscapeLeft ||
-		fromInterfaceOrientation == UIInterfaceOrientationLandscapeRight) &&
-		(self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft ||
-		self.interfaceOrientation == UIInterfaceOrientationLandscapeRight))
+	if ((fromInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || fromInterfaceOrientation == UIInterfaceOrientationLandscapeRight) &&
+		(self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft || self.interfaceOrientation == UIInterfaceOrientationLandscapeRight))
 		return;
 	// Size changed - need to redraw
-	[self.tableView setNeedsDisplay];
+	firstColWidth = self.tableView.bounds.size.width;
+	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
+	// Column state has changed - recreate all table cells
+	colState++;
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
+	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+//	[self.tableView setNeedsDisplay];
+	[self.timer fire];
 }
-*/
 
 #pragma mark -
 #pragma mark Table view data source
@@ -198,10 +204,14 @@
 	PSProc *proc = self.procs[indexPath.row];
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-//TODO: Replace tableView.frame.size.width with maximum screen dimension?
-	if (cell == nil)
+	if (cell && cell.colState != colState) {
+//		[cell release];
+		cell = nil;
+	}
+	if (cell == nil) {
 		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns size:CGSizeMake(firstColWidth, tableView.rowHeight)];
-	else
+		cell.colState = colState;
+	} else
 		[cell updateWithProc:proc columns:self.columns];
 	return cell;
 }
