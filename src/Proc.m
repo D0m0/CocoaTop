@@ -19,7 +19,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 			self.pid = ki->kp_proc.p_pid;
 			self.ppid = ki->kp_eproc.e_ppid;
 			self.args = [PSProc getArgsByKinfo:ki];
-			NSString *executable = [self.args objectAtIndex:0];
+			NSString *executable = self.args[0];
 			self.name = [executable lastPathComponent];
 			NSString *path = [executable stringByDeletingLastPathComponent];
 			self.app = [PSAppIcon getAppByPath:path];
@@ -311,9 +311,9 @@ int mach_state_order(int s, long sleep_time)
 	return self.procs.count;
 }
 
-- (PSProc *)procAtIndex:(NSUInteger)index
+- (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx
 {
-	return (PSProc *)self.procs[index];
+	return (PSProc *)self.procs[idx];
 }
 
 - (void)dealloc

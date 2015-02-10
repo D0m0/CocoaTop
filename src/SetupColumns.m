@@ -72,7 +72,7 @@
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
-	cell.textLabel.text = ((PSColumn *)[ar[indexPath.section] objectAtIndex:indexPath.row]).descr;
+	cell.textLabel.text = ((PSColumn *)ar[indexPath.section][indexPath.row]).descr;
 	return cell;
 }
 
@@ -99,7 +99,7 @@
 
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)src toIndexPath:(NSIndexPath *)dst
 {
-	id save = [ar[src.section] objectAtIndex:src.row];
+	id save = ar[src.section][src.row];
 	[ar[src.section] removeObjectAtIndex:src.row];
 	[ar[dst.section] insertObject:save atIndex:dst.row];
 }

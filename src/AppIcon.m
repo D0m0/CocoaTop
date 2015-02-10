@@ -25,7 +25,7 @@
 				Value = Try;
 			}
 			while ([Value isKindOfClass:[NSArray class]] && [Value count])
-				Value = [Value objectAtIndex:0];
+				Value = Value[0];
 			if ([Value isKindOfClass:[NSString class]])
 				return Value;
 		}

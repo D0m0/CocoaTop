@@ -21,26 +21,6 @@
 #pragma mark -
 #pragma mark View lifecycle
 
-- (void)refreshProcs
-{
-	[self.procs refresh];
-	if (self.sortdesc) {
-		[self.procs sortWithComparator:^NSComparisonResult(PSProc *a, PSProc *b) { return self.sorter.sort(b, a); }];
-	} else
-		[self.procs sortWithComparator:self.sorter.sort];
-	// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
-	// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
-	[self.tableView reloadData];
-	self.status.text = [NSString stringWithFormat:@"\u2699 CPU Usage: 1%% | Physical Memory: 40%% | Processes: %u | Threads: 1000", self.procs.count];
-	// Uptime, CPU Freq, Cores, Cache L1/L2
-
-	// If there's a new process, scroll to it
-	NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
-	if (idx != NSNotFound)
-		[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
-			atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-}
-
 - (void)openSettings
 {
 	SetupViewController* setupViewController = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped];
@@ -80,29 +60,47 @@
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
 }
 
+- (void)refreshProcs
+{
+	[self.procs refresh];
+	if (self.sortdesc) {
+		[self.procs sortWithComparator:^NSComparisonResult(PSProc *a, PSProc *b) { return self.sorter.sort(b, a); }];
+	} else
+		[self.procs sortWithComparator:self.sorter.sort];
+	// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
+	// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
+	[self.tableView reloadData];
+	self.status.text = [NSString stringWithFormat:@"\u2699 CPU Usage: 1%% | Physical Memory: 40%% | Processes: %u | Threads: 1000", self.procs.count];
+	// Uptime, CPU Freq, Cores, Cache L1/L2
+
+	// If there's a new process, scroll to it
+	NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
+	if (idx != NSNotFound)
+		[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
+			atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+}
+
 - (void)sortHeader:(UIGestureRecognizer *)gestureRecognizer
 {
 	CGPoint loc = [gestureRecognizer locationInView:self.header];
-	for (int i = 0; i < self.columns.count; i++) {
-		PSColumn *col = [self.columns objectAtIndex:i];
-		if (loc.x < col.width) {
-			NSUInteger idx = [self.columns indexOfObject:self.sorter];
-			if (idx == NSNotFound) idx = 0;
-			UILabel *label = (UILabel *)[self.header viewWithTag:idx+1];
-			if (self.sorter != col) {
-				label.textColor = [UIColor blackColor];
-				label.text = self.sorter.name;
-				self.sorter = col;
-				self.sortdesc = NO;
-			} else	// Sort descending
-				self.sortdesc = !self.sortdesc;
-			label = (UILabel *)[self.header viewWithTag:i+1];
-			label.textColor = [UIColor whiteColor];
-			label.text = [col.name stringByAppendingString:(self.sortdesc ? @"\u25BC" : @"\u25B2")];
-			[self refreshProcs];
-			break;
+	for (PSColumn *col in self.columns) {
+		if (loc.x > col.width) {
+			loc.x -= col.width;
+			continue;
 		}
-		loc.x -= col.width;
+		if (self.sorter != col) {
+			UILabel *label = (UILabel *)[self.header viewWithTag:self.sorter.tag];
+			label.textColor = [UIColor blackColor];
+			label.text = self.sorter.name;
+			self.sorter = col;
+			self.sortdesc = NO;
+		} else	// Sort descending
+			self.sortdesc = !self.sortdesc;
+		UILabel *label = (UILabel *)[self.header viewWithTag:col.tag];
+		label.textColor = [UIColor whiteColor];
+		label.text = [col.name stringByAppendingString:(self.sortdesc ? @"\u25BC" : @"\u25B2")];
+		[self.timer fire];
+		break;
 	}
 }
 
@@ -111,7 +109,8 @@
 	[super viewWillAppear:animated];
 
 	self.columns = [PSColumn psGetShownColumns];
-	self.sorter = [self.columns objectAtIndex:1];
+// TODO: Initial sort column
+	self.sorter = self.columns[1];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.frame.size.width, self.tableView.sectionHeaderHeight)];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self.procs refresh];
@@ -193,7 +192,7 @@
 {
 	if (indexPath.row >= self.procs.count)
 		return nil;
-	PSProc *proc = [self.procs procAtIndex:indexPath.row];
+	PSProc *proc = self.procs[indexPath.row];
 	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 //TODO: Replace tableView.frame.size.width with maximum screen dimension?
@@ -206,7 +205,7 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	display_t display = [self.procs procAtIndex:indexPath.row].display;
+	display_t display = self.procs[indexPath.row].display;
 	if (display == ProcDisplayTerminated)
 		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
 	else if (display == ProcDisplayStarted)

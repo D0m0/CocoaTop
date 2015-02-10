@@ -112,11 +112,13 @@ NSString *psProcessTty(PSProc *proc)
 	NSArray *columnOrder = [[NSUserDefaults standardUserDefaults] arrayForKey:@"Columns"];
 	NSArray *cols = [PSColumn psGetAllColumns];
 	NSMutableArray *shownCols = [NSMutableArray array];
-	NSUInteger ccc = cols.count;
-
+	int tag = 1;
 	for (NSNumber* order in columnOrder)
-		if (order.unsignedIntegerValue < ccc)
-			[shownCols addObject:cols[order.intValue]];
+		if (order.unsignedIntegerValue < cols.count) {
+			PSColumn *col = cols[order.intValue];
+			col.tag = tag++;
+			[shownCols addObject:col];
+		}
 	return shownCols;
 }
 
@@ -142,14 +144,14 @@ NSString *psProcessTty(PSProc *proc)
 /*
 if (rawcpu) return p->p_pctcpu;
 
-#define FSHIFT  11              // bits to right of fixed binary point
+#define FSHIFT  11				// bits to right of fixed binary point
 #define FSCALE  (1<<FSHIFT)
 // decay 95% of `p_pctcpu' in 60 seconds; see CCPU_SHIFT before changing
-fixpt_t ccpu = 0.95122942450071400909 * FSCALE;         // exp(-1/20)
+fixpt_t ccpu = 0.95122942450071400909 * FSCALE;			// exp(-1/20)
 return p->p_pctcpu / (1.0 - exp(p->p_swtime * log(fxtofl(ccpu))));
 
 #define TH_USAGE_SCALE 1000
-(void)printf("%*.1f", v->width, ((double)cp) * 100.0 / ((double)TH_USAGE_SCALE)); 
+(void)printf("%*.1f", v->width, ((double)cp) * 100.0 / ((double)TH_USAGE_SCALE));
 */
 
 - (void)dealloc

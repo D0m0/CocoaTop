@@ -20,6 +20,8 @@ typedef NSString *(^PSColumnData)(PSProc *proc);
 @property (assign) NSComparator sort;
 // Need to refresh
 @property (assign) BOOL refresh;
+// Label tag
+@property (assign) int tag;
 
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
 	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;

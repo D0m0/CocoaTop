@@ -8,15 +8,15 @@
 {
 	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
 	self.textLabel.text = proc.name;
-	NSString *full = [[[proc.args objectAtIndex:0] copy] autorelease];
+	NSString *full = [[proc.args[0] copy] autorelease];
 	for (int i = 1; i < proc.args.count; i++)
-		full = [full stringByAppendingFormat:@" %@", [proc.args objectAtIndex:i]];
+		full = [full stringByAppendingFormat:@" %@", proc.args[i]];
 	self.detailTextLabel.text = full;
 //	self.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 //	self.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 //	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 	// Remember first column width
-	firstCol = MIN(((PSColumn *)[columns objectAtIndex:0]).width, size.width);
+	firstCol = MIN(((PSColumn *)columns[0]).width, size.width);
 	CGFloat totalCol = firstCol;
 	// Get application icon
 	if (proc.icon) {
@@ -26,14 +26,13 @@
 	// Get other columns
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
-	for (int i = 1; i < columns.count /*&& totalCol < size.width*/; i++) {
+	for (PSColumn *col in columns) if (col.tag > 1) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
 		[self.dividers addObject:divider];
 		[divider release];
 		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 		[self.contentView addSubview:divider];
 
-		PSColumn *col = [columns objectAtIndex:i];
 		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
 		[self.labels addObject:label];
 		[label release];
@@ -41,7 +40,7 @@
 		label.font = [UIFont systemFontOfSize:12.0];
 		label.text = col.getData(proc);
 		label.backgroundColor = [UIColor clearColor];
-		label.tag = i;
+		label.tag = col.tag;
 		[self.contentView addSubview:label];
 		totalCol += col.width;
 	}
@@ -55,12 +54,9 @@
 
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns
 {
-	for (int i = 1; i < columns.count; i++) {
-		PSColumn *col = [columns objectAtIndex:i];
-		UILabel *label = (UILabel *)[self viewWithTag:i];
-		if (col.refresh)
-			label.text = col.getData(proc);
-	}
+	for (PSColumn *col in columns)
+		if (col.tag > 1 && col.refresh)
+			((UILabel *)[self viewWithTag:col.tag]).text = col.getData(proc);
 }
 
 //- (void)drawRect:(CGRect)rect
@@ -72,7 +68,7 @@
 //	CGContextSetLineWidth(ctx, 1.0);
 //
 //	for (int i = 0; i < [columns count]; i++) {
-//		CGFloat f = [((NSNumber*) [columns objectAtIndex:i]) floatValue];
+//		CGFloat f = [((NSNumber*)columns[i]) floatValue];
 //		CGContextMoveToPoint(ctx, f, 0);
 //		CGContextAddLineToPoint(ctx, f, self.bounds.size.height);
 //	}
@@ -117,8 +113,7 @@
 	CGFloat totalCol = 0;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
-	for (int i = 0; i < columns.count /*&& totalCol < size.width*/; i++) {
-		PSColumn *col = [columns objectAtIndex:i];
+	for (PSColumn *col in columns) {
 		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, col.width - 4, size.height)];
 		[self.labels addObject:label];
 		[label release];
@@ -128,7 +123,7 @@
 		label.text = col.name;
 		label.textColor = [UIColor blackColor];
 		label.backgroundColor = [UIColor clearColor];
-		label.tag = i+1;
+		label.tag = col.tag;
 		[self.contentView addSubview:label];
 		totalCol += col.width;
 	}

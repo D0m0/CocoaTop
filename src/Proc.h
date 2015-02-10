@@ -51,6 +51,6 @@ typedef enum {
 - (void)setAllDisplayed:(display_t)display;
 - (NSUInteger)indexOfDisplayed:(display_t)display;
 - (NSUInteger)count;
-- (PSProc *)procAtIndex:(NSUInteger)index;
+- (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
 
 @end

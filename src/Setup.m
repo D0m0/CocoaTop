@@ -49,7 +49,12 @@
 	// Refresh period: 0.5 1 2 5 manual
 	// Auto jump to new/terminated processes
 	// Special process colors: Root / User / 32 bit / Zombie & Stuck
+	// Use Apple API to get App icons: On/Off
 	// First column: Bundle name / Executable name / With args / Full path with args
+
+	// CPU Graph
+	// Manual Refresh button with arrows
+	// Filter procs by string
 }
 
 @end
