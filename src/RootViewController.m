@@ -167,11 +167,8 @@
 	// Size changed - need to redraw
 	firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
-	// Column state has changed - recreate all table cells
-//	colState++;
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
-//	[self.tableView setNeedsDisplay];
 	[self.timer fire];
 }
 

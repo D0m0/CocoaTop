@@ -14,23 +14,33 @@
 	CGFloat totalCol = firstColWidth;
 	// Get other columns
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
-	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
+	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
+	extendArgsLabel = YES;//firstColWidth < ((PSColumn *)columns[0]).width;
+	if (extendArgsLabel)
+		size.height /= 2;
 	for (PSColumn *col in columns) if (col.tag > 1) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
 		[self.dividers addObject:divider];
-		[divider release];
 		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 		[self.contentView addSubview:divider];
+		[divider release];
 
 		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
 		[self.labels addObject:label];
-		[label release];
 		label.textAlignment = col.align;
 		label.font = [UIFont systemFontOfSize:12.0];
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = col.tag;
 		[self.contentView addSubview:label];
+		[label release];
 		totalCol += col.width;
+	}
+	if (extendArgsLabel) {
+		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(firstColWidth, size.height, totalCol - firstColWidth, 1)];
+		[self.dividers addObject:divider];
+		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
+		[self.contentView addSubview:divider];
+		[divider release];
 	}
 	return self;
 }
@@ -49,10 +59,8 @@
 	self.detailTextLabel.text = full;
 //	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 	// Get application icon
-	if (proc.icon) {
+	if (proc.icon)
 		[self.imageView initWithImage:proc.icon];
-		imageWidth = self.frame.size.height;
-	}
 	// Fill data
 	for (PSColumn *col in columns)
 		if (col.tag > 1)
@@ -63,18 +71,21 @@
 {
 	[super layoutSubviews];
 	CGRect frame;
+	NSInteger imageWidth = self.imageView.frame.size.width;
 	frame = self.contentView.frame;
 		frame.origin.x = 5;
+		frame.size.width -= 10;
 		self.contentView.frame = frame;
 	frame = self.textLabel.frame;
-		frame.origin.x = self.imageView.frame.size.width;
+		frame.origin.x = imageWidth;
 		if (frame.origin.x) frame.origin.x += 5;
 		frame.size.width = firstColWidth - imageWidth - 5;
 		self.textLabel.frame = frame;
 	frame = self.detailTextLabel.frame;
-		frame.origin.x = self.imageView.frame.size.width;
+		frame.origin.x = imageWidth;
 		if (frame.origin.x) frame.origin.x += 5;
-		frame.size.width = firstColWidth - imageWidth - 5;
+		if (!extendArgsLabel) frame.size.width = firstColWidth - imageWidth - 5;
+			else frame.size.width = self.contentView.frame.size.width - imageWidth;
 		self.detailTextLabel.frame = frame;
 }
 
@@ -98,7 +109,7 @@
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	for (PSColumn *col in columns) {
-		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, col.width - 4, size.height)];
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, (col.tag > 1 ? col.width : size.width) - 4, size.height)];
 		[self.labels addObject:label];
 		[label release];
 		label.textAlignment = NSTextAlignmentCenter;//col.align;
