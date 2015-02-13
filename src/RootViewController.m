@@ -61,27 +61,41 @@
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	colState = 0;
 	// Default column order
-	[[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Columns" : @[@0, @1, @2, @3, @6, @7, @8]}];
+	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
+		@"Columns" : @[@0, @1, @2, @3, @6, @7, @8],
+		@"UpdateInterval" : @1.0f,
+		@"FullWidthCommandLine" : @NO,
+		@"AutoJumpNewProcess" : @NO,
+		@"UseAppleIconApi" : @NO,
+		@"FirstColumnStyle" : @1,
+		@"CpuGraph" : @NO
+	}];
 }
 
-- (void)refreshProcs
+- (void)refreshProcsSmall
 {
 	[self.procs refresh];
 	if (self.sortdesc) {
 		[self.procs sortWithComparator:^NSComparisonResult(PSProc *a, PSProc *b) { return self.sorter.sort(b, a); }];
 	} else
 		[self.procs sortWithComparator:self.sorter.sort];
-	// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
-	// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	[self.tableView reloadData];
 	self.status.text = [NSString stringWithFormat:@"\u2699 CPU Usage: 1%% | Physical Memory: 40%% | Processes: %u | Threads: 1000", self.procs.count];
 	// Uptime, CPU Freq, Cores, Cache L1/L2
+}
 
+- (void)refreshProcs
+{
+	[self refreshProcsSmall];
 	// If there's a new process, scroll to it
-	NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
-	if (idx != NSNotFound)
-		[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
-			atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
+		NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
+		if (idx != NSNotFound)
+			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
+				atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+		// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
+		// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
+	}
 }
 
 - (void)sortHeader:(UIGestureRecognizer *)gestureRecognizer
@@ -121,10 +135,9 @@
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 // TODO: Initial sort column
 	self.sorter = self.columns[1];
-	[self.procs refresh];
-	[self.procs sortWithComparator:self.sorter.sort];
+	[self refreshProcsSmall];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
-	self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0f 
+	self.timer = [NSTimer scheduledTimerWithTimeInterval:[[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"]
 		target:self selector:@selector(refreshProcs) userInfo:nil repeats:YES];
 }
 

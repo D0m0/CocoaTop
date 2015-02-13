@@ -15,7 +15,7 @@
 	// Get other columns
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
-	extendArgsLabel = YES;//firstColWidth < ((PSColumn *)columns[0]).width;
+	extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
 	if (extendArgsLabel)
 		size.height /= 2;
 	for (PSColumn *col in columns) if (col.tag > 1) {
