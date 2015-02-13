@@ -4,12 +4,11 @@
 
 @interface GridTableCell : UITableViewCell
 {
-	CGFloat firstColWidth;
+	CGFloat firstColWidth, imageWidth;
 }
 @property (retain) NSMutableArray *labels;
 @property (retain) NSMutableArray *dividers;
-@property (assign) NSInteger colState;
-+ (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size;
++ (instancetype)cellWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size;
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns;
 
 @end

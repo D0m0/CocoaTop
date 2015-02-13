@@ -4,6 +4,5 @@
 @interface RootViewController : UITableViewController
 {
 }
-@property (retain) GridHeaderView *header;
 
 @end

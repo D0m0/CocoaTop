@@ -10,6 +10,7 @@
 	NSUInteger firstColWidth;
 	NSInteger colState;
 }
+@property (retain) GridHeaderView *header;
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
 @property (retain) PSProcArray *procs;
@@ -167,7 +168,7 @@
 	firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
 	// Column state has changed - recreate all table cells
-	colState++;
+//	colState++;
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 //	[self.tableView setNeedsDisplay];
@@ -202,17 +203,11 @@
 	if (indexPath.row >= self.procs.count)
 		return nil;
 	PSProc *proc = self.procs[indexPath.row];
-	NSString *CellIdentifier = [NSString stringWithFormat:@"%u", proc.pid];
+	NSString *CellIdentifier = [NSString stringWithFormat:@"%u-%u-%u", firstColWidth, colState, proc.icon ? 1 : 0];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-	if (cell && cell.colState != colState) {
-//		[cell release];
-		cell = nil;
-	}
-	if (cell == nil) {
-		cell = [GridTableCell cellWithId:CellIdentifier proc:proc columns:self.columns size:CGSizeMake(firstColWidth, tableView.rowHeight)];
-		cell.colState = colState;
-	} else
-		[cell updateWithProc:proc columns:self.columns];
+	if (cell == nil)
+		cell = [GridTableCell cellWithId:CellIdentifier columns:self.columns size:CGSizeMake(firstColWidth, tableView.rowHeight)];
+	[cell updateWithProc:proc columns:self.columns];
 	return cell;
 }
 

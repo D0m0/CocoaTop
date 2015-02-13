@@ -4,25 +4,14 @@
 
 @implementation GridTableCell
 
-- (instancetype)initWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size
+- (instancetype)initWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size
 {
 	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
-	self.textLabel.text = proc.name;
-	NSString *full = [[proc.args[0] copy] autorelease];
-	for (int i = 1; i < proc.args.count; i++)
-		full = [full stringByAppendingFormat:@" %@", proc.args[i]];
-	self.detailTextLabel.text = full;
 //	self.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
 //	self.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
-//	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 	// Calculate first column width
 	firstColWidth = size.width - 5;
 	CGFloat totalCol = firstColWidth;
-	// Get application icon
-	if (proc.icon) {
-		[self.imageView initWithImage:proc.icon];
-		firstColWidth -= size.height; //proc.icon.size.width;
-	}
 	// Get other columns
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
@@ -38,7 +27,6 @@
 		[label release];
 		label.textAlignment = col.align;
 		label.font = [UIFont systemFontOfSize:12.0];
-		label.text = col.getData(proc);
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = col.tag;
 		[self.contentView addSubview:label];
@@ -47,33 +35,29 @@
 	return self;
 }
 
-+ (instancetype)cellWithId:(NSString *)reuseIdentifier proc:(PSProc *)proc columns:(NSArray *)columns size:(CGSize)size
++ (instancetype)cellWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size
 {
-	return [[[GridTableCell alloc] initWithId:reuseIdentifier proc:proc columns:columns size:size] autorelease];
+	return [[[GridTableCell alloc] initWithId:reuseIdentifier columns:columns size:size] autorelease];
 }
 
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns
 {
+	self.textLabel.text = proc.name;
+	NSString *full = [[proc.args[0] copy] autorelease];
+	for (int i = 1; i < proc.args.count; i++)
+		full = [full stringByAppendingFormat:@" %@", proc.args[i]];
+	self.detailTextLabel.text = full;
+//	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
+	// Get application icon
+	if (proc.icon) {
+		[self.imageView initWithImage:proc.icon];
+		imageWidth = self.frame.size.height;
+	}
+	// Fill data
 	for (PSColumn *col in columns)
-		if (col.tag > 1 && col.refresh)
+		if (col.tag > 1)
 			((UILabel *)[self viewWithTag:col.tag]).text = col.getData(proc);
 }
-
-//- (void)drawRect:(CGRect)rect
-//{
-//	[super drawRect:rect];
-//
-//	CGContextRef ctx = UIGraphicsGetCurrentContext();
-//	CGContextSetRGBStrokeColor(ctx, 1.0, .5, .5, 1.0);
-//	CGContextSetLineWidth(ctx, 1.0);
-//
-//	for (int i = 0; i < [columns count]; i++) {
-//		CGFloat f = [((NSNumber*)columns[i]) floatValue];
-//		CGContextMoveToPoint(ctx, f, 0);
-//		CGContextAddLineToPoint(ctx, f, self.bounds.size.height);
-//	}
-//	CGContextStrokePath(ctx);
-//}
 
 - (void)layoutSubviews
 {
@@ -85,12 +69,12 @@
 	frame = self.textLabel.frame;
 		frame.origin.x = self.imageView.frame.size.width;
 		if (frame.origin.x) frame.origin.x += 5;
-		frame.size.width = firstColWidth - 5;
+		frame.size.width = firstColWidth - imageWidth - 5;
 		self.textLabel.frame = frame;
 	frame = self.detailTextLabel.frame;
 		frame.origin.x = self.imageView.frame.size.width;
 		if (frame.origin.x) frame.origin.x += 5;
-		frame.size.width = firstColWidth - 5;
+		frame.size.width = firstColWidth - imageWidth - 5;
 		self.detailTextLabel.frame = frame;
 }
 
