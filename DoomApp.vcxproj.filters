@@ -30,10 +30,13 @@
     <ClInclude Include="src\AppIcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\SetupViewController.h">
+    <ClInclude Include="src\Column.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Column.h">
+    <ClInclude Include="src\Setup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SetupColumns.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -56,10 +59,13 @@
     <None Include="src\AppIcon.m">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="src\SetupViewController.m">
+    <None Include="src\Column.m">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="src\Column.m">
+    <None Include="src\Setup.m">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\SetupColumns.m">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
