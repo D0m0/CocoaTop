@@ -82,7 +82,8 @@
     <ClInclude Include="src\GridCell.h" />
     <ClInclude Include="src\Proc.h" />
     <ClInclude Include="src\RootViewController.h" />
-    <ClInclude Include="src\SetupViewController.h" />
+    <ClInclude Include="src\Setup.h" />
+    <ClInclude Include="src\SetupColumns.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\AppIcon.m" />
@@ -92,7 +93,8 @@
     <None Include="src\main.m" />
     <None Include="src\Proc.m" />
     <None Include="src\RootViewController.m" />
-    <None Include="src\SetupViewController.m" />
+    <None Include="src\Setup.m" />
+    <None Include="src\SetupColumns.m" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
