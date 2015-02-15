@@ -68,6 +68,10 @@
 	;
 	return cell;
 }
+// Mac OS X and iOS internals
+
+// Mach tasks vs. processes
+
 	//"DZRUSITH?";
 	//if (proc.nice < 0)
 	//	*pst++ = L'\u25B4';	// ^
