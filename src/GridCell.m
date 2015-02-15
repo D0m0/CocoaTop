@@ -11,7 +11,7 @@
 //	self.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
 	// Calculate first column width
 	firstColWidth = size.width - 5;
-	CGFloat totalCol = firstColWidth;
+	NSUInteger totalCol = firstColWidth;
 	// Get other columns
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
@@ -105,7 +105,7 @@
 {
 	self = [super initWithReuseIdentifier:@"Header"];
 	// Get column widths
-	CGFloat totalCol = 0;
+	NSUInteger totalCol = 0;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	for (PSColumn *col in columns) {
@@ -128,6 +128,20 @@
 + (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size
 {
 	return [[[GridHeaderView alloc] initWithColumns:columns size:size] autorelease];
+}
+
+- (void)sortColumnOld:(PSColumn *)oldCol New:(PSColumn *)newCol desc:(BOOL)desc
+{
+	UILabel *label;
+	if (oldCol && oldCol != newCol)
+	if ((label = (UILabel *)[self viewWithTag:oldCol.tag])) {
+		label.textColor = [UIColor blackColor];
+		label.text = oldCol.name;
+	}
+	if ((label = (UILabel *)[self viewWithTag:newCol.tag])) {
+		label.textColor = [UIColor whiteColor];
+		label.text = [newCol.name stringByAppendingString:(desc ? @"\u25BC" : @"\u25B2")];
+	}
 }
 
 - (void)dealloc

@@ -113,9 +113,12 @@ NSString *psProcessTty(PSProc *proc)
 	NSArray *cols = [PSColumn psGetAllColumns];
 	NSMutableArray *shownCols = [NSMutableArray array];
 	int tag = 1;
+	// Sanity check
+	if (columnOrder.count == 0)
+		columnOrder = @[@0, @1, @2, @3, @6, @7, @8];
 	for (NSNumber* order in columnOrder)
 		if (order.unsignedIntegerValue < cols.count) {
-			PSColumn *col = cols[order.intValue];
+			PSColumn *col = cols[order.unsignedIntegerValue];
 			col.tag = tag++;
 			[shownCols addObject:col];
 			if (*width < col.width) break;

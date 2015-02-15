@@ -288,9 +288,12 @@ int mach_state_order(int s, long sleep_time)
 	return err;
 }
 
-- (void)sortWithComparator:(NSComparator)comp
+- (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc
 {
-	[self.procs sortUsingComparator:comp];
+	if (desc) {
+		[self.procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) { return comp(b, a); }];
+	} else
+		[self.procs sortUsingComparator:comp];
 }
 
 - (void)setAllDisplayed:(display_t)display

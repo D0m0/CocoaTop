@@ -5,7 +5,7 @@
 @interface GridTableCell : UITableViewCell
 {
 	BOOL extendArgsLabel;
-	CGFloat firstColWidth;
+	NSUInteger firstColWidth;
 }
 @property (retain) NSMutableArray *labels;
 @property (retain) NSMutableArray *dividers;
@@ -21,5 +21,6 @@
 @property (retain) NSMutableArray *labels;
 @property (retain) NSMutableArray *dividers;
 + (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size;
+- (void)sortColumnOld:(PSColumn *)oldCol New:(PSColumn *)newCol desc:(BOOL)desc;
 
 @end

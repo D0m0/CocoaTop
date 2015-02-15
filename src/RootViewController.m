@@ -50,7 +50,7 @@
 	[setupButton release];
 	[setupColsButton release];
 
-	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 100, 40)];
+	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 150, 40)];
 	self.status.backgroundColor = [UIColor clearColor];
 	UIBarButtonItem *cpuLoad = [[UIBarButtonItem alloc] initWithCustomView:self.status];
 //	[self.status release];
@@ -63,6 +63,8 @@
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @2, @3, @6, @7, @8],
+		@"SortColumn" : @1,
+		@"SortDescending" : @NO,
 		@"UpdateInterval" : @1.0f,
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,
@@ -75,10 +77,7 @@
 - (void)refreshProcsSmall
 {
 	[self.procs refresh];
-	if (self.sortdesc) {
-		[self.procs sortWithComparator:^NSComparisonResult(PSProc *a, PSProc *b) { return self.sorter.sort(b, a); }];
-	} else
-		[self.procs sortWithComparator:self.sorter.sort];
+	[self.procs sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
 	self.status.text = [NSString stringWithFormat:@"\u2699 CPU Usage: 1%% | Physical Memory: 40%% | Processes: %u | Threads: 1000", self.procs.count];
 	// Uptime, CPU Freq, Cores, Cache L1/L2
@@ -107,17 +106,11 @@
 			loc.x -= width;
 			continue;
 		}
-		if (self.sorter != col) {
-			UILabel *label = (UILabel *)[self.header viewWithTag:self.sorter.tag];
-			label.textColor = [UIColor blackColor];
-			label.text = self.sorter.name;
-			self.sorter = col;
-			self.sortdesc = NO;
-		} else	// Sort descending
-			self.sortdesc = !self.sortdesc;
-		UILabel *label = (UILabel *)[self.header viewWithTag:col.tag];
-		label.textColor = [UIColor whiteColor];
-		label.text = [col.name stringByAppendingString:(self.sortdesc ? @"\u25BC" : @"\u25B2")];
+		self.sortdesc = self.sorter == col ? !self.sortdesc : NO;
+		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
+		self.sorter = col;
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:@"SortColumn"];
+		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:@"SortDescending"];
 		[self.timer fire];
 		break;
 	}
@@ -131,10 +124,14 @@
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
 	// Column state has changed - recreate all table cells
 	colState++;
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
-	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 // TODO: Initial sort column
-	self.sorter = self.columns[1];
+	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"];
+	if (sortCol >= self.columns.count) sortCol = 0;
+	self.sorter = self.columns[sortCol];
+	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
+	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
+	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self refreshProcsSmall];
 	[self.procs setAllDisplayed:ProcDisplayNormal];
 	self.timer = [NSTimer scheduledTimerWithTimeInterval:[[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"]
