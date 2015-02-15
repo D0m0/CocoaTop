@@ -70,9 +70,9 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	// Reuse a single cell
-	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SetupCols"];
 	if (cell == nil)
-		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
+		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"SetupCols"];
 	cell.textLabel.text = ((PSColumn *)ar[indexPath.section][indexPath.row]).descr;
 	return cell;
 }

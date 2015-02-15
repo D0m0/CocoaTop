@@ -20,7 +20,7 @@ NSString *psProcessStateString(PSProc *proc)
 		*pst++ = 'z';
 	if (proc.flags & P_PPWAIT)
 		*pst++ = 'w';
-	if (proc.flags & (P_SYSTEM | P_NOSWAP | P_PHYSIO))
+	if (proc.flags & P_SYSTEM)
 		*pst++ = 'K';
 	return [NSString stringWithCharacters:st length:(pst - st)];
 }
@@ -144,7 +144,7 @@ NSString *psProcessTty(PSProc *proc)
 
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort
 {
-	return [[PSColumn alloc] initWithName:name descr:descr align:align width:width refresh:refresh data:data sort:sort];
+	return [[[PSColumn alloc] initWithName:name descr:descr align:align width:width refresh:refresh data:data sort:sort] autorelease];
 }
 
 /*

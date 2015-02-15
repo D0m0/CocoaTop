@@ -1,6 +1,8 @@
 #import "Proc.h"
 #import "AppIcon.h"
 #import <mach/mach_init.h>
+#import <mach/mach_host.h>
+#import <mach/host_info.h>
 #import <mach/task_info.h>
 #import <mach/thread_info.h>
 #import <mach/mach_interface.h>
@@ -31,7 +33,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 					self.icon = [PSAppIcon getIconForApp:self.app bundle:bundle path:path size:size];
 				}
 			}
-			[self updateWithKinfoEx:ki];
+			[self updateWithKinfo:ki];
 //	self.name = self.app[@"CFBundleIdentifier"];
 //	self.bundleName = self.app[@"CFBundleName"];
 //	self.displayName = self.app[@"CFBundleDisplayName"];
@@ -43,12 +45,6 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size
 {
 	return [[[PSProc alloc] initWithKinfo:ki iconSize:size] autorelease];
-}
-
-- (void)updateWithKinfo:(struct kinfo_proc *)ki
-{
-	self.display = ProcDisplayUser;
-	[self updateWithKinfoEx:ki];
 }
 
 #define PSPROC_STATE_MAX 8
@@ -66,7 +62,7 @@ int mach_state_order(int s, long sleep_time)
 	}
 }
 
-- (void)updateWithKinfoEx:(struct kinfo_proc *)ki
+- (void)updateWithKinfo:(struct kinfo_proc *)ki
 {
 	time_value_t total_time = {0};
 	task_port_t task;
@@ -253,6 +249,24 @@ int mach_state_order(int s, long sleep_time)
 	return [[[PSProcArray alloc] initProcArrayWithIconSize:size] autorelease];
 }
 
+- (void)refreshMemStats
+{
+	mach_port_t host_port = mach_host_self();
+	mach_msg_type_number_t host_size = HOST_VM_INFO64_COUNT;
+	vm_statistics64_data_t vm_stat;
+	vm_size_t pagesize;
+
+	host_page_size(host_port, &pagesize);
+	if (host_statistics64(host_port, HOST_VM_INFO64, (host_info_t)&vm_stat, &host_size) == KERN_SUCCESS) {
+		self.memUsed = (vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count) * pagesize;
+		self.memFree = vm_stat.free_count * pagesize;
+//		self.memTotal = self.memUsed + self.memFree;
+	}
+	self.memTotal = [NSProcessInfo processInfo].physicalMemory;
+//	[NSProcessInfo processInfo].processorCount
+//	NSTimeInterval systemUptime
+}
+
 - (int)refresh
 {
 	struct kinfo_proc *kp;
@@ -261,6 +275,8 @@ int mach_state_order(int s, long sleep_time)
 	int i, err;
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
 
+	self.totalCpu = 0;
+	self.threadCount = 0;
 	// Remove terminated processes
 	[self.procs filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
 		return obj.display != ProcDisplayTerminated;
@@ -278,13 +294,22 @@ int mach_state_order(int s, long sleep_time)
 			NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 				return ((PSProc *)obj).pid == kp[i].kp_proc.p_pid;
 			}];
-			if (idx == NSNotFound)
-				[self.procs addObject:[PSProc psProcWithKinfo:&kp[i] iconSize:self.iconSize]];
-			else
-				[self.procs[idx] updateWithKinfo:&kp[i]];
+			PSProc *proc;
+			if (idx == NSNotFound) {
+				proc = [PSProc psProcWithKinfo:&kp[i] iconSize:self.iconSize];
+				[self.procs addObject:proc];
+			} else {
+				proc = self.procs[idx];
+				[proc updateWithKinfo:&kp[i]];
+				proc.display = ProcDisplayUser;
+			}
+			if (proc.pid)
+				self.totalCpu += proc.pcpu;
+			self.threadCount += proc.threads;
 		}
 	}
 	free(kp);
+	[self refreshMemStats];
 	return err;
 }
 

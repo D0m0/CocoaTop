@@ -1,7 +1,23 @@
 #import "Setup.h"
-#import "Column.h"
+#import "About.h"
 
 @implementation SetupViewController
+
+- (void)openAbout
+{
+	AboutViewController* about = [[AboutViewController alloc] initWithStyle:UITableViewStyleGrouped];
+	[self.navigationController pushViewController:about animated:YES];
+	[about release];
+}
+
+- (void)viewDidLoad
+{
+	[super viewDidLoad];
+	UIBarButtonItem *aboutButton = [[UIBarButtonItem alloc] initWithTitle:@"The Story" style:UIBarButtonItemStylePlain
+		target:self action:@selector(openAbout)];
+	self.navigationItem.rightBarButtonItem = aboutButton;
+	[aboutButton release];
+}
 
 - (void)viewWillAppear:(BOOL)animated
 {
@@ -27,83 +43,66 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-	return @"Main";
+	return @"General";
 }
+
+struct optionsList_t {
+	NSString*	accessory;
+	UITableViewCellAccessoryType accType;
+	NSString*	optionKey;
+	NSString*	label;
+};
+
+struct optionsList_t optionsList[4] = {
+	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"UpdateInterval", @"Update interval (seconds)"},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"FullWidthCommandLine", @"Full width command line"},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"AutoJumpNewProcess", @"Auto scroll to new/terminated processes"},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"UseAppleIconApi", @"Use Apple API to get App icons (needs restart)"},
+//	{[UILabel class], UITableViewCellAccessoryDisclosureIndicator, @"FirstColumnStyle", @"First column style"},	// @"Bundle name" : @"Other"
+//	{[UISwitch class], UITableViewCellAccessoryNone, @"CpuGraph", @"Show CPU Graph"},
+};
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return 7;
+	return sizeof(optionsList) / sizeof(struct optionsList_t);
 }
 
 - (void)flipSwitch:(id)sender
 {
 	UISwitch *onOff = (UISwitch *)sender;
-	switch (onOff.tag) {
-	case 2: [[NSUserDefaults standardUserDefaults] setBool:onOff.on forKey:@"FullWidthCommandLine"]; break;
-	case 3: [[NSUserDefaults standardUserDefaults] setBool:onOff.on forKey:@"AutoJumpNewProcess"]; break;
-	case 4: [[NSUserDefaults standardUserDefaults] setBool:onOff.on forKey:@"UseAppleIconApi"]; break;
-	case 6: [[NSUserDefaults standardUserDefaults] setBool:onOff.on forKey:@"CpuGraph"]; break;
-	}
-//	UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:[NSString stringWithFormat:@"Tag = %d", onOff.tag] message:(onOff.on ? @"YES" : @"NO") delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
-//	[alertView show];
+	[[NSUserDefaults standardUserDefaults] setBool:onOff.on forKey:optionsList[onOff.tag - 1].optionKey];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	// Reuse a single cell
-	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Setup"];
 	if (cell == nil)
-		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
-	UISwitch *onOff;
-	UILabel *label;
-	switch (indexPath.row) {
-	case 0:
-	case 2:
-	case 3:
-	case 4:
-	case 6:
-		onOff = [[UISwitch alloc] initWithFrame:CGRectZero];
+		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Setup"];
+	struct optionsList_t *option = &optionsList[indexPath.row];
+	cell.textLabel.text = option->label;
+	if ([option->accessory isEqual:@"UISwitch"]) {
+		UISwitch *onOff = [[UISwitch alloc] initWithFrame:CGRectZero];
 		[onOff addTarget:self action:@selector(flipSwitch:) forControlEvents:UIControlEventValueChanged];
+		onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:option->optionKey];
+//		onOff.onTintColor = [UIColor redColor];
+		onOff.tag = indexPath.row + 1;
 		cell.accessoryView = onOff;
-		onOff.tag = indexPath.row;
 		[onOff release];
-		break;
-	case 1:
-	case 5:
-		cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-		label = [[UILabel alloc] initWithFrame:CGRectZero];
-		label.textAlignment = NSTextAlignmentRight;
-		label.font = [UIFont systemFontOfSize:16.0];
-		label.backgroundColor = [UIColor clearColor];
-		// Bundle name / Executable name / With args / Full path with args
-		label.tag = 1;//indexPath.row;
-		[cell.contentView addSubview:label];
-		[label release];
+	} else {
+		cell.accessoryType = option->accType;
 		cell.accessoryView = nil;
-		break;
-	}
-	switch (indexPath.row) {
-	case 0:
-		onOff.onTintColor = [UIColor redColor];
-		cell.textLabel.text = @"Main Power Switch"; break;
-	case 1:
-		label.text = [[NSUserDefaults standardUserDefaults] stringForKey:@"UpdateInterval"];
-		cell.textLabel.text = @"Update interval (seconds)"; break;
-	case 2:
-		onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
-		cell.textLabel.text = @"Full width command line"; break;
-	case 3:
-		onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"];
-		cell.textLabel.text = @"Auto jump to new/terminated processes"; break;
-	case 4:
-		onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"UseAppleIconApi"];
-		cell.textLabel.text = @"Use Apple API to get App icons (needs restart)"; break;
-	case 5:
-		label.text = [[NSUserDefaults standardUserDefaults] integerForKey:@"FirstColumnStyle"] == 1 ? @"Bundle name" : @"Other";
-		cell.textLabel.text = @"First column style"; break;
-	case 6:
-		onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"CpuGraph"];
-		cell.textLabel.text = @"Show CPU Graph"; break;
+		if ([option->accessory isEqual:@"UILabel"]) {
+			UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
+			label.textAlignment = NSTextAlignmentRight;
+			label.font = [UIFont systemFontOfSize:16.0];
+			label.backgroundColor = [UIColor clearColor];
+			label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
+			// Bundle name / Executable name / With args / Full path with args
+			label.tag = indexPath.row + 1;
+			[cell.contentView addSubview:label];
+			[label release];
+		}
 	}
 	return cell;
 	// Special process colors: Root / User / 32 bit / Zombie & Stuck
@@ -113,8 +112,8 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	UIView *label = [cell viewWithTag:1];
-	if (label) {
+	if ([optionsList[indexPath.row].accessory isEqual:@"UILabel"]) {
+		UIView *label = [cell viewWithTag:indexPath.row + 1];
 		CGSize size = cell.contentView.frame.size;
 		label.frame = CGRectMake(size.width - 110, 0, 100, size.height);
 	}

@@ -4,8 +4,6 @@
 typedef NSString *(^PSColumnData)(PSProc *proc);
 
 @interface PSColumn : NSObject
-{
-}
 // Full column name (in settings)
 @property (retain) NSString *descr;
 // Short name (in header)
@@ -27,5 +25,4 @@ typedef NSString *(^PSColumnData)(PSProc *proc);
 	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;
 + (NSArray *)psGetAllColumns;
 + (NSMutableArray *)psGetShownColumnsWithWidth:(NSUInteger *)width;
-
 @end

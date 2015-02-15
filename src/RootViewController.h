@@ -2,7 +2,4 @@
 #import "GridCell.h"
 
 @interface RootViewController : UITableViewController
-{
-}
-
 @end

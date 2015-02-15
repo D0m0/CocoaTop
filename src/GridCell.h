@@ -16,8 +16,6 @@
 
 
 @interface GridHeaderView : UITableViewHeaderFooterView
-{
-}
 @property (retain) NSMutableArray *labels;
 @property (retain) NSMutableArray *dividers;
 + (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size;

@@ -53,7 +53,6 @@
 	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 150, 40)];
 	self.status.backgroundColor = [UIColor clearColor];
 	UIBarButtonItem *cpuLoad = [[UIBarButtonItem alloc] initWithCustomView:self.status];
-//	[self.status release];
 	self.navigationItem.leftBarButtonItem = cpuLoad;	//leftBarButtonItems NSArray
 	[cpuLoad release];
 
@@ -74,20 +73,24 @@
 	}];
 }
 
-- (void)refreshProcsSmall
+- (void)refreshProcs:(NSTimer *)timer
 {
 	[self.procs refresh];
 	[self.procs sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
-	self.status.text = [NSString stringWithFormat:@"\u2699 CPU Usage: 1%% | Physical Memory: 40%% | Processes: %u | Threads: 1000", self.procs.count];
+	// Status bar
+	self.status.text = [NSString stringWithFormat:@"\u2699 Processes: %u   Threads: %u   RAM: %.1f/%.1f MB   CPU: %.1f%%",
+		self.procs.count,
+		self.procs.threadCount,
+		(float)self.procs.memUsed / 1024 / 1024,
+		(float)self.procs.memTotal / 1024 / 1024,
+		(float)self.procs.totalCpu / 10];
 	// Uptime, CPU Freq, Cores, Cache L1/L2
-}
-
-- (void)refreshProcs
-{
-	[self refreshProcsSmall];
-	// If there's a new process, scroll to it
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
+	if (timer == nil) {
+		// First time refresh: we don't need info about new processes
+		[self.procs setAllDisplayed:ProcDisplayNormal];
+	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
+		// If there's a new process, scroll to it
 		NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
 		if (idx != NSNotFound)
 			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
@@ -123,8 +126,8 @@
 	firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
 	// Column state has changed - recreate all table cells
+// TODO: Optimize this!
 	colState++;
-// TODO: Initial sort column
 	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"];
 	if (sortCol >= self.columns.count) sortCol = 0;
 	self.sorter = self.columns[sortCol];
@@ -132,10 +135,9 @@
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
-	[self refreshProcsSmall];
-	[self.procs setAllDisplayed:ProcDisplayNormal];
+	[self refreshProcs:nil];
 	self.timer = [NSTimer scheduledTimerWithTimeInterval:[[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"]
-		target:self selector:@selector(refreshProcs) userInfo:nil repeats:YES];
+		target:self selector:@selector(refreshProcs:) userInfo:nil repeats:YES];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -264,6 +266,9 @@
 	// Relinquish ownership of anything that can be recreated in viewDidLoad or on demand.
 	if (self.timer.isValid)
 		[self.timer invalidate];
+	self.status = nil;
+	self.header = nil;
+	self.sorter = nil;
 	self.procs = nil;
 	self.columns = nil;
 }
@@ -273,6 +278,7 @@
 	if (self.timer.isValid)
 		[self.timer invalidate];
 	[_timer release];
+	[_status release];
 	[_procs release];
 	[_columns release];
 	[super dealloc];

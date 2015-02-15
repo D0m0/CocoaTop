@@ -76,6 +76,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\About.h" />
     <ClInclude Include="src\AppIcon.h" />
     <ClInclude Include="src\Column.h" />
     <ClInclude Include="src\DoomAppAppDelegate.h" />
@@ -86,6 +87,7 @@
     <ClInclude Include="src\SetupColumns.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="src\About.m" />
     <None Include="src\AppIcon.m" />
     <None Include="src\Column.m" />
     <None Include="src\DoomAppAppDelegate.m" />

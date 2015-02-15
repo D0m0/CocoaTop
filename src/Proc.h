@@ -36,15 +36,17 @@ typedef enum {
 @property (retain) UIImage *icon;
 @property (retain) NSDictionary *app;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
-- (void)updateWithKinfo:(struct kinfo_proc *)ki;
 
 @end
 
 @interface PSProcArray : NSObject
-{
-}
 @property (retain) NSMutableArray *procs;
 @property (assign) CGFloat iconSize;
+@property (assign) int totalCpu;
+@property (assign) int threadCount;
+@property (assign) uint64_t memUsed;
+@property (assign) uint64_t memFree;
+@property (assign) uint64_t memTotal;
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size;
 - (int)refresh;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
