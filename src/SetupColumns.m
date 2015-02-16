@@ -67,13 +67,14 @@
 	return ar[section].count;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)src
 {
-	// Reuse a single cell
-	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SetupCols"];
+	// Stupid non-draggable cell should be created separately
+	NSString *reuse = src.section == 0 && src.row == 0 ? @"SetupUnmovableColumn" : @"SetupColumns";
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuse];
 	if (cell == nil)
-		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"SetupCols"];
-	cell.textLabel.text = ((PSColumn *)ar[indexPath.section][indexPath.row]).descr;
+		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuse];
+	cell.textLabel.text = ((PSColumn *)ar[src.section][src.row]).descr;
 	return cell;
 }
 
@@ -85,16 +86,13 @@
 
 - (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)src
 {
-	return src.section == 0 && src.row == 0 ? NO : YES;
-//	return (src.section == 0 && src.row == 0) || (src.section > 1) ? NO : YES;
+	return !(src.section == 0 && src.row == 0);
 }
 
 - (NSIndexPath *)tableView:(UITableView *)tableView targetIndexPathForMoveFromRowAtIndexPath:(NSIndexPath *)src toProposedIndexPath:(NSIndexPath *)dst
 {
 	if (dst.section == 0 && dst.row == 0)
 		return [NSIndexPath indexPathForRow:1 inSection:0];
-//	if (dst.section > 1)
-//		return [NSIndexPath indexPathForRow:[tableView numberOfRowsInSection:1]-1 inSection:1];
 	return dst;
 }
 

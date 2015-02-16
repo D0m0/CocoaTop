@@ -11,9 +11,9 @@ NSString *psProcessStateString(PSProc *proc)
 
 	*pst++ = states[proc.state];
 	if (proc.nice < 0)
-		*pst++ = L'\u25B4';	// ^
+		*pst++ = L'\u25B2';	// ^
 	else if (proc.nice > 0)
-		*pst++ = L'\u25BE';	// v
+		*pst++ = L'\u25BC';	// v
 	if (proc.flags & P_TRACED)
 		*pst++ = 't';
 	if (proc.flags & P_WEXIT && proc.state != 1)
@@ -100,7 +100,7 @@ NSString *psProcessTty(PSProc *proc)
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.priobase]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.priobase - a.priobase; }],
 		[PSColumn psColumnWithName:@"Nice" descr:@"Process Nice Value" align:NSTextAlignmentRight width:42 refresh:YES
-			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.nice]; }
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%d", proc.nice]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.nice - b.nice; }]
 		] retain];
 	});

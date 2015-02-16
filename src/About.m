@@ -34,9 +34,9 @@
 	return 1;
 }
 
-- (CGFloat) tableView:(UITableView *)aTableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+- (CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	int numberOfLines = 22;
+	int numberOfLines = 30;
 	return  (44.0 + (numberOfLines - 1) * 19.0);
 }
 
@@ -51,78 +51,31 @@
 	cell.textLabel.text =
 		@"Hello, friends!\n\n"
 		"This text should clarify some questionable concepts implemented in CocoaTop, the ideas behind those concepts, "
-		"and the idea behind the application itself. Also, it should be a fun read for some of you ;)\n\n"
-		"Before we begin I would like to thank ... for making miniCode - a nice alternative to XCode that became an IDE "
-		"for my first iOS app, which is also my first Objective-C app.\n\n"
-		"1. CPU usage sums up not to 100% but to 100*cores %. Moreover, it can actually exceed this value ;)\n"
-		"2. Process flags will surely be deciphered in future versions, but for now here's the full list:\n"
-		"	0x00000001	P_ADVLOCK	\tProcess may hold POSIX adv. lock\n"
-		"	0x00000002	P_CONTROLT	\tHas a controlling terminal\n"
-		"	0x00000004	P_LP64		\t\tProcess is LP64\n"
-		"	0x00000008	P_NOCLDSTOP	No SIGCHLD when children stop\n"
-		"	0x00000010	P_PPWAIT	\t\tParent waiting for chld exec/exit\n"
-		"	0x00000020	P_PROFIL	\t\tHas started profiling\n"
-		"	0x00000040	P_SELECT	\t\tSelecting; wakeup/waiting danger\n"
-		"	0x00000080	P_CONTINUED	\tProcess was stopped and continued\n"
-		"	0x00000100	P_SUGID		\tHas set privileges since last exec\n"
+		"and the idea behind the application itself. Also, it should be a fun read, at least for some ;)\n\n"
+		"Before we begin I would like to thank Luis Finke for making miniCode (available in Cydia) - a nice alternative "
+		"to XCode that became an IDE for my first iOS app, which is also my first Objective-C app.\n\n"
+		"Now, you could say that the purpose of CocoaTop is to replace the original 'terminal' top - but it is not. "
+		"First of all, the UNIX terminal is a thing in itself: every iPad user has to have a terminal installed, "
+		"otherwise (s)he can be mistaken for a dork, or worse - a humanitarian. Also, top executed on an iPad "
+		"always attracts people's attention. So the idea behind this app is this: I wanted to create something nice, "
+		"gaining knowledge in the process. If you find it useful, well, you're in luck!\n\n"
+		"Now, on to the details:\n\n"
+		"1. CPU usage sums up not to 100% but to 100*cores %. Moreover, it can actually exceed this value, and it surely will "
+		"when the cores are doing the real stuff: protein folding and shit like that. This is due to a scheduling policy "
+		"of the Mach Kernel, which is called decay-usage scheduling. When a thread acquires CPU time, its priority is continually "
+		"being depressed: this ensures short response times of interactive jobs, which do not always have a high initial priority. "
+		"The decayed CPU usage of a running thread increases in a linearly proportional fashion with CPU time obtained, and is "
+		"periodically divided by the decay factor, which is a constant larger than one. Thus, the Mach CPU utilization of "
+		"the process is a decaying average over up to a minute of previous (real) time. Since the time base over which this is "
+		"computed varies (since processes may be very young) it is possible for the sum of all %cpu fields to exceed 100%. "
+		"And this is exactly why Android sucks.\n\n"
+		"1. Number one again? Allright. Processes and Mach tasks are different things. Here's why...\n\n"
+		"2. There's no such thing as a running process, because it is the threads that run, not processes. So why is there a "
+		"'Process running' state? Well, this is taken from the source code of top.\n"
 	;
 	return cell;
 }
 // Mac OS X and iOS internals
-
 // Mach tasks vs. processes
-
-	//"DZRUSITH?";
-	//if (proc.nice < 0)
-	//	*pst++ = L'\u25B4';	// ^
-	//else if (proc.nice > 0)
-	//	*pst++ = L'\u25BE';	// v
-	//if (proc.flags & P_TRACED)
-	//	*pst++ = 't';
-	//if (proc.flags & P_WEXIT && proc.state != 1)
-	//	*pst++ = 'z';
-	//if (proc.flags & P_PPWAIT)
-	//	*pst++ = 'w';
-	//if (proc.flags & P_SYSTEM)
-	//	*pst++ = 'K';
-
-//#define	P_SYSTEM	0x00000200	/* Sys proc: no sigs, stats or swap */
-//#define	P_TIMEOUT	0x00000400	/* Timing out during sleep */
-//#define	P_TRACED	0x00000800	/* Debugged process being traced */
-//
-//#define	P_DISABLE_ASLR	0x00001000	/* Disable address space layout randomization */
-//#define	P_WEXIT		0x00002000	/* Working on exiting */
-//#define	P_EXEC		0x00004000	/* Process called exec. */
-//
-///* Should be moved to machine-dependent areas. */
-//#define	P_OWEUPC	0x00008000	/* Owe process an addupc() call at next ast. */
-//
-//#define	P_AFFINITY	0x00010000	/* xxx */
-//#define	P_TRANSLATED	0x00020000	/* xxx */
-//#define	P_CLASSIC	P_TRANSLATED	/* xxx */
-//
-///*
-//#define	P_FSTRACE	0x10000	/ * tracing via file system (elsewhere?) * /
-//#define	P_SSTEP		0x20000	/ * process needs single-step fixup ??? * /
-//*/
-//
-//#define	P_DELAYIDLESLEEP 0x00040000	/* Process is marked to delay idle sleep on disk IO */
-//#define	P_CHECKOPENEVT 	0x00080000	/* check if a vnode has the OPENEVT flag set on open */
-//
-//#define	P_DEPENDENCY_CAPABLE	0x00100000	/* process is ok to call vfs_markdependency() */
-//#define	P_REBOOT	0x00200000	/* Process called reboot() */
-//#define	P_TBE		0x00400000	/* Process is TBE */
-//#define	P_RESV7		0x00800000	/* (P_SIGEXC)signal exceptions */
-//
-//#define	P_THCWD		0x01000000	/* process has thread cwd  */
-//#define	P_RESV9		0x02000000	/* (P_VFORK)process has vfork children */
-//#define	P_RESV10 	0x04000000	/* used to be P_NOATTACH */
-//#define	P_RESV11	0x08000000	/* (P_INVFORK) proc in vfork */
-//
-//#define	P_NOSHLIB	0x10000000	/* no shared libs are in use for proc */
-//					/* flag set on exec */
-//#define	P_FORCEQUOTA	0x20000000	/* Force quota for root */
-//#define	P_NOCLDWAIT	0x40000000	/* No zombies when chil procs exit */
-//#define	P_NOREMOTEHANG	0x80000000	/* Don't hang on remote FS ops */
 
 @end

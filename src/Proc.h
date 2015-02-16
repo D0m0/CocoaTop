@@ -19,18 +19,18 @@ typedef enum {
 @property (assign) display_t display;
 @property (assign) pid_t pid;
 @property (assign) pid_t ppid;
-@property (assign) int prio;
-@property (assign) int priobase;
+@property (assign) unsigned int prio;
+@property (assign) unsigned int priobase;
 @property (assign) int nice;
-@property (assign) int flags;
+@property (assign) unsigned int flags;
 @property (assign) unsigned int ptime;	// 100's of a second
 @property (assign) dev_t tdev;
 @property (assign) uid_t uid;
 @property (assign) gid_t gid;
 @property (assign) int state;
-@property (assign) int pcpu;
-@property (assign) int threads;
-@property (assign) int ports;
+@property (assign) unsigned int pcpu;
+@property (assign) unsigned int threads;
+@property (assign) unsigned int ports;
 @property (retain) NSString *name;
 @property (retain) NSArray *args;
 @property (retain) UIImage *icon;
@@ -42,8 +42,8 @@ typedef enum {
 @interface PSProcArray : NSObject
 @property (retain) NSMutableArray *procs;
 @property (assign) CGFloat iconSize;
-@property (assign) int totalCpu;
-@property (assign) int threadCount;
+@property (assign) unsigned int totalCpu;
+@property (assign) unsigned int threadCount;
 @property (assign) uint64_t memUsed;
 @property (assign) uint64_t memFree;
 @property (assign) uint64_t memTotal;

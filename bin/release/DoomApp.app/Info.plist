@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>DoomApp</string>
 	<key>CFBundleIconFile</key>
-	<string></string>
+	<string>Icon.png</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.domo.doomapp</string>
 	<key>CFBundleInfoDictionaryVersion</key>
