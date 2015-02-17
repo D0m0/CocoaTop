@@ -90,7 +90,7 @@ struct optionsList_t optionsList[4] = {
 		cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
 		cell.textLabel.font = [UIFont systemFontOfSize:16.0];
 		cell.textLabel.text =
-			@"Process states (similar to original top):\n\n"
+			@"Process states (similar to original top):\n"
 			"	R	Running (at least one thread within this process is running right now)\n"
 			"	U	Uninterruptible/'Stuck' (a thread is waiting on I/O in a system call)\n"
 			"	S	Sleeping (all threads are sleeping)\n"
@@ -105,8 +105,9 @@ struct optionsList_t optionsList[4] = {
 			"	t	Process being traced, see P_TRACED below\n"
 			"	z	Process being terminated at the moment, see P_WEXIT below\n"
 			"	w	Process' parent is waiting for action after fork, see P_PPWAIT below\n"
-			"	K	The system process (kernel), see P_SYSTEM below\n\n"
-			"Process flags (will surely be deciphered in future versions):\n"
+			"	K	The system process (kernel), see P_SYSTEM below\n"
+			"	B	The application is suspended by SpringBoard (iOS specific)\n"
+			"\nProcess flags (will surely be deciphered in future versions):\n"
 			"	0001	P_ADVLOCK		Process may hold POSIX adv. lock\n"
 			"	0002	P_CONTROLT		Has a controlling terminal\n"
 			"	0004	P_LP64			\t64-bit process\n"

@@ -109,6 +109,12 @@ int mach_state_order(int s, long sleep_time)
 				break;
 			}
 		}
+		// Task policy
+		task_category_policy_data_t policy_info = {TASK_UNSPECIFIED};
+		boolean_t get_default = NO;
+		info_count = TASK_CATEGORY_POLICY_COUNT;
+		task_policy_get(task, TASK_CATEGORY_POLICY, (task_policy_t)&policy_info, &info_count, &get_default);
+		self.role = policy_info.role;
 		// Task times
 		struct task_thread_times_info times;
 		info_count = TASK_THREAD_TIMES_INFO_COUNT;

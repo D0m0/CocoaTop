@@ -21,6 +21,7 @@ typedef enum {
 @property (assign) pid_t ppid;
 @property (assign) unsigned int prio;
 @property (assign) unsigned int priobase;
+@property (assign) task_role_t role;
 @property (assign) int nice;
 @property (assign) unsigned int flags;
 @property (assign) unsigned int ptime;	// 100's of a second

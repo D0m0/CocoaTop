@@ -22,8 +22,33 @@ NSString *psProcessStateString(PSProc *proc)
 		*pst++ = 'w';
 	if (proc.flags & P_SYSTEM)
 		*pst++ = 'K';
+	if (proc->basic.suspend_count > 0)
+		*pst++ = 'B';
 	return [NSString stringWithCharacters:st length:(pst - st)];
 }
+
+NSString *psTaskRoleString(PSProc *proc)
+{
+	switch (proc.role) {
+	case TASK_RENICED:					return @"Reniced";
+	case TASK_FOREGROUND_APPLICATION:	return @"Foreground";
+	case TASK_BACKGROUND_APPLICATION:	return @"Background";
+	case TASK_CONTROL_APPLICATION:		return @"Controller";
+	case TASK_GRAPHICS_SERVER:			return @"GfxServer";
+	case TASK_THROTTLE_APPLICATION:		return @"Throttle";
+	case TASK_NONUI_APPLICATION:		return @"Inactive";
+	case TASK_DEFAULT_APPLICATION:		return @"App";
+	case TASK_UNSPECIFIED:				return @"None";
+	default:							return @"Unknown";
+	}
+}
+/*
+ * TASK_UNSPECIFIED is the default, since the role is not inherited from the parent.
+ * TASK_FOREGROUND_APPLICATION should be assigned when the task is a normal UI application in the foreground from the HI point of view. **N.B. There may be more than one of these at a given time.
+ * TASK_BACKGROUND_APPLICATION should be assigned when the task is a normal UI application in the background from the HI point of view.
+ * TASK_CONTROL_APPLICATION should be assigned to the unique UI application which implements the pop-up application dialog. There can only be one task at a time with this designation, which is assigned FCFS.
+ * TASK_GRAPHICS_SERVER should be assigned to the graphics management (window) server.  There can only be one task at a time with this designation, which is assigned FCFS.
+ */
 
 NSString *psProcessTty(PSProc *proc)
 {
@@ -94,14 +119,17 @@ NSString *psProcessTty(PSProc *proc)
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw - proc->events_prev.csw]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (b->events.csw - b->events_prev.csw) - (a->events.csw - a->events_prev.csw); }],
 		[PSColumn psColumnWithName:@"Prio" descr:@"Mach Actual Threads Priority" align:NSTextAlignmentLeft width:42 refresh:YES
-			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.prio]; }
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%@%u", 	proc->basic.policy == POLICY_RR ? @"R:" : proc->basic.policy == POLICY_FIFO ? @"F:" : @"", proc.prio]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.prio - a.prio; }],
 		[PSColumn psColumnWithName:@"BPri" descr:@"Base Process Priority" align:NSTextAlignmentLeft width:42 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.priobase]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.priobase - a.priobase; }],
 		[PSColumn psColumnWithName:@"Nice" descr:@"Process Nice Value" align:NSTextAlignmentRight width:42 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%d", proc.nice]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.nice - b.nice; }]
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.nice - b.nice; }],
+		[PSColumn psColumnWithName:@"Role" descr:@"Mach Task Role" align:NSTextAlignmentLeft width:75 refresh:YES
+			data:^NSString*(PSProc *proc) { return psTaskRoleString(proc); }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.role - b.role; }]
 		] retain];
 	});
 	return allColumns;
