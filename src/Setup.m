@@ -1,6 +1,76 @@
 #import "Setup.h"
 #import "About.h"
 
+@interface SelectFromList : UITableViewController
+@property (retain) NSArray *list;
+@property (retain) NSString *option;
+@property (retain) NSString *value;
+@property (retain) NSString *footer;
+@end
+
+@implementation SelectFromList
+
+- (instancetype)initWithList:(NSArray *)list option:(NSString *)option footer:(NSString *)footer
+{
+	self = [super initWithStyle:UITableViewStyleGrouped];
+	self.list = list;
+	self.option = option;
+	self.footer = footer;
+	self.value = [[NSUserDefaults standardUserDefaults] stringForKey:option];
+	return self;
+}
+
++ (instancetype)selectFromList:(NSArray *)list option:(NSString *)option footer:(NSString *)footer
+{
+	return [[[SelectFromList alloc] initWithList:list option:option  footer:footer] autorelease];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+	[super viewWillAppear:animated];
+	self.navigationItem.title = @"Settings";
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+	return 1;
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+	return @"Choose";
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
+{
+	return self.footer;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+	return self.list.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"About"];
+	if (cell == nil)
+		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"About"];
+	cell.textLabel.text = self.list[indexPath.row];
+	cell.accessoryType = [self.value isEqualToString:cell.textLabel.text] ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+	return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	self.value = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
+	[[NSUserDefaults standardUserDefaults] setObject:self.value forKey:self.option];
+	[self.navigationController popViewControllerAnimated:YES];
+}
+
+@end
+
+
 @implementation SetupViewController
 
 - (void)openAbout
@@ -10,19 +80,41 @@
 	[about release];
 }
 
+struct optionsList_t {
+	NSString*	accessory;
+	UITableViewCellAccessoryType accType;
+	NSString*	optionKey;
+	NSString*	label;
+	NSArray*	choose;
+	NSString*	footer;
+} optionsList[] = {
+	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"UpdateInterval", @"Update interval (seconds)", nil, @"Note: tap the status header to refresh manually"},
+	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"FirstColumnStyle", @"First column style (needs restart)", nil, nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"FullWidthCommandLine", @"Full width command line", nil, nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"AutoJumpNewProcess", @"Auto scroll to new/terminated processes", nil, nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"UseAppleIconApi", @"Use Apple API to get App icons (needs restart)", nil, nil},
+//	{@"UISwitch", UITableViewCellAccessoryNone, @"CpuGraph", @"Show CPU Graph", nil, nil},
+};
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
 	UIBarButtonItem *aboutButton = [[UIBarButtonItem alloc] initWithTitle:@"The Story" style:UIBarButtonItemStylePlain
 		target:self action:@selector(openAbout)];
 	self.navigationItem.rightBarButtonItem = aboutButton;
+	self.navigationItem.title = @"Settings";
 	[aboutButton release];
+
+	if (!optionsList[0].choose)
+		optionsList[0].choose = [@[@"0.5",@"1",@"2",@"3",@"5",@"10",@"Never"] retain];
+	if (!optionsList[1].choose)
+		optionsList[1].choose = [@[@"Bundle Identifier",@"Bundle Name",@"Bundle Display Name",@"Executable Name",@"Executable With Args"] retain];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	self.tableView.allowsSelection = NO;
+	[self.tableView reloadData];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -46,21 +138,10 @@
 	return section ? @"Quick guide" : @"General";
 }
 
-struct optionsList_t {
-	NSString*	accessory;
-	UITableViewCellAccessoryType accType;
-	NSString*	optionKey;
-	NSString*	label;
-};
-
-struct optionsList_t optionsList[4] = {
-	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"UpdateInterval", @"Update interval (seconds)"},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"FullWidthCommandLine", @"Full width command line"},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"AutoJumpNewProcess", @"Auto scroll to new/terminated processes"},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"UseAppleIconApi", @"Use Apple API to get App icons (needs restart)"},
-//	{[UILabel class], UITableViewCellAccessoryDisclosureIndicator, @"FirstColumnStyle", @"First column style"},	// @"Bundle name" : @"Other"
-//	{[UISwitch class], UITableViewCellAccessoryNone, @"CpuGraph", @"Show CPU Graph"},
-};
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
+{
+	return section == 0 ? @"More options will be available in future versions" : nil;
+}
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
@@ -69,7 +150,7 @@ struct optionsList_t optionsList[4] = {
 
 - (CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	static const int numberOfLines = 37;
+	static const int numberOfLines = 46;
 	return indexPath.section ? 44.0 + (numberOfLines - 1) * 19.0 : tableView.rowHeight;
 }
 
@@ -85,7 +166,36 @@ struct optionsList_t optionsList[4] = {
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Setup"];
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Setup"];
-	if (indexPath.section) {
+	cell.selectionStyle = UITableViewCellSelectionStyleNone;
+	if (indexPath.section == 0) {
+		struct optionsList_t *option = &optionsList[indexPath.row];
+		cell.textLabel.text = option->label;
+		if ([option->accessory isEqualToString:@"UISwitch"]) {
+			UISwitch *onOff = [[UISwitch alloc] initWithFrame:CGRectZero];
+			[onOff addTarget:self action:@selector(flipSwitch:) forControlEvents:UIControlEventValueChanged];
+			onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:option->optionKey];
+//			onOff.onTintColor = [UIColor redColor];
+			onOff.tag = indexPath.row + 1;
+			cell.accessoryView = onOff;
+			[onOff release];
+		} else {
+			cell.accessoryType = option->accType;
+			cell.accessoryView = nil;
+			if ([option->accessory isEqualToString:@"UILabel"]) {
+				UIView *lbl = [cell viewWithTag:indexPath.row + 1];
+				if (lbl) [lbl removeFromSuperview];
+				UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
+				label.textAlignment = NSTextAlignmentRight;
+				label.font = [UIFont systemFontOfSize:16.0];
+				label.backgroundColor = [UIColor clearColor];
+				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
+				cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+				label.tag = indexPath.row + 1;
+				[cell.contentView addSubview:label];
+				[label release];
+			}
+		}
+	} else {
 		cell.textLabel.numberOfLines = 0;
 		cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
 		cell.textLabel.font = [UIFont systemFontOfSize:16.0];
@@ -93,7 +203,7 @@ struct optionsList_t optionsList[4] = {
 			@"Process states (similar to original top):\n"
 			"	R	Running (at least one thread within this process is running right now)\n"
 			"	U	Uninterruptible/'Stuck' (a thread is waiting on I/O in a system call)\n"
-			"	S	Sleeping (all threads are sleeping)\n"
+			"	S	Sleeping (all threads of a process are sleeping)\n"
 			"	I	Idle (all threads are sleeping for at least 20 seconds)\n"
 			"	T	Terminated (all threads stopped)\n"
 			"	H	Halted (all threads halted at a clean point)\n"
@@ -106,7 +216,7 @@ struct optionsList_t optionsList[4] = {
 			"	z	Process being terminated at the moment, see P_WEXIT below\n"
 			"	w	Process' parent is waiting for action after fork, see P_PPWAIT below\n"
 			"	K	The system process (kernel), see P_SYSTEM below\n"
-			"	B	The application is suspended by SpringBoard (iOS specific)\n"
+			"	B	Application is suspended by SpringBoard (iOS specific)\n"
 			"\nProcess flags (will surely be deciphered in future versions):\n"
 			"	0001	P_ADVLOCK		Process may hold POSIX adv. lock\n"
 			"	0002	P_CONTROLT		Has a controlling terminal\n"
@@ -123,33 +233,15 @@ struct optionsList_t optionsList[4] = {
 			"	1000	P_DISABLE_ASLR	Disable address space layout randomization\n"
 			"	2000	P_WEXIT			Process is working on exiting\n"
 			"	4000	P_EXEC			Process has called exec\n"
+			"\nTask role (Mac specific):\n"
+			"	None		\tNon-UI task\n"
+			"	Foreground	\tNormal UI application in the foreground\n"
+			"	Inactive	\t\tNormal UI application in the background\n"
+			"	Background	OS X: Normal UI application in the background\n"
+			"	Controller	\tOS X: Controller service application\n"
+			"	GfxServer	\tOS X: Graphics management (window) server\n"
+			"	Throttle	\t\tOS X: Throttle application"
 		;
-	} else {
-		struct optionsList_t *option = &optionsList[indexPath.row];
-		cell.textLabel.text = option->label;
-		if ([option->accessory isEqual:@"UISwitch"]) {
-			UISwitch *onOff = [[UISwitch alloc] initWithFrame:CGRectZero];
-			[onOff addTarget:self action:@selector(flipSwitch:) forControlEvents:UIControlEventValueChanged];
-			onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:option->optionKey];
-	//		onOff.onTintColor = [UIColor redColor];
-			onOff.tag = indexPath.row + 1;
-			cell.accessoryView = onOff;
-			[onOff release];
-		} else {
-			cell.accessoryType = option->accType;
-			cell.accessoryView = nil;
-			if ([option->accessory isEqual:@"UILabel"]) {
-				UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
-				label.textAlignment = NSTextAlignmentRight;
-				label.font = [UIFont systemFontOfSize:16.0];
-				label.backgroundColor = [UIColor clearColor];
-				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
-				// Bundle name / Executable name / With args / Full path with args
-				label.tag = indexPath.row + 1;
-				[cell.contentView addSubview:label];
-				[label release];
-			}
-		}
 	}
 	return cell;
 	// Special process colors: Root / User / 32 bit / Zombie & Stuck
@@ -159,10 +251,19 @@ struct optionsList_t optionsList[4] = {
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if ([optionsList[indexPath.row].accessory isEqual:@"UILabel"]) {
+	if (indexPath.section == 0 && [optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
 		UIView *label = [cell viewWithTag:indexPath.row + 1];
 		CGSize size = cell.contentView.frame.size;
-		label.frame = CGRectMake(size.width - 110, 0, 100, size.height);
+		label.frame = CGRectMake(size.width - 210, 0, 200, size.height);
+	}
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	if (indexPath.section == 0 && [optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
+		struct optionsList_t *option = &optionsList[indexPath.row];
+		SelectFromList* selectView = [SelectFromList selectFromList:option->choose option:option->optionKey footer:option->footer];
+		[self.navigationController pushViewController:selectView animated:YES];
 	}
 }
 

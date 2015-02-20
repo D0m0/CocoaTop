@@ -52,8 +52,10 @@
 
 	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 150, 40)];
 	self.status.backgroundColor = [UIColor clearColor];
+	self.status.userInteractionEnabled = YES;
+	[self.status addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(refreshProcs)]];
 	UIBarButtonItem *cpuLoad = [[UIBarButtonItem alloc] initWithCustomView:self.status];
-	self.navigationItem.leftBarButtonItem = cpuLoad;	//leftBarButtonItems NSArray
+	self.navigationItem.leftBarButtonItem = cpuLoad;
 	[cpuLoad release];
 
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
@@ -61,15 +63,16 @@
 	colState = 0;
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
-		@"Columns" : @[@0, @1, @2, @3, @6, @7, @8],
+		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 		@"SortColumn" : @1,
 		@"SortDescending" : @NO,
-		@"UpdateInterval" : @1.0f,
+		@"UpdateInterval" : @"1",
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,
 		@"UseAppleIconApi" : @NO,
 		@"FirstColumnStyle" : @1,
-		@"CpuGraph" : @NO
+		@"CpuGraph" : @NO,
+		@"FirstColumnStyle" : @"Bundle Identifier",
 	}];
 }
 
@@ -98,6 +101,11 @@
 		// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 		// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	}
+}
+
+- (void)refreshProcs
+{
+	[self refreshProcs:nil];
 }
 
 - (void)sortHeader:(UIGestureRecognizer *)gestureRecognizer
@@ -129,15 +137,16 @@
 // TODO: Optimize this!
 	colState++;
 	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"];
-	if (sortCol >= self.columns.count) sortCol = 0;
+	if (sortCol >= self.columns.count) sortCol = self.columns.count - 1;
 	self.sorter = self.columns[sortCol];
 	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
-	[self refreshProcs:nil];
-	self.timer = [NSTimer scheduledTimerWithTimeInterval:[[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"]
-		target:self selector:@selector(refreshProcs:) userInfo:nil repeats:YES];
+	[self refreshProcs];
+	CGFloat interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
+	if (interval >= 0.1)
+		self.timer = [NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:YES];
 }
 
 - (void)viewDidDisappear:(BOOL)animated

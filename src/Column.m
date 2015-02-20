@@ -31,24 +31,17 @@ NSString *psTaskRoleString(PSProc *proc)
 {
 	switch (proc.role) {
 	case TASK_RENICED:					return @"Reniced";
+	case TASK_UNSPECIFIED:				return @"None";
 	case TASK_FOREGROUND_APPLICATION:	return @"Foreground";
 	case TASK_BACKGROUND_APPLICATION:	return @"Background";
 	case TASK_CONTROL_APPLICATION:		return @"Controller";
 	case TASK_GRAPHICS_SERVER:			return @"GfxServer";
 	case TASK_THROTTLE_APPLICATION:		return @"Throttle";
 	case TASK_NONUI_APPLICATION:		return @"Inactive";
-	case TASK_DEFAULT_APPLICATION:		return @"App";
-	case TASK_UNSPECIFIED:				return @"None";
+	case TASK_DEFAULT_APPLICATION:		return @"Default";
 	default:							return @"Unknown";
 	}
 }
-/*
- * TASK_UNSPECIFIED is the default, since the role is not inherited from the parent.
- * TASK_FOREGROUND_APPLICATION should be assigned when the task is a normal UI application in the foreground from the HI point of view. **N.B. There may be more than one of these at a given time.
- * TASK_BACKGROUND_APPLICATION should be assigned when the task is a normal UI application in the background from the HI point of view.
- * TASK_CONTROL_APPLICATION should be assigned to the unique UI application which implements the pop-up application dialog. There can only be one task at a time with this designation, which is assigned FCFS.
- * TASK_GRAPHICS_SERVER should be assigned to the graphics management (window) server.  There can only be one task at a time with this designation, which is assigned FCFS.
- */
 
 NSString *psProcessTty(PSProc *proc)
 {
@@ -75,7 +68,7 @@ NSString *psProcessTty(PSProc *proc)
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ppid - b.ppid; }],
 		[PSColumn psColumnWithName:@"%" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 refresh:YES
 			data:^NSString*(PSProc *proc) { return !proc.pcpu ? @"-" :
-				[NSString stringWithFormat:@"%.1f", (float)proc.pcpu/10]; }
+				[NSString stringWithFormat:@"%.1f", (float)proc.pcpu/10]; }		// p->p_pctcpu / 1.05    - decay 95% in 60 seconds
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.pcpu - a.pcpu; }],
 		[PSColumn psColumnWithName:@"Time" descr:@"Process Time" align:NSTextAlignmentRight width:75 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u:%02u.%02u", proc.ptime / 6000, (proc.ptime / 100) % 60, proc.ptime % 100]; }
@@ -97,7 +90,7 @@ NSString *psProcessTty(PSProc *proc)
 		[PSColumn psColumnWithName:@"User" descr:@"User Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:user_from_uid(proc.uid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.uid - b.uid; }],
-		[PSColumn psColumnWithName:@"Group" descr:@"Groud Id" align:NSTextAlignmentLeft width:80 refresh:NO
+		[PSColumn psColumnWithName:@"Group" descr:@"Group Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.gid - b.gid; }],
 		[PSColumn psColumnWithName:@"TTY" descr:@"Terminal" align:NSTextAlignmentLeft width:65 refresh:NO
@@ -129,7 +122,7 @@ NSString *psProcessTty(PSProc *proc)
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.nice - b.nice; }],
 		[PSColumn psColumnWithName:@"Role" descr:@"Mach Task Role" align:NSTextAlignmentLeft width:75 refresh:YES
 			data:^NSString*(PSProc *proc) { return psTaskRoleString(proc); }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.role - b.role; }]
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a.role + (a.role <= 0 ? 50 : 0)) - (b.role + (b.role <= 0 ? 50 : 0)); }],
 		] retain];
 	});
 	return allColumns;
@@ -174,19 +167,6 @@ NSString *psProcessTty(PSProc *proc)
 {
 	return [[[PSColumn alloc] initWithName:name descr:descr align:align width:width refresh:refresh data:data sort:sort] autorelease];
 }
-
-/*
-if (rawcpu) return p->p_pctcpu;
-
-#define FSHIFT  11				// bits to right of fixed binary point
-#define FSCALE  (1<<FSHIFT)
-// decay 95% of `p_pctcpu' in 60 seconds; see CCPU_SHIFT before changing
-fixpt_t ccpu = 0.95122942450071400909 * FSCALE;			// exp(-1/20)
-return p->p_pctcpu / (1.0 - exp(p->p_swtime * log(fxtofl(ccpu))));
-
-#define TH_USAGE_SCALE 1000
-(void)printf("%*.1f", v->width, ((double)cp) * 100.0 / ((double)TH_USAGE_SCALE));
-*/
 
 - (void)dealloc
 {

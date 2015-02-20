@@ -16,6 +16,7 @@
 {
 	[super viewDidLoad];
 	self.tableView.editing = YES;
+	self.navigationItem.title = @"Manage columns";
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -54,12 +55,12 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-	return section == 0 ? @"Active" : @"Inactive";
+	return section == 0 ? @"Shown columns" : @"Inactive columns";
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
 {
-	return section == 1 ? @"These columns will not be shown" : nil;
+	return section == 0 ? @"Only columns that fit will actually be shown" : nil;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section

@@ -22,21 +22,29 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 			self.ppid = ki->kp_eproc.e_ppid;
 			self.args = [PSProc getArgsByKinfo:ki];
 			NSString *executable = self.args[0];
-			self.name = [executable lastPathComponent];
 			NSString *path = [executable stringByDeletingLastPathComponent];
 			self.app = [PSAppIcon getAppByPath:path];
 			memset(&events, 0, sizeof(events));
+			NSString *firslCol = [[NSUserDefaults standardUserDefaults] stringForKey:@"FirstColumnStyle"];
 			if (self.app) {
-				NSString *bundle = self.app[@"CFBundleIdentifier"];
-				if (bundle) {
-					self.name = bundle;//self.app[@"CFBundleDisplayName"];
-					self.icon = [PSAppIcon getIconForApp:self.app bundle:bundle path:path size:size];
-				}
+				NSString *ident = self.app[@"CFBundleIdentifier"];
+				if (ident)
+					self.icon = [PSAppIcon getIconForApp:self.app bundle:ident path:path size:size];
+				if ([firslCol isEqualToString:@"Bundle Identifier"])
+					self.name = ident;
+				else if ([firslCol isEqualToString:@"Bundle Name"])
+					self.name = self.app[@"CFBundleName"];
+				else if ([firslCol isEqualToString:@"Bundle Display Name"])
+					self.name = self.app[@"CFBundleDisplayName"];
 			}
+			if ([firslCol isEqualToString:@"Executable With Args"]) {
+				self.name = [executable lastPathComponent];
+				for (int i = 1; i < self.args.count; i++)
+					self.name = [self.name stringByAppendingFormat:@" %@", self.args[i]];
+			}
+			if (!self.name || [firslCol isEqualToString:@"Executable Name"])
+				self.name = [executable lastPathComponent];
 			[self updateWithKinfo:ki];
-//	self.name = self.app[@"CFBundleIdentifier"];
-//	self.bundleName = self.app[@"CFBundleName"];
-//	self.displayName = self.app[@"CFBundleDisplayName"];
 		}
 	}
 	return self;
