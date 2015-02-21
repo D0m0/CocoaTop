@@ -17,6 +17,7 @@
 @property (retain) PSColumn *sorter;
 @property (retain) UILabel *status;
 @property (assign) BOOL sortdesc;
+@property (retain) NSString *majorOptions;
 @end
 
 @implementation RootViewController
@@ -58,6 +59,8 @@
 	self.navigationItem.leftBarButtonItem = cpuLoad;
 	[cpuLoad release];
 
+	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
+	self.majorOptions = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"UseAppleIconApi"], [def stringForKey:@"FirstColumnStyle"]];
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	colState = 0;
@@ -131,6 +134,13 @@
 {
 	[super viewWillAppear:animated];
 
+	// Check if some major options changed
+	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
+	NSString *majorCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"UseAppleIconApi"], [def stringForKey:@"FirstColumnStyle"]];
+	if (![self.majorOptions isEqualToString:majorCheck]) {
+		self.majorOptions = majorCheck;
+		self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
+	}
 	firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
 	// Column state has changed - recreate all table cells
@@ -159,24 +169,6 @@
 	self.columns = nil;
 }
 
-/*
-- (void)viewDidAppear:(BOOL)animated
-{
-	[super viewDidAppear:animated];
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-	[super viewDidDisappear:animated];
-}
-
-// Override to allow orientations other than the default portrait orientation.
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-	// Return YES for supported orientations.
-	return YES;//(interfaceOrientation == UIInterfaceOrientationPortrait);
-}
-*/
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
 	if ((fromInterfaceOrientation == UIInterfaceOrientationPortrait || fromInterfaceOrientation == UIInterfaceOrientationPortraitUpsideDown) &&
@@ -225,6 +217,8 @@
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil)
 		cell = [GridTableCell cellWithId:CellIdentifier columns:self.columns size:CGSizeMake(firstColWidth, tableView.rowHeight)];
+//		[myObject configureCell:cell];
+// TODO: configureCell vs. updateCell !!!!
 	[cell updateWithProc:proc columns:self.columns];
 	return cell;
 }
@@ -245,13 +239,6 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	/*
-	<#DetailViewController#> *detailViewController = [[<#DetailViewController#> alloc] initWithNibName:@"<#Nib name#>" bundle:nil];
-	// ...
-	// Pass the selected object to the new view controller.
-	[self.navigationController pushViewController:detailViewController animated:YES];
-	[detailViewController release];
-	*/
 	UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
 	if (cell) {
 		UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:cell.textLabel.text message:cell.detailTextLabel.text delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
@@ -280,6 +267,7 @@
 	self.sorter = nil;
 	self.procs = nil;
 	self.columns = nil;
+	self.majorOptions = nil;
 }
 
 - (void)dealloc
@@ -290,6 +278,7 @@
 	[_status release];
 	[_procs release];
 	[_columns release];
+	[_majorOptions release];
 	[super dealloc];
 }
 

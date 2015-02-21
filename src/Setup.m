@@ -117,16 +117,6 @@ struct optionsList_t {
 	[self.tableView reloadData];
 }
 
-- (void)viewWillDisappear:(BOOL)animated
-{
-	[super viewWillDisappear:animated];
-}
-
-- (void)didReceiveMemoryWarning
-{
-	[super didReceiveMemoryWarning];
-}
-
 #pragma mark - UITableViewDataSource, UITableViewDelegate
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
@@ -187,6 +177,7 @@ struct optionsList_t {
 				UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
 				label.textAlignment = NSTextAlignmentRight;
 				label.font = [UIFont systemFontOfSize:16.0];
+				label.textColor = [UIColor grayColor];
 				label.backgroundColor = [UIColor clearColor];
 				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
 				cell.selectionStyle = UITableViewCellSelectionStyleBlue;

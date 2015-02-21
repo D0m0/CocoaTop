@@ -7,12 +7,8 @@
 - (instancetype)initWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size
 {
 	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
-//	self.detailTextLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
-//	self.accessoryType = indexPath.row < 5 ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
-	// Calculate first column width
 	firstColWidth = size.width - 5;
 	NSUInteger totalCol = firstColWidth;
-	// Get other columns
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
@@ -58,10 +54,8 @@
 		full = [full stringByAppendingFormat:@" %@", proc.args[i]];
 	self.detailTextLabel.text = full;
 //	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
-	// Get application icon
 	if (proc.icon)
 		[self.imageView initWithImage:proc.icon];
-	// Fill data
 	for (PSColumn *col in columns)
 		if (col.tag > 1)
 			((UILabel *)[self viewWithTag:col.tag]).text = col.getData(proc);
@@ -104,7 +98,6 @@
 - (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size
 {
 	self = [super initWithReuseIdentifier:@"Header"];
-	// Get column widths
 	NSUInteger totalCol = 0;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
@@ -112,7 +105,7 @@
 		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, (col.tag > 1 ? col.width : size.width) - 4, size.height)];
 		[self.labels addObject:label];
 		[label release];
-		label.textAlignment = NSTextAlignmentCenter;//col.align;
+		label.textAlignment = NSTextAlignmentCenter;
 		label.font = [UIFont boldSystemFontOfSize:16.0];
 		label.adjustsFontSizeToFitWidth = YES;
 		label.text = col.name;

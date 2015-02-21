@@ -11,7 +11,6 @@
 @property (retain) NSMutableArray *dividers;
 + (instancetype)cellWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size;
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns;
-
 @end
 
 
@@ -20,5 +19,4 @@
 @property (retain) NSMutableArray *dividers;
 + (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size;
 - (void)sortColumnOld:(PSColumn *)oldCol New:(PSColumn *)newCol desc:(BOOL)desc;
-
 @end
