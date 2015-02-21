@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\DoomAppAppDelegate.h">
+    <ClInclude Include="src\AppDelegate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GridCell.h">
@@ -44,7 +44,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\DoomAppAppDelegate.m">
+    <None Include="src\AppDelegate.m">
       <Filter>Source Files</Filter>
     </None>
     <None Include="src\GridCell.m">
