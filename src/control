@@ -1,0 +1,9 @@
+Package: ru.domo.CocoaTop
+Name: CocoaTop
+Depends: 
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Process Viewer for iOS GUI
+Maintainer: Domo
+Author: Domo
+Section: Utilities

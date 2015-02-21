@@ -1,8 +1,8 @@
 
-#import "DoomAppAppDelegate.h"
+#import "AppDelegate.h"
 #import "RootViewController.h"
 
-@implementation DoomAppAppDelegate
+@implementation TopAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
