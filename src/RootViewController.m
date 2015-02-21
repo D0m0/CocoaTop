@@ -73,7 +73,6 @@
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,
 		@"UseAppleIconApi" : @NO,
-		@"FirstColumnStyle" : @1,
 		@"CpuGraph" : @NO,
 		@"FirstColumnStyle" : @"Bundle Identifier",
 	}];

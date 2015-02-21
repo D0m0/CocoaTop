@@ -1,5 +1,4 @@
-cd /User/doomapp
-cp -f obj/DoomApp.app/DoomApp /Applications/DoomApp.app/DoomApp_
-ldid -Stask.xml /Applications/DoomApp.app/DoomApp_
-open com.domo.doomapp
+cd /User/CocoaTop
+cp -f obj/CocoaTop.app/CocoaTop /Applications/CocoaTop.app/CocoaTop
+open ru.domo.CocoaTop
 exit

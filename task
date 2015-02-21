@@ -1,3 +1,0 @@
-#!/bin/bash
-cp -f obj/DoomApp.app/DoomApp /Applications/DoomApp.app/DoomApp_
-ldid -Stask.xml /Applications/DoomApp.app/DoomApp_
