@@ -2,3 +2,5 @@ build
 /miniCode.sdf
 /miniCode.v11.suo
 /*.opensdf
+*.sdf
+*.suo

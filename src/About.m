@@ -34,11 +34,12 @@
 		"This text should clarify some questionable concepts implemented in CocoaTop, the ideas behind those concepts, "
 		"and the idea behind the application itself. Also, it should be a fun read, at least for some ;)\n\n"
 		"Before we begin I would like to thank Luis Finke for making miniCode (available in Cydia) \u2014 a nice alternative "
-		"to XCode that became an IDE for my first iOS app, which is also my first Objective C app.\n\n"
-		"Now, you could say that the purpose of CocoaTop is to replace the original 'terminal' top \u2014 but it is not. "
+		"to XCode that became an IDE for my first iOS app, which is also my first Objective C app. (Hey, if you think I "
+		"typed the whole thing on the iPad, you're wrong. I even used Theos, goddamit, okay! But that's not the point!\n\n"
+		"Now, you could say that the purpose of CocoaTop is to replace the original terminal 'top' \u2014 but it is not. "
 		"First of all, the UNIX terminal is a thing in itself: every iPad user has to have a terminal installed, "
-		"otherwise (s)he can be mistaken for a dork, or worse \u2014 a humanitarian. Also, top executed on an iPad "
-		"always attracts people's attention. So the idea behind this app is this: I wanted to create something nice, "
+		"otherwise (s)he can be mistaken for a dork, or worse \u2014 a humanitarian. Also, 'top' executed on an iPad "
+		"always attracts people's attention. So the idea behind CocoaTop is this: I wanted to create something nice, "
 		"gaining knowledge in the process. If you find it useful, well, you're in luck!\n\n"
 		"Ok, on to the fun facts:\n\n"
 		"\u2605 CPU usage sums up not to 100% but to cores\u00D7100%. Moreover, it can actually exceed this value, and it surely will "
@@ -49,25 +50,39 @@
 		"thread increases in a linearly proportional fashion with CPU time obtained, and is periodically divided by the decay "
 		"factor, which is a constant larger than one. Thus, the Mach CPU utilization of the process is a decaying average over "
 		"up to a minute of previous (real) time. Since the time base over which this is computed varies (since processes may be "
-		"very young) it is possible for the sum of all %CPU fields to exceed 100%. And this is exactly why Android sucks.\n\n"
-		"\u2605 Processes and Mach tasks are different things. In fact, it is technically possible to "
-		"create a Mach task without a BSD process. A Mach task can actually be created without threads and memory. Mach tasks "
-		"do not have parent-child relationships, those are implemented at the BSD level. "
-		"In UNIX, it is actually the norm for the parent to outlive its children. A parent can fork (or posix_spawn) children, "
-		"and actually expects them to die. UNIX processes, unlike some humans, have a very distinct and clear meaning in life \u2014 "
-		"to run, and then return a single integer value.\n\n"
-		"\u2605 There's no such thing as a running process, because it is the threads that run, not processes. So why is there a "
-		"'Process running' state? Well, this is taken from the source code of top.\n\n"
-		"\u2605 There is also a column called 'Mach Actual Threads Priority'. What it actually contains is the highest priority of "
-		"a thread within the process. This is also the way original top works. Also, there are several scheduling schemes "
-		"supported by Mach, but only one of them is actually used in iOS \u2014 'Time Sharing'. The other two \u2014 'Round-Robin' "
-		"and 'FIFO' will be indicated in this column using prefixes R: and F: respectively. I added those out of curiosity.\n\n"
-		"\u2605 Apple tightens up security with each new version of iOS, so CocoaTop can no longer show details about task 0 "
-		"(the kernel task) on iOS 8. You can still enjoy this data if you have iOS 7!\n\n"
+		"very young) it is possible for the sum of all %CPU fields to exceed 100%. And this is why Android sucks. Also, because "
+		"of Java, which isn't bad by itself, but... the mobile world?\n\n"
+		"\u2605 Everyone knows about processes, but what about Mach tasks? These are actually different things. In fact, it is "
+		"technically possible to create a Mach task without a BSD process. A Mach task can actually be created without threads "
+		"and memory (ah, the benefits of The Microkernel, my love). Mach tasks do not have parent-child relationships, those are "
+		"implemented at the BSD level. This implies that BSD (or, generally, POSIX) has more morale, but not really. In UNIX, it "
+		"is actually the norm for the parent to outlive its children. Furthermore, a parent actually expects their children to die, "
+		"otherwise they rise as zombies. This is why I love pure microkernels.\n\n"
 		"\u2605 I didn't make an option to kill processes. This seems cruel. But, I'll think about it in later versions. One "
-		"thing I would really prefer is killing zombies, but not sure if that fits with the iOS philosophy."//\n"
+		"thing I would really prefer is killing zombies, but not sure if that fits with the iOS philosophy.\n\n"
+		"\u2605 There's no such thing as a running process, because it is the threads that run, not processes. So why is there a "
+		"'Process running' state? Well, this is done to simplify the output, and actually taken from the original 'top' source "
+		"code. Most process states are calculated from thread states using a simple rule of precedence: i.e. if at least one thread "
+		"is running, the process state is presumed 'R', and so on. The complete list can be seen in the previous pane.\n\n"
+		"\u2605 There is also a column called 'Mach Actual Threads Priority'. What it actually contains is the highest priority of "
+		"a thread within the process. This is also the way original 'top' works. Also, there are several scheduling schemes "
+		"supported by Mach, but only one of them is actually used in iOS \u2014 'Time Sharing'. The other two, 'Round-Robin' "
+		"and 'FIFO', will be marked in this column using prefixes R: and F: respectively, but I've never seen them. I added "
+		"those marks out of curiosity - write me a letter.\n\n"
+		"\u2605 Apple tightens up security with each new version of iOS, so CocoaTop can no longer show details about task 0 "
+		"(the kernel task) on iOS 8. You can still enjoy this data if you have iOS 7! Actually, the iOS could be considered the "
+		"most secure public platform of all times, only if it wasn't so stuffed with backdoors, at least in v.7 ;) Anyways, "
+		"it's better than the other non-evil company ;)\n\n"
+		"\u2605 There's a 'Mach Task Role' column which actually shows the assigned role for GUI apps, like in OS X. I noticed "
+		"this works only on iOS 8."//\n"
 	;
 }
+
+//- (void)viewWillAppear:(BOOL)animated
+//{
+//	[super viewWillAppear:animated];
+//	[self.tableView reloadData];
+//}
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
@@ -104,7 +119,7 @@
 {
 	if (indexPath.section)
 		return UITableViewAutomaticDimension;
-	CGSize maximumSize = CGSizeMake(tableView.contentSize.width - [self cellsMargin] * 2 - 20, 10000);
+	CGSize maximumSize = CGSizeMake(tableView.frame.size.width - [self cellsMargin] * 2 - 20, 10000);
 	CGSize expectedSize = [self.aboutText sizeWithFont:[UIFont systemFontOfSize:16.0] constrainedToSize:maximumSize lineBreakMode:NSLineBreakByWordWrapping];
 	return expectedSize.height + 25;
 }
@@ -118,7 +133,7 @@
 		if (indexPath.row == 0)
 			cell.textLabel.text = @"Donate via PayPal, if you like this stuff";
 		else
-			cell.textLabel.text = @"Email developer";
+			cell.textLabel.text = @"Email for feedback and suggestions";
 		cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
 		cell.selectionStyle = UITableViewCellSelectionStyleBlue;
 		return cell;

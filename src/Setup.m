@@ -182,6 +182,9 @@ struct optionsList_t {
 				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
 				cell.selectionStyle = UITableViewCellSelectionStyleBlue;
 				label.tag = indexPath.row + 1;
+			cell.contentView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleWidth;
+			cell.contentView.autoresizesSubviews = YES;
+				label.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleWidth;
 				[cell.contentView addSubview:label];
 				[label release];
 			}
