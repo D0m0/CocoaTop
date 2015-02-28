@@ -7,7 +7,7 @@
 - (instancetype)initWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size
 {
 	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
-	self.accessoryView = [UIView new];
+	self.accessoryView = [[UIView new] autorelease];
 	firstColWidth = size.width - 5;
 	NSUInteger totalCol = firstColWidth;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];

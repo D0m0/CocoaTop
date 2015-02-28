@@ -17,6 +17,7 @@
 @property (retain) PSColumn *sorter;
 @property (retain) UILabel *status;
 @property (assign) BOOL sortdesc;
+@property (assign) CGFloat interval;
 @property (retain) NSString *majorOptions;
 @end
 
@@ -83,10 +84,9 @@
 
 - (void)refreshProcs:(NSTimer *)timer
 {
-	CGFloat interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
-	if (interval >= 0.1) {
+	if (self.interval >= 0.1) {
 		[self.timer invalidate];
-		self.timer = [NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
+		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
 	}
 	if (self.tableView.editing)
 		return;
@@ -169,9 +169,9 @@
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self refreshProcs];
-	CGFloat interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
-	if (interval >= 0.1)
-		self.timer = [NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
+	self.interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
+	if (self.interval >= 0.1)
+		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
