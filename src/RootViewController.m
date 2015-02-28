@@ -83,6 +83,13 @@
 
 - (void)refreshProcs:(NSTimer *)timer
 {
+	CGFloat interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
+	if (interval >= 0.1) {
+		[self.timer invalidate];
+		self.timer = [NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
+	}
+	if (self.tableView.editing)
+		return;
 	[self.procs refresh];
 	[self.procs sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
@@ -164,7 +171,7 @@
 	[self refreshProcs];
 	CGFloat interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	if (interval >= 0.1)
-		self.timer = [NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:YES];
+		self.timer = [NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -240,6 +247,18 @@
 		cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
 	else if (indexPath.row & 1)
 		cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
+}
+
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	if (editingStyle == UITableViewCellEditingStyleDelete) {
+		//add code here for when you hit delete
+		PSProc *proc = self.procs[indexPath.row];
+		kill(proc.pid, SIGTERM);	// SIGQUIT, SIGKILL
+//		[self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+		[self.timer performSelector:@selector(fire) withObject:nil afterDelay:.1f];
+//		[self.timer fire];
+	}
 }
 
 #pragma mark -
