@@ -57,7 +57,7 @@ NSString *psProcessTty(PSProc *proc)
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		allColumns = [@[
-		[PSColumn psColumnWithName:@"Command line" descr:@"Command line" align:NSTextAlignmentLeft width:300 refresh:NO
+		[PSColumn psColumnWithName:@"Command line" descr:@"Command line" align:NSTextAlignmentLeft width:170 refresh:NO
 			data:^NSString*(PSProc *proc) { return proc.name; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }],
 		[PSColumn psColumnWithName:@"PID" descr:@"Process ID" align:NSTextAlignmentRight width:50 refresh:NO

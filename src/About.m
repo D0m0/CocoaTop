@@ -108,7 +108,7 @@
 -(CGFloat)cellsMargin
 {
 	CGFloat widthTable = self.tableView.bounds.size.width;
-//	if (isPhone)              return (10.0f);
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) return (10.0f);
 	if (widthTable <= 400.0f) return (10.0f);
 	if (widthTable <= 546.0f) return (31.0f);
 	if (widthTable >= 720.0f) return (45.0f);

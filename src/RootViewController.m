@@ -51,7 +51,10 @@
 	[setupButton release];
 	[setupColsButton release];
 
-	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 150, 40)];
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
+		self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 80, 40)];
+	else
+		self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 150, 40)];
 	self.status.backgroundColor = [UIColor clearColor];
 	self.status.userInteractionEnabled = YES;
 	[self.status addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(refreshProcs)]];
@@ -84,12 +87,18 @@
 	[self.procs sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
 	// Status bar
-	self.status.text = [NSString stringWithFormat:@"\u2699 Processes: %u   Threads: %u   RAM: %.1f/%.1f MB   CPU: %.1f%%",
-		self.procs.count,
-		self.procs.threadCount,
-		(float)self.procs.memUsed / 1024 / 1024,
-		(float)self.procs.memTotal / 1024 / 1024,
-		(float)self.procs.totalCpu / 10];
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
+		self.status.text = [NSString stringWithFormat:@"%.1f/%.1f MB  CPU: %.1f%%",
+			(float)self.procs.memUsed / 1024 / 1024,
+			(float)self.procs.memTotal / 1024 / 1024,
+			(float)self.procs.totalCpu / 10];
+	else
+		self.status.text = [NSString stringWithFormat:@"\u2699 Processes: %u   Threads: %u   RAM: %.1f/%.1f MB   CPU: %.1f%%",
+			self.procs.count,
+			self.procs.threadCount,
+			(float)self.procs.memUsed / 1024 / 1024,
+			(float)self.procs.memTotal / 1024 / 1024,
+			(float)self.procs.totalCpu / 10];
 	// Uptime, CPU Freq, Cores, Cache L1/L2
 	if (timer == nil) {
 		// First time refresh: we don't need info about new processes
