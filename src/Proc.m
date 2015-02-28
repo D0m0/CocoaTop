@@ -358,6 +358,14 @@ int mach_state_order(int s, long sleep_time)
 	return (PSProc *)self.procs[idx];
 }
 
+- (PSProc *)procForPid:(pid_t)pid
+{
+	NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+		return ((PSProc *)obj).pid == pid;
+	}];
+	return idx == NSNotFound ? nil : (PSProc *)self.procs[idx];
+}
+
 - (void)dealloc
 {
 	[_procs release];

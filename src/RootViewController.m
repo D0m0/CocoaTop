@@ -6,10 +6,8 @@
 #import "Proc.h"
 
 @interface RootViewController()
-{
-	NSUInteger firstColWidth;
-	NSInteger colState;
-}
+@property (assign) NSUInteger firstColWidth;
+@property (assign) NSInteger colState;
 @property (retain) GridHeaderView *header;
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
@@ -67,7 +65,7 @@
 	self.majorOptions = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"UseAppleIconApi"], [def stringForKey:@"FirstColumnStyle"]];
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
-	colState = 0;
+	self.colState = 0;
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
@@ -84,10 +82,13 @@
 
 - (void)refreshProcs:(NSTimer *)timer
 {
+	// Rearm the timer: this way the timer will wait for a full interval after each 'fire'
 	if (self.interval >= 0.1) {
-		[self.timer invalidate];
+		if (self.timer.isValid)
+			[self.timer invalidate];
 		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
 	}
+	// Do not refresh while the user is killing a process
 	if (self.tableView.editing)
 		return;
 	[self.procs refresh];
@@ -130,7 +131,7 @@
 {
 	CGPoint loc = [gestureRecognizer locationInView:self.header];
 	for (PSColumn *col in self.columns) {
-		NSUInteger width = col.tag == 1 ? firstColWidth : col.width;
+		NSUInteger width = col.tag == 1 ? self.firstColWidth : col.width;
 		if (loc.x > width) {
 			loc.x -= width;
 			continue;
@@ -156,22 +157,20 @@
 		self.majorOptions = majorCheck;
 		self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	}
-	firstColWidth = self.tableView.bounds.size.width;
-	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
+	self.firstColWidth = self.tableView.bounds.size.width;
+	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
 	// Column state has changed - recreate all table cells
 // TODO: Optimize this!
-	colState++;
+	self.colState++;
 	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"];
 	if (sortCol >= self.columns.count) sortCol = self.columns.count - 1;
 	self.sorter = self.columns[sortCol];
 	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
-	[self refreshProcs];
 	self.interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
-	if (self.interval >= 0.1)
-		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
+	[self refreshProcs];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -193,9 +192,9 @@
 		(self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft || self.interfaceOrientation == UIInterfaceOrientationLandscapeRight))
 		return;
 	// Size changed - need to redraw
-	firstColWidth = self.tableView.bounds.size.width;
-	self.columns = [PSColumn psGetShownColumnsWithWidth:&firstColWidth];
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(firstColWidth, self.tableView.sectionHeaderHeight)];
+	self.firstColWidth = self.tableView.bounds.size.width;
+	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self.timer fire];
 }
@@ -206,7 +205,6 @@
 // Customize the number of sections in the table view.
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-//TODO: section 1: system processes, section 2: user processes
 	return 1;
 }
 
@@ -228,10 +226,10 @@
 	if (indexPath.row >= self.procs.count)
 		return nil;
 	PSProc *proc = self.procs[indexPath.row];
-	NSString *CellIdentifier = [NSString stringWithFormat:@"%u-%u-%u", firstColWidth, colState, proc.icon ? 1 : 0];
+	NSString *CellIdentifier = [NSString stringWithFormat:@"%u-%u-%u", self.firstColWidth, self.colState, proc.icon ? 1 : 0];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil)
-		cell = [GridTableCell cellWithId:CellIdentifier columns:self.columns size:CGSizeMake(firstColWidth, tableView.rowHeight)];
+		cell = [GridTableCell cellWithId:CellIdentifier columns:self.columns size:CGSizeMake(self.firstColWidth, tableView.rowHeight)];
 //		[myObject configureCell:cell];
 // TODO: configureCell vs. updateCell !!!!
 	[cell updateWithProc:proc columns:self.columns];
@@ -252,12 +250,14 @@
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (editingStyle == UITableViewCellEditingStyleDelete) {
-		//add code here for when you hit delete
 		PSProc *proc = self.procs[indexPath.row];
-		kill(proc.pid, SIGTERM);	// SIGQUIT, SIGKILL
-//		[self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+		if (kill(proc.pid, SIGTERM)) {	// SIGQUIT, SIGKILL
+			NSString *msg = [NSString stringWithFormat:@"Error %d while terminating app", errno];
+			UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:proc.name message:msg delegate:nil cancelButtonTitle:@"No" otherButtonTitles:nil] autorelease];
+			[alertView show];
+		}
+		// Refresh immediately to show process termination
 		[self.timer performSelector:@selector(fire) withObject:nil afterDelay:.1f];
-//		[self.timer fire];
 	}
 }
 
@@ -268,7 +268,7 @@
 {
 	UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
 	if (cell) {
-		UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:cell.textLabel.text message:cell.detailTextLabel.text delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+		UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:cell.textLabel.text message:cell.detailTextLabel.text delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
 		[alertView show];
 	}
 }
