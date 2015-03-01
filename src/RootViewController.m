@@ -251,15 +251,42 @@
 {
 	if (editingStyle == UITableViewCellEditingStyleDelete) {
 		PSProc *proc = self.procs[indexPath.row];
-		if (kill(proc.pid, SIGTERM)) {	// SIGQUIT, SIGKILL
+		// task_for_pid(mach_task_self(), pid, &task)
+		// task_terminate(task)
+		if (kill(proc.pid, SIGTERM)) {	// SIGTERM, SIGQUIT, SIGKILL
 			NSString *msg = [NSString stringWithFormat:@"Error %d while terminating app", errno];
-			UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:proc.name message:msg delegate:nil cancelButtonTitle:@"No" otherButtonTitles:nil] autorelease];
+			UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:proc.name message:msg delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
 			[alertView show];
 		}
 		// Refresh immediately to show process termination
 		[self.timer performSelector:@selector(fire) withObject:nil afterDelay:.1f];
 	}
 }
+/*
+- (NSString *)tableView:(UITableView *)tableView titleForSwipeAccessoryButtonForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	return @"Kill";
+}
+
+- (void)tableView:(UITableView *)tableView swipeAccessoryButtonPushedForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:@"SIGKILL!" message:@"Killemall!" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+	[alertView show];
+}
+
+- (id)tableView:(UITableView *)tableView editActionsForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	UITableViewRowAction *moreRowAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDefault title:@"More" handler:
+		(void (^)(UITableViewRowAction *action, NSIndexPath *indexPath))handler
+{action, indexpath in println("MORE•ACTION");
+	});
+	moreRowAction.backgroundColor = UIColor(red: 0.298, green: 0.851, blue: 0.3922, alpha: 1.0);
+	var deleteRowAction = UITableViewRowAction(style: UITableViewRowActionStyle.Default, title: "Delete", handler:{action, indexpath in
+		println("DELETE•ACTION");
+	});
+	return [deleteRowAction, moreRowAction];
+}
+*/
 
 #pragma mark -
 #pragma mark Table view delegate
