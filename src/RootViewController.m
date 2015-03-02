@@ -98,9 +98,8 @@
 	[self.tableView reloadData];
 	// Status bar
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
-		self.status.text = [NSString stringWithFormat:@"%.1f/%.1f MB  CPU: %.1f%%",
+		self.status.text = [NSString stringWithFormat:@"%.1f used, CPU: %.1f%%",
 			(float)self.procs.memUsed / 1024 / 1024,
-			(float)self.procs.memTotal / 1024 / 1024,
 			(float)self.procs.totalCpu / 10];
 	else
 		self.status.text = [NSString stringWithFormat:@"\u2699 Processes: %u   Threads: %u   RAM: %.1f/%.1f MB   CPU: %.1f%%",
