@@ -54,7 +54,6 @@
 	for (int i = 1; i < proc.args.count; i++)
 		full = [full stringByAppendingFormat:@" %@", proc.args[i]];
 	self.detailTextLabel.text = full;
-//	self.indentationLevel = proc.ppid <= 1 ? 0 : 1;
 	if (proc.icon)
 		[self.imageView initWithImage:proc.icon];
 	for (PSColumn *col in columns)
@@ -71,6 +70,9 @@
 		frame.origin.x = 5;
 		frame.size.width -= 10;
 		self.contentView.frame = frame;
+	frame = self.imageView.frame;
+		frame.origin.x = 0;
+		self.imageView.frame = frame;
 	frame = self.textLabel.frame;
 		frame.origin.x = imageWidth;
 		if (frame.origin.x) frame.origin.x += 5;
@@ -99,6 +101,12 @@
 - (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size
 {
 	self = [super initWithReuseIdentifier:@"Header"];
+	if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0)
+		self.backgroundView = ({
+			UIView * view = [[UIView alloc] initWithFrame:self.bounds];
+			view.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
+			view;
+		});
 	NSUInteger totalCol = 0;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];

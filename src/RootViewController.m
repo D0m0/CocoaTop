@@ -65,6 +65,8 @@
 	self.majorOptions = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"UseAppleIconApi"], [def stringForKey:@"FirstColumnStyle"]];
 	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
+	if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
+		[self.tableView setSeparatorInset:UIEdgeInsetsZero];
 	self.colState = 0;
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
@@ -183,6 +185,11 @@
 	self.columns = nil;
 }
 
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{	// For future iOS5 support
+	return YES;
+}
+
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
 	if ((fromInterfaceOrientation == UIInterfaceOrientationPortrait || fromInterfaceOrientation == UIInterfaceOrientationPortraitUpsideDown) &&
@@ -245,48 +252,45 @@
 		cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
 	else if (indexPath.row & 1)
 		cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
+	else
+		cell.backgroundColor = [UIColor whiteColor];
+}
+
+- (void)tableView:(UITableView *)tableView sendSignal:(int)sig toProcessAtIndexPath:(NSIndexPath *)indexPath
+{
+	PSProc *proc = self.procs[indexPath.row];
+	// task_for_pid(mach_task_self(), pid, &task)
+	// task_terminate(task)
+	if (kill(proc.pid, sig)) {
+		NSString *msg = [NSString stringWithFormat:@"Error %d while terminating app", errno];
+		UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:proc.name message:msg delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+		[alertView show];
+	}
+	// Refresh immediately to show process termination
+	tableView.editing = NO;
+	[self.timer performSelector:@selector(fire) withObject:nil afterDelay:.1f];
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	return @"TERM";
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForSwipeAccessoryButtonForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	return @"KILL";
 }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if (editingStyle == UITableViewCellEditingStyleDelete) {
-		PSProc *proc = self.procs[indexPath.row];
-		// task_for_pid(mach_task_self(), pid, &task)
-		// task_terminate(task)
-		if (kill(proc.pid, SIGTERM)) {	// SIGTERM, SIGQUIT, SIGKILL
-			NSString *msg = [NSString stringWithFormat:@"Error %d while terminating app", errno];
-			UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:proc.name message:msg delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-			[alertView show];
-		}
-		// Refresh immediately to show process termination
-		[self.timer performSelector:@selector(fire) withObject:nil afterDelay:.1f];
-	}
-}
-/*
-- (NSString *)tableView:(UITableView *)tableView titleForSwipeAccessoryButtonForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-	return @"Kill";
+	if (editingStyle == UITableViewCellEditingStyleDelete)
+		[self tableView:tableView sendSignal:SIGTERM toProcessAtIndexPath:indexPath];
 }
 
 - (void)tableView:(UITableView *)tableView swipeAccessoryButtonPushedForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:@"SIGKILL!" message:@"Killemall!" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-	[alertView show];
+	[self tableView:tableView sendSignal:SIGKILL toProcessAtIndexPath:indexPath];
 }
-
-- (id)tableView:(UITableView *)tableView editActionsForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-	UITableViewRowAction *moreRowAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDefault title:@"More" handler:
-		(void (^)(UITableViewRowAction *action, NSIndexPath *indexPath))handler
-{action, indexpath in println("MORE•ACTION");
-	});
-	moreRowAction.backgroundColor = UIColor(red: 0.298, green: 0.851, blue: 0.3922, alpha: 1.0);
-	var deleteRowAction = UITableViewRowAction(style: UITableViewRowActionStyle.Default, title: "Delete", handler:{action, indexpath in
-		println("DELETE•ACTION");
-	});
-	return [deleteRowAction, moreRowAction];
-}
-*/
 
 #pragma mark -
 #pragma mark Table view delegate
