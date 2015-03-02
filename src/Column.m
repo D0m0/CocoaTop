@@ -140,9 +140,9 @@ NSString *psProcessTty(PSProc *proc)
 	for (NSNumber* order in columnOrder)
 		if (order.unsignedIntegerValue < cols.count) {
 			PSColumn *col = cols[order.unsignedIntegerValue];
+			if (*width < col.width) break;
 			col.tag = tag++;
 			[shownCols addObject:col];
-			if (*width < col.width) break;
 			*width -= col.width;
 		}
 	*width += ((PSColumn *)shownCols[0]).width;
