@@ -20,7 +20,7 @@
 
 
 @interface AboutViewController()
-@property (retain) NSString *aboutText;
+@property (retain) UILabel *aboutLabel;
 @end
 
 @implementation AboutViewController
@@ -29,8 +29,12 @@
 {
 	[super viewDidLoad];
 	self.navigationItem.title = @"The Story";
-	self.aboutText =
-		@"Hello, friends!\n\n"
+	self.aboutLabel = [[UILabel alloc] init];
+	self.aboutLabel.font = [UIFont systemFontOfSize:16.0];
+	self.aboutLabel.numberOfLines = 0;
+	self.aboutLabel.lineBreakMode = NSLineBreakByWordWrapping;
+	self.aboutLabel.tag = 1;
+	self.aboutLabel.text = @"Hello, friends!\n\n"
 		"This text should clarify some questionable concepts implemented in CocoaTop, the ideas behind those concepts, "
 		"and the idea behind the application itself. Also, it should be a fun read, at least for some ;)\n\n"
 		"Before we begin I would like to thank Luis Finke for making miniCode (available in Cydia) \u2014 a nice alternative "
@@ -78,12 +82,6 @@
 	;
 }
 
-//- (void)viewWillAppear:(BOOL)animated
-//{
-//	[super viewWillAppear:animated];
-//	[self.tableView reloadData];
-//}
-
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
 	[self.tableView reloadData];
@@ -119,9 +117,19 @@
 {
 	if (indexPath.section)
 		return UITableViewAutomaticDimension;
-	CGSize maximumSize = CGSizeMake(tableView.frame.size.width - [self cellsMargin] * 2 - 20, 10000);
-	CGSize expectedSize = [self.aboutText sizeWithFont:[UIFont systemFontOfSize:16.0] constrainedToSize:maximumSize lineBreakMode:NSLineBreakByWordWrapping];
-	return expectedSize.height + 25;
+	CGRect frame = self.aboutLabel.frame;
+	frame.origin.x = [self cellsMargin];
+	frame.origin.y = 12;
+	frame.size.width = tableView.frame.size.width - frame.origin.x * 2 - 20;
+	frame.size.height = MAXFLOAT;
+	self.aboutLabel.frame = frame;
+	[self.aboutLabel sizeToFit];
+	return self.aboutLabel.frame.size.height + 25;
+//	return [self.aboutLabel sizeThatFits:CGSizeMake(tableView.frame.size.width - [self cellsMargin] * 2 - 20, MAXFLOAT)].height + 25;
+//	return [self.aboutLabel sizeThatFits:CGSizeMake(self.aboutLabel.frame.size.width, MAXFLOAT)].height + 25;
+//	CGSize maximumSize = CGSizeMake(tableView.frame.size.width - [self cellsMargin] * 2 - 20, MAXFLOAT);
+//	CGSize expectedSize = [self.aboutText sizeWithFont:[UIFont systemFontOfSize:16.0] constrainedToSize:maximumSize lineBreakMode:NSLineBreakByWordWrapping];
+//	return expectedSize.height + 25;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -139,12 +147,17 @@
 		return cell;
 	} else {
 		UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"AboutBig"];
-		if (cell == nil)
+		if (cell == nil) {
 			cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"AboutBig"];
-		cell.textLabel.numberOfLines = 0;
-		cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
-		cell.textLabel.font = [UIFont systemFontOfSize:16.0];
-		cell.textLabel.text = self.aboutText;
+			[cell.contentView addSubview:self.aboutLabel];
+		}
+	CGRect frame = self.aboutLabel.frame;
+	frame.origin.y = 12;
+	self.aboutLabel.frame = frame;
+//		cell.textLabel.numberOfLines = 0;
+//		cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
+//		cell.textLabel.font = [UIFont systemFontOfSize:16.0];
+//		cell.textLabel.text = self.aboutText;
 		cell.selectionStyle = UITableViewCellSelectionStyleNone;
 		return cell;
 	}
@@ -177,7 +190,7 @@
 
 - (void)dealloc
 {
-	[_aboutText release];
+	[_aboutLabel release];
 	[super dealloc];
 }
 
