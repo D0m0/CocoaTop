@@ -172,21 +172,22 @@ struct optionsList_t {
 			cell.accessoryType = option->accType;
 			cell.accessoryView = nil;
 			if ([option->accessory isEqualToString:@"UILabel"]) {
-				UIView *lbl = [cell viewWithTag:indexPath.row + 1];
-				if (lbl) [lbl removeFromSuperview];
-				UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
-				label.textAlignment = NSTextAlignmentRight;
-				label.font = [UIFont systemFontOfSize:16.0];
-				label.textColor = [UIColor grayColor];
-				label.backgroundColor = [UIColor clearColor];
-				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
 				cell.selectionStyle = UITableViewCellSelectionStyleBlue;
-				label.tag = indexPath.row + 1;
-			cell.contentView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleWidth;
-			cell.contentView.autoresizesSubviews = YES;
-				label.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleWidth;
-				[cell.contentView addSubview:label];
-				[label release];
+				cell.contentView.autoresizesSubviews = YES;
+				UILabel *label = (UILabel *)[cell viewWithTag:indexPath.row + 1];
+				if (!label) {
+					label = [[UILabel alloc] initWithFrame:CGRectZero];
+					label.textAlignment = NSTextAlignmentRight;
+					label.font = [UIFont systemFontOfSize:16.0];
+					label.textColor = [UIColor grayColor];
+					label.backgroundColor = [UIColor clearColor];
+					label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
+					label.tag = indexPath.row + 1;
+					label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleWidth;
+					[cell.contentView addSubview:label];
+					[label release];
+				} else
+					label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
 			}
 		}
 	} else {
@@ -247,8 +248,10 @@ struct optionsList_t {
 {
 	if (indexPath.section == 0 && [optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
 		UIView *label = [cell viewWithTag:indexPath.row + 1];
+		[cell.textLabel sizeToFit];
+		CGFloat labelstart = cell.textLabel.frame.size.width + 20;
 		CGSize size = cell.contentView.frame.size;
-		label.frame = CGRectMake(size.width - 210, 0, 200, size.height);
+		label.frame = CGRectMake(labelstart, 0, size.width - labelstart, size.height);
 	}
 }
 

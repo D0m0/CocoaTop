@@ -115,21 +115,11 @@
 
 - (CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if (indexPath.section)
-		return UITableViewAutomaticDimension;
-	CGRect frame = self.aboutLabel.frame;
-	frame.origin.x = [self cellsMargin];
-	frame.origin.y = 12;
-	frame.size.width = tableView.frame.size.width - frame.origin.x * 2 - 20;
-	frame.size.height = MAXFLOAT;
-	self.aboutLabel.frame = frame;
-	[self.aboutLabel sizeToFit];
-	return self.aboutLabel.frame.size.height + 25;
-//	return [self.aboutLabel sizeThatFits:CGSizeMake(tableView.frame.size.width - [self cellsMargin] * 2 - 20, MAXFLOAT)].height + 25;
-//	return [self.aboutLabel sizeThatFits:CGSizeMake(self.aboutLabel.frame.size.width, MAXFLOAT)].height + 25;
-//	CGSize maximumSize = CGSizeMake(tableView.frame.size.width - [self cellsMargin] * 2 - 20, MAXFLOAT);
-//	CGSize expectedSize = [self.aboutText sizeWithFont:[UIFont systemFontOfSize:16.0] constrainedToSize:maximumSize lineBreakMode:NSLineBreakByWordWrapping];
-//	return expectedSize.height + 25;
+	if (indexPath.section == 0) {
+		CGSize maxSize = CGSizeMake(tableView.frame.size.width - [self cellsMargin] * 2 - 20, MAXFLOAT);
+		return [self.aboutLabel sizeThatFits:maxSize].height + 25;
+	}
+	return UITableViewAutomaticDimension;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -151,19 +141,24 @@
 			cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"AboutBig"];
 			[cell.contentView addSubview:self.aboutLabel];
 		}
-	CGRect frame = self.aboutLabel.frame;
-	frame.origin.y = 12;
-	self.aboutLabel.frame = frame;
-//		cell.textLabel.numberOfLines = 0;
-//		cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
-//		cell.textLabel.font = [UIFont systemFontOfSize:16.0];
-//		cell.textLabel.text = self.aboutText;
 		cell.selectionStyle = UITableViewCellSelectionStyleNone;
+		//CGFloat margin = [self cellsMargin];
+		//self.aboutLabel.frame = CGRectMake(margin, 12, tableView.frame.size.width - margin * 2 - 20, MAXFLOAT);
+		//[self.aboutLabel sizeToFit];
+		//self.aboutLabel.frame = CGRectMake(margin, 12, self.aboutLabel.frame.size.width, self.aboutLabel.frame.size.height);
 		return cell;
 	}
 }
-// Mac OS X and iOS internals
-// Mach tasks vs. processes
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	if (indexPath.section == 0) {
+		CGFloat margin = [self cellsMargin];
+		self.aboutLabel.frame = CGRectMake(margin, 12, tableView.frame.size.width - margin * 2 - 20, MAXFLOAT);
+		[self.aboutLabel sizeToFit];
+		self.aboutLabel.frame = CGRectMake(margin, 12, self.aboutLabel.frame.size.width, self.aboutLabel.frame.size.height);
+	}
+}
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
