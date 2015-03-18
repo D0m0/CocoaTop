@@ -74,11 +74,11 @@
 		"and 'FIFO', will be marked in this column using prefixes R: and F: respectively, but I've never seen them. I added "
 		"those marks out of curiosity - write me a letter.\n\n"
 		"\u2605 Apple tightens up security with each new version of iOS, so CocoaTop can no longer show details about task 0 "
-		"(the kernel task) on iOS 8. You can still enjoy this data if you have iOS 7! Actually, the iOS could be considered the "
+		"(the kernel task) on iOS\u00A08. You can still enjoy this data if you have iOS\u00A07! Actually, the iOS could be considered the "
 		"most secure public platform of all times, only if it wasn't so stuffed with backdoors, at least in v.7 ;) Anyways, "
 		"it's better than the other non-evil company ;)\n\n"
-		"\u2605 There's a 'Mach Task Role' column which actually shows the assigned role for GUI apps, like in OS X. I noticed "
-		"this works only on iOS 8."//\n"
+		"\u2605 There's a 'Mach Task Role' column which actually shows the assigned role for GUI apps, like in OS\u00A0X. I noticed "
+		"this works only on iOS\u00A08."//\n"
 	;
 }
 
@@ -103,9 +103,10 @@
 	return section ? 2 : 1;
 }
 
--(CGFloat)cellsMargin
+-(CGFloat)cellMargin
 {
 	CGFloat widthTable = self.tableView.bounds.size.width;
+	if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) return (15.0f);
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) return (10.0f);
 	if (widthTable <= 400.0f) return (10.0f);
 	if (widthTable <= 546.0f) return (31.0f);
@@ -113,19 +114,25 @@
 	return (31.0f + ceilf((widthTable - 547.0f)/13.0f));
 }
 
-- (CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+-(CGFloat)cellWidth:(UITableView *)tableView
 {
-	if (indexPath.section == 0) {
-		CGSize maxSize = CGSizeMake(tableView.frame.size.width - [self cellsMargin] * 2 - 20, MAXFLOAT);
-		return [self.aboutLabel sizeThatFits:maxSize].height + 25;
-	}
+	CGFloat width = tableView.frame.size.width - [self cellMargin] * 2;
+	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1) width -= 20;
+	return width;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	if (indexPath.section == 0)
+		return [self.aboutLabel sizeThatFits:CGSizeMake([self cellWidth:tableView], MAXFLOAT)].height + 25;
 	return UITableViewAutomaticDimension;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+	UITableViewCell *cell;
 	if (indexPath.section) {
-		UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"About"];
+		cell = [tableView dequeueReusableCellWithIdentifier:@"About"];
 		if (cell == nil)
 			cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"About"];
 		if (indexPath.row == 0)
@@ -134,29 +141,23 @@
 			cell.textLabel.text = @"Email for feedback and suggestions";
 		cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
 		cell.selectionStyle = UITableViewCellSelectionStyleBlue;
-		return cell;
 	} else {
-		UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"AboutBig"];
+		cell = [tableView dequeueReusableCellWithIdentifier:@"AboutBig"];
 		if (cell == nil) {
 			cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"AboutBig"];
 			[cell.contentView addSubview:self.aboutLabel];
 		}
 		cell.selectionStyle = UITableViewCellSelectionStyleNone;
-		//CGFloat margin = [self cellsMargin];
-		//self.aboutLabel.frame = CGRectMake(margin, 12, tableView.frame.size.width - margin * 2 - 20, MAXFLOAT);
-		//[self.aboutLabel sizeToFit];
-		//self.aboutLabel.frame = CGRectMake(margin, 12, self.aboutLabel.frame.size.width, self.aboutLabel.frame.size.height);
-		return cell;
 	}
+	return cell;
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (indexPath.section == 0) {
-		CGFloat margin = [self cellsMargin];
-		self.aboutLabel.frame = CGRectMake(margin, 12, tableView.frame.size.width - margin * 2 - 20, MAXFLOAT);
+		self.aboutLabel.frame = CGRectMake([self cellMargin], 12, [self cellWidth:tableView], MAXFLOAT);
 		[self.aboutLabel sizeToFit];
-		self.aboutLabel.frame = CGRectMake(margin, 12, self.aboutLabel.frame.size.width, self.aboutLabel.frame.size.height);
+		self.aboutLabel.frame = CGRectMake([self cellMargin], 12, self.aboutLabel.frame.size.width, self.aboutLabel.frame.size.height);
 	}
 }
 
