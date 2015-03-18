@@ -31,6 +31,7 @@
 	self.navigationItem.title = @"The Story";
 	self.aboutLabel = [[UILabel alloc] init];
 	self.aboutLabel.font = [UIFont systemFontOfSize:16.0];
+	self.aboutLabel.backgroundColor = [UIColor clearColor];
 	self.aboutLabel.numberOfLines = 0;
 	self.aboutLabel.lineBreakMode = NSLineBreakByWordWrapping;
 	self.aboutLabel.tag = 1;
@@ -117,7 +118,8 @@
 -(CGFloat)cellWidth:(UITableView *)tableView
 {
 	CGFloat width = tableView.frame.size.width - [self cellMargin] * 2;
-	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1) width -= 20;
+	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1)
+		width -= 20;
 	return width;
 }
 
@@ -145,9 +147,9 @@
 		cell = [tableView dequeueReusableCellWithIdentifier:@"AboutBig"];
 		if (cell == nil) {
 			cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"AboutBig"];
+			cell.selectionStyle = UITableViewCellSelectionStyleNone;
 			[cell.contentView addSubview:self.aboutLabel];
 		}
-		cell.selectionStyle = UITableViewCellSelectionStyleNone;
 	}
 	return cell;
 }
