@@ -41,19 +41,22 @@
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-//	'GEAR' (\u2699)		'GEAR WITHOUT HUB' (\u26ED)
-	UIBarButtonItem *setupButton = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStylePlain
-		target:self action:@selector(openSettings)];
-	UIBarButtonItem *setupColsButton = [[UIBarButtonItem alloc] initWithTitle:@"Columns" style:UIBarButtonItemStylePlain
-		target:self action:@selector(openColSettings)];
+	bool isPhone = UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone;
+
+	UIBarButtonItem *setupButton = [[UIBarButtonItem alloc] initWithTitle: isPhone ? @"\u2699" : @"Settings"
+		style:UIBarButtonItemStylePlain target:self action:@selector(openSettings)];
+	UIBarButtonItem *setupColsButton = [[UIBarButtonItem alloc] initWithTitle: isPhone ? @"\u25EB" : @"Columns"
+		style:UIBarButtonItemStylePlain target:self action:@selector(openColSettings)];
+	if (isPhone) {
+		NSDictionary *font = [NSDictionary dictionaryWithObject:[UIFont systemFontOfSize:25.0] forKey:NSFontAttributeName];
+		[setupButton setTitleTextAttributes:font forState:UIControlStateNormal];
+		[setupColsButton setTitleTextAttributes:font forState:UIControlStateNormal];
+	}
 	self.navigationItem.rightBarButtonItems = @[setupButton, setupColsButton];
 	[setupButton release];
 	[setupColsButton release];
 
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
-		self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 80, 40)];
-	else
-		self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - 150, 40)];
+	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - (isPhone ? 80 : 150), 40)];
 	self.status.backgroundColor = [UIColor clearColor];
 	self.status.userInteractionEnabled = YES;
 	[self.status addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(refreshProcs)]];
@@ -98,7 +101,7 @@
 	[self.tableView reloadData];
 	// Status bar
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
-		self.status.text = [NSString stringWithFormat:@"%.1f used, CPU: %.1f%%",
+		self.status.text = [NSString stringWithFormat:@"RAM: %.1f MB  CPU: %.1f%%",
 			(float)self.procs.memUsed / 1024 / 1024,
 			(float)self.procs.totalCpu / 10];
 	else
