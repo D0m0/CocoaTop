@@ -7,7 +7,6 @@
 
 @interface RootViewController()
 @property (assign) NSUInteger firstColWidth;
-@property (assign) NSInteger colState;
 @property (retain) GridHeaderView *header;
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
@@ -16,7 +15,8 @@
 @property (retain) UILabel *status;
 @property (assign) BOOL sortdesc;
 @property (assign) CGFloat interval;
-@property (retain) NSString *majorOptions;
+@property (assign) NSUInteger configId;
+@property (retain) NSString *configChange;
 @end
 
 @implementation RootViewController
@@ -59,18 +59,14 @@
 	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - (isPhone ? 80 : 150), 40)];
 	self.status.backgroundColor = [UIColor clearColor];
 	self.status.userInteractionEnabled = YES;
-	[self.status addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(refreshProcs)]];
+	[self.status addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(refreshProcs:)]];
 	UIBarButtonItem *cpuLoad = [[UIBarButtonItem alloc] initWithCustomView:self.status];
 	self.navigationItem.leftBarButtonItem = cpuLoad;
 	[cpuLoad release];
 
-	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
-	self.majorOptions = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"UseAppleIconApi"], [def stringForKey:@"FirstColumnStyle"]];
-	self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
 		[self.tableView setSeparatorInset:UIEdgeInsetsZero];
-	self.colState = 0;
 	// Default column order
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
@@ -83,6 +79,8 @@
 		@"CpuGraph" : @NO,
 		@"FirstColumnStyle" : @"Bundle Identifier",
 	}];
+	self.configChange = @"";
+	self.configId = 0;
 }
 
 - (void)refreshProcs:(NSTimer *)timer
@@ -100,6 +98,7 @@
 	[self.procs sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
 	// Status bar
+// Also add: Uptime, CPU Freq, Cores, Cache L1/L2
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
 		self.status.text = [NSString stringWithFormat:@"RAM: %.1f MB  CPU: %.1f%%",
 			(float)self.procs.memUsed / 1024 / 1024,
@@ -111,9 +110,9 @@
 			(float)self.procs.memUsed / 1024 / 1024,
 			(float)self.procs.memTotal / 1024 / 1024,
 			(float)self.procs.totalCpu / 10];
-	// Uptime, CPU Freq, Cores, Cache L1/L2
+	// First time refresh?
 	if (timer == nil) {
-		// First time refresh: we don't need info about new processes
+		// We don't need info about new processes, they are all new :)
 		[self.procs setAllDisplayed:ProcDisplayNormal];
 	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
 		// If there's a new process, scroll to it
@@ -124,11 +123,6 @@
 		// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 		// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	}
-}
-
-- (void)refreshProcs
-{
-	[self refreshProcs:nil];
 }
 
 - (void)sortHeader:(UIGestureRecognizer *)gestureRecognizer
@@ -154,18 +148,18 @@
 {
 	[super viewWillAppear:animated];
 
-	// Check if some major options changed
+	// When major options change, process list is rebuilt from scratch
 	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
-	NSString *majorCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"UseAppleIconApi"], [def stringForKey:@"FirstColumnStyle"]];
-	if (![self.majorOptions isEqualToString:majorCheck]) {
-		self.majorOptions = majorCheck;
+	NSString *configCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"UseAppleIconApi"], [def stringForKey:@"FirstColumnStyle"]];
+	if (![self.configChange isEqualToString:configCheck]) {
 		self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
+		self.configChange = configCheck;
 	}
+	// When configId changes, all cells are reconfigured
+	self.configId++;
 	self.firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
-	// Column state has changed - recreate all table cells
-// TODO: Optimize this!
-	self.colState++;
+	// Find sort column and create table header
 	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"];
 	if (sortCol >= self.columns.count) sortCol = self.columns.count - 1;
 	self.sorter = self.columns[sortCol];
@@ -173,8 +167,9 @@
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+	// Refresh interval
 	self.interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
-	[self refreshProcs];
+	[self refreshProcs:nil];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -201,6 +196,7 @@
 		(self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft || self.interfaceOrientation == UIInterfaceOrientationLandscapeRight))
 		return;
 	// Size changed - need to redraw
+	self.configId++;
 	self.firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
@@ -235,12 +231,10 @@
 	if (indexPath.row >= self.procs.count)
 		return nil;
 	PSProc *proc = self.procs[indexPath.row];
-	NSString *CellIdentifier = [NSString stringWithFormat:@"%u-%u-%u", self.firstColWidth, self.colState, proc.icon ? 1 : 0];
-	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:proc.icon != nil]];
 	if (cell == nil)
-		cell = [GridTableCell cellWithId:CellIdentifier columns:self.columns size:CGSizeMake(self.firstColWidth, tableView.rowHeight)];
-//		[myObject configureCell:cell];
-// TODO: configureCell vs. updateCell !!!!
+		cell = [GridTableCell cellWithIcon:proc.icon != nil];
+	[cell configureWithId:self.configId columns:self.columns size:CGSizeMake(self.firstColWidth, tableView.rowHeight)];
 	[cell updateWithProc:proc columns:self.columns];
 	return cell;
 }
@@ -327,7 +321,6 @@
 	self.sorter = nil;
 	self.procs = nil;
 	self.columns = nil;
-	self.majorOptions = nil;
 }
 
 - (void)dealloc
@@ -338,7 +331,6 @@
 	[_status release];
 	[_procs release];
 	[_columns release];
-	[_majorOptions release];
 	[super dealloc];
 }
 

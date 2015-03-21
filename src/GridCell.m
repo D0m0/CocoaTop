@@ -4,16 +4,41 @@
 
 @implementation GridTableCell
 
-- (instancetype)initWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size
++ (NSString *)reuseIdWithIcon:(bool)withicon
 {
-	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
+	return withicon ? @"GridTableIconCell" : @"GridTableCell";
+}
+
+- (instancetype)initWithIcon:(bool)withicon
+{
+	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:[GridTableCell reuseIdWithIcon:withicon]];
 	self.accessoryView = [[UIView new] autorelease];
-	firstColWidth = size.width - 5;
-	NSUInteger totalCol = firstColWidth;
-	self.labels = [[NSMutableArray arrayWithCapacity:columns.count-1] retain];
-	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
-	extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
-	if (extendArgsLabel)
+	self.id = 0;
+	return self;
+}
+
++ (instancetype)cellWithIcon:(bool)withicon
+{
+	return [[[GridTableCell alloc] initWithIcon:withicon] autorelease];
+}
+
+- (void)configureWithId:(int)id columns:(NSArray *)columns size:(CGSize)size
+{
+	// Configuration did not change
+	if (self.id == id)
+		return;
+	// Remove old views
+	if (self.labels)
+		for (UILabel *item in self.labels) [item removeFromSuperview];
+	if (self.dividers)
+		for (UIView *item in self.dividers) [item removeFromSuperview];
+	// Create new views
+	self.firstColWidth = size.width - 5;
+	NSUInteger totalCol = self.firstColWidth;
+	self.labels = [NSMutableArray arrayWithCapacity:columns.count-1];
+	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
+	self.extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
+	if (self.extendArgsLabel)
 		size.height /= 2;
 	for (PSColumn *col in columns) if (col.tag > 1) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
@@ -30,21 +55,17 @@
 		label.tag = col.tag;
 		[self.contentView addSubview:label];
 		[label release];
+
 		totalCol += col.width;
 	}
-	if (extendArgsLabel) {
-		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(firstColWidth, size.height, totalCol - firstColWidth, 1)];
+	if (self.extendArgsLabel) {
+		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(self.firstColWidth, size.height, totalCol - self.firstColWidth, 1)];
 		[self.dividers addObject:divider];
 		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 		[self.contentView addSubview:divider];
 		[divider release];
 	}
-	return self;
-}
-
-+ (instancetype)cellWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size
-{
-	return [[[GridTableCell alloc] initWithId:reuseIdentifier columns:columns size:size] autorelease];
+	self.id = id;
 }
 
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns
@@ -76,12 +97,12 @@
 	frame = self.textLabel.frame;
 		frame.origin.x = imageWidth;
 		if (frame.origin.x) frame.origin.x += 5;
-		frame.size.width = firstColWidth - imageWidth - 5;
+		frame.size.width = self.firstColWidth - imageWidth - 5;
 		self.textLabel.frame = frame;
 	frame = self.detailTextLabel.frame;
 		frame.origin.x = imageWidth;
 		if (frame.origin.x) frame.origin.x += 5;
-		if (!extendArgsLabel) frame.size.width = firstColWidth - imageWidth - 5;
+		if (!self.extendArgsLabel) frame.size.width = self.firstColWidth - imageWidth - 5;
 			else frame.size.width = self.contentView.frame.size.width - imageWidth;
 		self.detailTextLabel.frame = frame;
 }

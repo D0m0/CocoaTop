@@ -3,13 +3,14 @@
 #import "Column.h"
 
 @interface GridTableCell : UITableViewCell
-{
-	BOOL extendArgsLabel;
-	NSUInteger firstColWidth;
-}
+@property (assign) NSUInteger id;
+@property (assign) NSUInteger firstColWidth;
+@property (assign) BOOL extendArgsLabel;
 @property (retain) NSMutableArray *labels;
 @property (retain) NSMutableArray *dividers;
-+ (instancetype)cellWithId:(NSString *)reuseIdentifier columns:(NSArray *)columns size:(CGSize)size;
++ (NSString *)reuseIdWithIcon:(bool)withicon;
++ (instancetype)cellWithIcon:(bool)withicon;
+- (void)configureWithId:(int)id columns:(NSArray *)columns size:(CGSize)size;
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns;
 @end
 
