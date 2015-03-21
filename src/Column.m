@@ -6,7 +6,7 @@
 
 NSString *psProcessStateString(PSProc *proc)
 {
-	static const char states[] = "DZRUSITH?";
+	static const char states[] = PROC_STATE_CHARS;
 	unichar st[8], *pst = st;
 
 	*pst++ = states[proc.state];

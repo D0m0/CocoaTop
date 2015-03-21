@@ -8,6 +8,7 @@
 @interface RootViewController()
 @property (assign) NSUInteger firstColWidth;
 @property (retain) GridHeaderView *header;
+@property (retain) GridHeaderView *footer;
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
 @property (retain) PSProcArray *procs;
@@ -165,6 +166,7 @@
 	self.sorter = self.columns[sortCol];
 	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
+	self.footer = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	// Refresh interval
@@ -200,6 +202,7 @@
 	self.firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
+	self.footer = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self.timer fire];
 }
@@ -213,10 +216,15 @@
 	return 1;
 }
 
-// Section header will be used as a grid header
+// Section header/footer will be used as a grid header/footer
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
 	return self.header;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
+{
+	return self.footer;
 }
 
 // Customize the number of rows in the table view.

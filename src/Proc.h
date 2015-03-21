@@ -2,12 +2,22 @@
 #import <sys/sysctl.h>
 #import <UIKit/UIKit.h>
 
-@interface PSProc : NSObject
-{
-@public struct task_basic_info basic;
-@public struct task_events_info events;
-@public struct task_events_info events_prev;
-}
+// Thread states are sorted by priority, top priority becomes a "task state"
+typedef enum {
+	ProcStateDebugging,
+	ProcStateZombie,
+	ProcStateRunning,
+	ProcStateUninterruptible,
+	ProcStateSleeping,
+	ProcStateIndefiniteSleep,
+	ProcStateTerminated,
+	ProcStateHalted,
+	ProcStateMax
+} proc_state_t;
+
+#define PROC_STATE_CHARS "DZRUSITH?"
+
+// Display states determine grid row colors
 typedef enum {
 	ProcDisplaySystem,
 	ProcDisplayUser,
@@ -16,6 +26,13 @@ typedef enum {
 	ProcDisplayTerminated,
 	ProcDisplayRemove
 } display_t;
+
+@interface PSProc : NSObject
+{
+@public struct task_basic_info basic;
+@public struct task_events_info events;
+@public struct task_events_info events_prev;
+}
 @property (assign) display_t display;
 @property (assign) pid_t pid;
 @property (assign) pid_t ppid;
@@ -28,7 +45,7 @@ typedef enum {
 @property (assign) dev_t tdev;
 @property (assign) uid_t uid;
 @property (assign) gid_t gid;
-@property (assign) int state;
+@property (assign) proc_state_t state;
 @property (assign) unsigned int pcpu;
 @property (assign) unsigned int threads;
 @property (assign) unsigned int ports;

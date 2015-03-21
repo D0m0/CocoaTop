@@ -55,18 +55,16 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	return [[[PSProc alloc] initWithKinfo:ki iconSize:size] autorelease];
 }
 
-#define PSPROC_STATE_MAX 8
-
 // Thread states are sorted by priority, top priority becomes a "task state"
-int mach_state_order(int s, long sleep_time)
+proc_state_t mach_state_order(int s, long sleep_time)
 {      
 	switch (s) {
-	case TH_STATE_RUNNING:			return 2;
-	case TH_STATE_UNINTERRUPTIBLE:	return 3;
-	case TH_STATE_WAITING:			return sleep_time <= 20 ? 4 : 5;
-	case TH_STATE_STOPPED:			return 6;
-	case TH_STATE_HALTED:			return 7;  
-	default:						return PSPROC_STATE_MAX; 
+	case TH_STATE_RUNNING:			return ProcStateRunning;
+	case TH_STATE_UNINTERRUPTIBLE:	return ProcStateUninterruptible;
+	case TH_STATE_WAITING:			return sleep_time <= 20 ? ProcStateSleeping : ProcStateIndefiniteSleep;
+	case TH_STATE_STOPPED:			return ProcStateTerminated;
+	case TH_STATE_HALTED:			return ProcStateHalted;  
+	default:						return ProcStateMax; 
 	}
 }
 
@@ -86,10 +84,10 @@ int mach_state_order(int s, long sleep_time)
 	self.threads = 0;
 	self.prio = 0;
 	self.pcpu = 0;
-	self.state = PSPROC_STATE_MAX;
+	self.state = ProcStateMax;
 	// Priority process states
-	if (ki->kp_proc.p_stat == SSTOP) self.state = 0;
-	if (ki->kp_proc.p_stat == SZOMB) self.state = 1;
+	if (ki->kp_proc.p_stat == SSTOP) self.state = ProcStateDebugging;
+	if (ki->kp_proc.p_stat == SZOMB) self.state = ProcStateZombie;
 	if (task_for_pid(mach_task_self(), ki->kp_proc.p_pid, &task) == KERN_SUCCESS) {
 		// Basic task info
 		info_count = TASK_BASIC_INFO_COUNT;
@@ -177,7 +175,7 @@ int mach_state_order(int s, long sleep_time)
 					}
 				}
 				// Task state is formed from all thread states
-				int thstate = mach_state_order(thval.run_state, thval.sleep_time);
+				proc_state_t thstate = mach_state_order(thval.run_state, thval.sleep_time);
 				if (self.state > thstate)
 					self.state = thstate;
 				mach_port_deallocate(mach_task_self(), thread_list[j]);
