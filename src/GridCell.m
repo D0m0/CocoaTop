@@ -119,12 +119,12 @@
 
 @implementation GridHeaderView
 
-- (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size
+- (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size footer:(bool)footer
 {
 	self = [super initWithReuseIdentifier:@"Header"];
 	if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0)
 		self.backgroundView = ({
-			UIView * view = [[UIView alloc] initWithFrame:self.bounds];
+			UIView *view = [[UIView alloc] initWithFrame:self.bounds];
 			view.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
 			view;
 		});
@@ -135,10 +135,10 @@
 		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, (col.tag > 1 ? col.width : size.width) - 4, size.height)];
 		[self.labels addObject:label];
 		[label release];
-		label.textAlignment = NSTextAlignmentCenter;
-		label.font = [UIFont boldSystemFontOfSize:16.0];
+		label.textAlignment = footer && col.getSummary ? col.align : NSTextAlignmentCenter;
+		label.font = footer && col.tag != 1 ? [UIFont systemFontOfSize:12.0] : [UIFont boldSystemFontOfSize:16.0];
 		label.adjustsFontSizeToFitWidth = YES;
-		label.text = col.name;
+		label.text = footer ? @"-" : col.name;
 		label.textColor = [UIColor blackColor];
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = col.tag;
@@ -150,7 +150,12 @@
 
 + (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size
 {
-	return [[[GridHeaderView alloc] initWithColumns:columns size:size] autorelease];
+	return [[[GridHeaderView alloc] initWithColumns:columns size:size footer:NO] autorelease];
+}
+
++ (instancetype)footerWithColumns:(NSArray *)columns size:(CGSize)size
+{
+	return [[[GridHeaderView alloc] initWithColumns:columns size:size footer:YES] autorelease];
 }
 
 - (void)sortColumnOld:(PSColumn *)oldCol New:(PSColumn *)newCol desc:(BOOL)desc
@@ -165,6 +170,13 @@
 		label.textColor = [UIColor whiteColor];
 		label.text = [newCol.name stringByAppendingString:(desc ? @"\u25BC" : @"\u25B2")];
 	}
+}
+
+- (void)updateSummaryWithColumns:(NSArray *)columns procs:(PSProcArray *)procs
+{
+	for (PSColumn *col in columns)
+		if (col.getSummary)
+			((UILabel *)[self viewWithTag:col.tag]).text = col.getSummary(procs);
 }
 
 - (void)dealloc

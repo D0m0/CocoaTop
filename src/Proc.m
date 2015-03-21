@@ -287,8 +287,8 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	int i, err;
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
 
-	self.totalCpu = 0;
-	self.threadCount = 0;
+	// Reset totals
+	self.totalCpu = self.threadCount = self.portCount = self.machCalls = self.unixCalls = self.switchCount = 0;
 	// Remove terminated processes
 	[self.procs filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
 		return obj.display != ProcDisplayTerminated;
@@ -315,9 +315,14 @@ proc_state_t mach_state_order(int s, long sleep_time)
 				[proc updateWithKinfo:&kp[i]];
 				proc.display = ProcDisplayUser;
 			}
-			if (proc.pid)
-				self.totalCpu += proc.pcpu;
+			// Compute totals
+			if (proc.pid) self.totalCpu += proc.pcpu;	// Kernel gets all idle CPU time
 			self.threadCount += proc.threads;
+			self.portCount += proc.ports;
+			self.machCalls += proc->events.syscalls_mach - proc->events_prev.syscalls_mach;
+			self.unixCalls += proc->events.syscalls_unix - proc->events_prev.syscalls_unix;
+			self.switchCount += proc->events.csw - proc->events_prev.csw;
+
 		}
 	}
 	free(kp);

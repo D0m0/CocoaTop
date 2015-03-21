@@ -51,6 +51,20 @@ NSString *psProcessTty(PSProc *proc)
 	return [NSString stringWithCString:(ttname ? ttname : "??") encoding:NSASCIIStringEncoding];
 }
 
+NSString *psSystemUptime()
+{
+	struct timeval boottime;
+    int mib[2] = {CTL_KERN, KERN_BOOTTIME};
+    size_t size = sizeof(boottime);
+    time_t uptime;
+	time(&uptime);
+    if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1 && boottime.tv_sec != 0) {
+		uptime -= boottime.tv_sec;
+		return [NSString stringWithFormat:@"%ldd %ld:%02ld:%02ld", uptime/60/60/24, (uptime/60/60) % 24, (uptime/60) % 60, uptime % 60];
+	} else
+		return @"\u2014";
+}
+
 + (NSArray *)psGetAllColumns
 {
 	static NSArray *allColumns;
@@ -59,70 +73,79 @@ NSString *psProcessTty(PSProc *proc)
 		allColumns = [@[
 		[PSColumn psColumnWithName:@"Command line" descr:@"Command line" align:NSTextAlignmentLeft width:170 refresh:NO
 			data:^NSString*(PSProc *proc) { return proc.name; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"Total processes: %u", procs.count]; }],
 		[PSColumn psColumnWithName:@"PID" descr:@"Process ID" align:NSTextAlignmentRight width:50 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.pid]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pid - b.pid; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pid - b.pid; } summary:nil],
 		[PSColumn psColumnWithName:@"PPID" descr:@"Parent PID" align:NSTextAlignmentRight width:50 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.ppid]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ppid - b.ppid; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ppid - b.ppid; } summary:nil],
 		[PSColumn psColumnWithName:@"%" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 refresh:YES
-			data:^NSString*(PSProc *proc) { return !proc.pcpu ? @"-" :
-				[NSString stringWithFormat:@"%.1f", (float)proc.pcpu/10]; }		// p->p_pctcpu / 1.05    - decay 95% in 60 seconds
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.pcpu - a.pcpu; }],
+			data:^NSString*(PSProc *proc) { return !proc.pcpu ? @"\u2014" : [NSString stringWithFormat:@"%.1f", (float)proc.pcpu / 10]; }	// p->p_pctcpu / 1.05    - decay 95% in 60 seconds
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.pcpu - a.pcpu; }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%.1f%%", (float)procs.totalCpu / 10]; }],
 		[PSColumn psColumnWithName:@"Time" descr:@"Process Time" align:NSTextAlignmentRight width:75 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u:%02u.%02u", proc.ptime / 6000, (proc.ptime / 100) % 60, proc.ptime % 100]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.ptime - a.ptime; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.ptime - a.ptime; }
+			summary:^NSString*(PSProcArray* procs) { return psSystemUptime(); }],
 		[PSColumn psColumnWithName:@"S" descr:@"Mach Task State" align:NSTextAlignmentLeft width:30 refresh:YES
 			data:^NSString*(PSProc *proc) { return psProcessStateString(proc); }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.state - b.state; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.state - b.state; } summary:nil],
 		[PSColumn psColumnWithName:@"Flags" descr:@"Raw Process Flags (Hex)" align:NSTextAlignmentLeft width:70 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%08X", proc.flags]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.flags - b.flags; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.flags - b.flags; } summary:nil],
 		[PSColumn psColumnWithName:@"RMem" descr:@"Resident Memory Usage" align:NSTextAlignmentRight width:70 refresh:YES
-			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size ? @"-" :
+			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size ? @"\u2014" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b->basic.resident_size - a->basic.resident_size; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b->basic.resident_size - a->basic.resident_size; }
+			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memUsed countStyle:NSByteCountFormatterCountStyleMemory]; }],
 		[PSColumn psColumnWithName:@"VSize" descr:@"Virtual Address Space Usage" align:NSTextAlignmentRight width:70 refresh:YES
-			data:^NSString*(PSProc *proc) { return !proc->basic.virtual_size ? @"-" :
+			data:^NSString*(PSProc *proc) { return !proc->basic.virtual_size ? @"\u2014" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.virtual_size countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b->basic.virtual_size - a->basic.virtual_size; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b->basic.virtual_size - a->basic.virtual_size; }
+			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memTotal countStyle:NSByteCountFormatterCountStyleMemory]; }],
 		[PSColumn psColumnWithName:@"User" descr:@"User Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:user_from_uid(proc.uid, 0) encoding:NSASCIIStringEncoding]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.uid - b.uid; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.uid - b.uid; } summary:nil],
 		[PSColumn psColumnWithName:@"Group" descr:@"Group Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.gid - b.gid; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.gid - b.gid; } summary:nil],
 		[PSColumn psColumnWithName:@"TTY" descr:@"Terminal" align:NSTextAlignmentLeft width:65 refresh:NO
 			data:^NSString*(PSProc *proc) { return psProcessTty(proc); }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.tdev - a.tdev; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.tdev - a.tdev; } summary:nil],
 		[PSColumn psColumnWithName:@"Thr" descr:@"Thread Count" align:NSTextAlignmentRight width:40 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.threads]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.threads - a.threads; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.threads - a.threads; }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.threadCount]; }],
 		[PSColumn psColumnWithName:@"Ports" descr:@"Mach Ports" align:NSTextAlignmentRight width:50 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.ports]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.ports - a.ports; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.ports - a.ports; }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.portCount]; }],
 		[PSColumn psColumnWithName:@"Mach" descr:@"Mach System Calls" align:NSTextAlignmentRight width:52 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_mach - proc->events_prev.syscalls_mach]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (b->events.syscalls_mach - b->events_prev.syscalls_mach) - (a->events.syscalls_mach - a->events_prev.syscalls_mach); }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (b->events.syscalls_mach - b->events_prev.syscalls_mach) - (a->events.syscalls_mach - a->events_prev.syscalls_mach); }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.machCalls]; }],
 		[PSColumn psColumnWithName:@"BSD" descr:@"BSD System Calls" align:NSTextAlignmentRight width:52 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_unix - proc->events_prev.syscalls_unix]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (b->events.syscalls_unix - b->events_prev.syscalls_unix) - (a->events.syscalls_unix - a->events_prev.syscalls_unix); }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (b->events.syscalls_unix - b->events_prev.syscalls_unix) - (a->events.syscalls_unix - a->events_prev.syscalls_unix); }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.unixCalls]; }],
 		[PSColumn psColumnWithName:@"CSw" descr:@"Context Switches" align:NSTextAlignmentRight width:52 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw - proc->events_prev.csw]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (b->events.csw - b->events_prev.csw) - (a->events.csw - a->events_prev.csw); }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (b->events.csw - b->events_prev.csw) - (a->events.csw - a->events_prev.csw); }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.switchCount]; }],
 		[PSColumn psColumnWithName:@"Prio" descr:@"Mach Actual Threads Priority" align:NSTextAlignmentLeft width:42 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%@%u", 	proc->basic.policy == POLICY_RR ? @"R:" : proc->basic.policy == POLICY_FIFO ? @"F:" : @"", proc.prio]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.prio - a.prio; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.prio - a.prio; } summary:nil],
 		[PSColumn psColumnWithName:@"BPri" descr:@"Base Process Priority" align:NSTextAlignmentLeft width:42 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.priobase]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.priobase - a.priobase; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.priobase - a.priobase; } summary:nil],
 		[PSColumn psColumnWithName:@"Nice" descr:@"Process Nice Value" align:NSTextAlignmentRight width:42 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%d", proc.nice]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.nice - b.nice; }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.nice - b.nice; } summary:nil],
 		[PSColumn psColumnWithName:@"Role" descr:@"Mach Task Role" align:NSTextAlignmentLeft width:75 refresh:YES
 			data:^NSString*(PSProc *proc) { return psTaskRoleString(proc); }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a.role + (a.role <= 0 ? 50 : 0)) - (b.role + (b.role <= 0 ? 50 : 0)); }],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a.role + (a.role <= 0 ? 50 : 0)) - (b.role + (b.role <= 0 ? 50 : 0)); } summary:nil],
 		] retain];
 	});
 	return allColumns;
@@ -149,7 +172,7 @@ NSString *psProcessTty(PSProc *proc)
 	return shownCols;
 }
 
-- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort
+- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSSummaryData)summary
 {
 	if (self = [super init]) {
 		self.name = name;
@@ -157,15 +180,16 @@ NSString *psProcessTty(PSProc *proc)
 		self.align = align;
 		self.width = width;
 		self.getData = data;
+		self.getSummary = summary;
 		self.sort = sort;
 		self.refresh = refresh;
 	}
 	return self;
 }
 
-+ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort
++ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSSummaryData)summary
 {
-	return [[[PSColumn alloc] initWithName:name descr:descr align:align width:width refresh:refresh data:data sort:sort] autorelease];
+	return [[[PSColumn alloc] initWithName:name descr:descr align:align width:width refresh:refresh data:data sort:sort summary:summary] autorelease];
 }
 
 - (void)dealloc

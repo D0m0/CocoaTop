@@ -71,7 +71,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)src
 {
 	// Stupid non-draggable cell should be created separately
-	NSString *reuse = src.section == 0 && src.row == 0 ? @"SetupUnmovableColumn" : @"SetupColumns";
+	NSString *reuse = (src.section == 0 && src.row == 0) ? @"SetupUnmovableColumn" : @"SetupColumns";
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuse];
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuse];

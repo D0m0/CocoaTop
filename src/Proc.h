@@ -60,11 +60,15 @@ typedef enum {
 @interface PSProcArray : NSObject
 @property (retain) NSMutableArray *procs;
 @property (assign) CGFloat iconSize;
-@property (assign) unsigned int totalCpu;
-@property (assign) unsigned int threadCount;
 @property (assign) uint64_t memUsed;
 @property (assign) uint64_t memFree;
 @property (assign) uint64_t memTotal;
+@property (assign) unsigned int totalCpu;
+@property (assign) unsigned int threadCount;
+@property (assign) unsigned int portCount;
+@property (assign) unsigned int machCalls;
+@property (assign) unsigned int unixCalls;
+@property (assign) unsigned int switchCount;
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size;
 - (int)refresh;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;

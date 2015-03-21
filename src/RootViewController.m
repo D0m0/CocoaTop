@@ -79,6 +79,8 @@
 		@"UseAppleIconApi" : @NO,
 		@"CpuGraph" : @NO,
 		@"FirstColumnStyle" : @"Bundle Identifier",
+		@"ShowHeader" : @YES,
+		@"ShowFooter" : @YES,
 	}];
 	self.configChange = @"";
 	self.configId = 0;
@@ -98,6 +100,7 @@
 	[self.procs refresh];
 	[self.procs sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
+	[self.footer updateSummaryWithColumns:self.columns procs:self.procs];
 	// Status bar
 // Also add: Uptime, CPU Freq, Cores, Cache L1/L2
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
@@ -145,6 +148,12 @@
 	}
 }
 
+- (void)scrollToBottom
+{
+	[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:[self.tableView numberOfRowsInSection:0]-1 inSection:0]
+		atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+}
+
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
@@ -166,9 +175,10 @@
 	self.sorter = self.columns[sortCol];
 	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
-	self.footer = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
+	self.footer = [GridHeaderView footerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+	[self.footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
 	// Refresh interval
 	self.interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	[self refreshProcs:nil];
@@ -202,8 +212,10 @@
 	self.firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
-	self.footer = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
+	self.footer = [GridHeaderView footerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
+	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+	[self.footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
 	[self.timer fire];
 }
 
@@ -218,22 +230,23 @@
 
 // Section header/footer will be used as a grid header/footer
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{
-	return self.header;
-}
+{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] ? self.header : nil; }
 
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
-{
-	return self.footer;
-}
+{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFooter"] ? self.footer : nil; }
 
-// Customize the number of rows in the table view.
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] ? self.tableView.sectionHeaderHeight : 0; }
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFooter"] ? self.tableView.sectionFooterHeight : 0; }
+
+// Data is acquired from PSProcArray
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
 	return self.procs.count;
 }
 
-// Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (indexPath.row >= self.procs.count)

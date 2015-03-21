@@ -2,6 +2,7 @@
 #import "Proc.h"
 
 typedef NSString *(^PSColumnData)(PSProc *proc);
+typedef NSString *(^PSSummaryData)(PSProcArray *procs);
 
 @interface PSColumn : NSObject
 // Full column name (in settings)
@@ -12,8 +13,10 @@ typedef NSString *(^PSColumnData)(PSProc *proc);
 @property (assign) NSTextAlignment align;
 // Minimal column width
 @property (assign) NSInteger width;
-// Data displayer
+// Data displayer (based on PSProc data)
 @property (assign) PSColumnData getData;
+// Summary displayer (based on PSProcArray data)
+@property (assign) PSSummaryData getSummary;
 // Sort comparator
 @property (assign) NSComparator sort;
 // Need to refresh
@@ -22,7 +25,8 @@ typedef NSString *(^PSColumnData)(PSProc *proc);
 @property (assign) int tag;
 
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
-	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort;
+	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSSummaryData)summary;
 + (NSArray *)psGetAllColumns;
 + (NSMutableArray *)psGetShownColumnsWithWidth:(NSUInteger *)width;
+
 @end

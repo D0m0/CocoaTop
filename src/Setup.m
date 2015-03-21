@@ -92,6 +92,8 @@ struct optionsList_t {
 	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"FirstColumnStyle", @"First column style", nil, nil},
 	{@"UISwitch", UITableViewCellAccessoryNone, @"FullWidthCommandLine", @"Full width command line", nil, nil},
 	{@"UISwitch", UITableViewCellAccessoryNone, @"AutoJumpNewProcess", @"Auto scroll to new/terminated processes", nil, nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowHeader", @"Show column header", nil, nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowFooter", @"Show totals (footer)", nil, nil},
 	{@"UISwitch", UITableViewCellAccessoryNone, @"UseAppleIconApi", @"Use Apple API to get App icons", nil, nil},
 //	{@"UISwitch", UITableViewCellAccessoryNone, @"CpuGraph", @"Show CPU Graph", nil, nil},
 };

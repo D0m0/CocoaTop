@@ -19,5 +19,7 @@
 @property (retain) NSMutableArray *labels;
 @property (retain) NSMutableArray *dividers;
 + (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size;
++ (instancetype)footerWithColumns:(NSArray *)columns size:(CGSize)size;
 - (void)sortColumnOld:(PSColumn *)oldCol New:(PSColumn *)newCol desc:(BOOL)desc;
+- (void)updateSummaryWithColumns:(NSArray *)columns procs:(PSProcArray *)procs;
 @end
