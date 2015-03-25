@@ -62,7 +62,7 @@ NSString *psSystemUptime()
 		uptime -= boottime.tv_sec;
 		return [NSString stringWithFormat:@"%ldd %ld:%02ld:%02ld", uptime/60/60/24, (uptime/60/60) % 24, (uptime/60) % 60, uptime % 60];
 	} else
-		return @"\u2014";
+		return @"-";
 }
 
 + (NSArray *)psGetAllColumns
@@ -82,7 +82,7 @@ NSString *psSystemUptime()
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.ppid]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ppid - b.ppid; } summary:nil],
 		[PSColumn psColumnWithName:@"%" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 refresh:YES
-			data:^NSString*(PSProc *proc) { return !proc.pcpu ? @"\u2014" : [NSString stringWithFormat:@"%.1f", (float)proc.pcpu / 10]; }	// p->p_pctcpu / 1.05    - decay 95% in 60 seconds
+			data:^NSString*(PSProc *proc) { return !proc.pcpu ? @"-" : [NSString stringWithFormat:@"%.1f", (float)proc.pcpu / 10]; }	// p->p_pctcpu / 1.05    - decay 95% in 60 seconds
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b.pcpu - a.pcpu; }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%.1f%%", (float)procs.totalCpu / 10]; }],
 		[PSColumn psColumnWithName:@"Time" descr:@"Process Time" align:NSTextAlignmentRight width:75 refresh:YES
@@ -96,12 +96,12 @@ NSString *psSystemUptime()
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%08X", proc.flags]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.flags - b.flags; } summary:nil],
 		[PSColumn psColumnWithName:@"RMem" descr:@"Resident Memory Usage" align:NSTextAlignmentRight width:70 refresh:YES
-			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size ? @"\u2014" :
+			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b->basic.resident_size - a->basic.resident_size; }
 			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memUsed countStyle:NSByteCountFormatterCountStyleMemory]; }],
 		[PSColumn psColumnWithName:@"VSize" descr:@"Virtual Address Space Usage" align:NSTextAlignmentRight width:70 refresh:YES
-			data:^NSString*(PSProc *proc) { return !proc->basic.virtual_size ? @"\u2014" :
+			data:^NSString*(PSProc *proc) { return !proc->basic.virtual_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.virtual_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b->basic.virtual_size - a->basic.virtual_size; }
 			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memTotal countStyle:NSByteCountFormatterCountStyleMemory]; }],
