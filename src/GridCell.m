@@ -72,10 +72,7 @@
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns
 {
 	self.textLabel.text = proc.name;
-	NSString *full = [[proc.args[0] copy] autorelease];
-	for (int i = 1; i < proc.args.count; i++)
-		full = [full stringByAppendingFormat:@" %@", proc.args[i]];
-	self.detailTextLabel.text = full;
+	self.detailTextLabel.text = [proc.executable stringByAppendingString:proc.args];
 	if (proc.icon)
 		[self.imageView initWithImage:proc.icon];
 	for (PSColumn *col in columns)

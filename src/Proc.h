@@ -50,7 +50,8 @@ typedef enum {
 @property (assign) unsigned int threads;
 @property (assign) unsigned int ports;
 @property (retain) NSString *name;
-@property (retain) NSArray *args;
+@property (retain) NSString *executable;
+@property (retain) NSString *args;
 @property (retain) UIImage *icon;
 @property (retain) NSDictionary *app;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
