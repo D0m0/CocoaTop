@@ -15,6 +15,7 @@
 @property (retain) PSColumn *sorter;
 @property (retain) UILabel *status;
 @property (assign) BOOL sortdesc;
+@property (assign) BOOL fullScreen;
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
 @property (retain) NSString *configChange;
@@ -37,6 +38,15 @@
 	SetupColsViewController* setupColsViewController = [[SetupColsViewController alloc] initWithStyle:UITableViewStyleGrouped];
 	[self.navigationController pushViewController:setupColsViewController animated:YES];
 	[setupColsViewController release];
+}
+
+- (void)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
+{
+	if (gestureRecognizer.state == UIGestureRecognizerStateEnded) {
+		self.fullScreen = !self.navigationController.navigationBarHidden;
+		[self.navigationController setNavigationBarHidden:self.fullScreen animated:YES];
+		[self.timer fire];
+	}
 }
 
 - (void)viewDidLoad
@@ -65,6 +75,10 @@
 	self.navigationItem.leftBarButtonItem = cpuLoad;
 	[cpuLoad release];
 
+	UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideShowNavBar:)];
+	twoTap.numberOfTouchesRequired = 2;
+	[self.tableView addGestureRecognizer:twoTap]; [twoTap release];
+
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
 		[self.tableView setSeparatorInset:UIEdgeInsetsZero];
@@ -84,6 +98,7 @@
 	}];
 	self.configChange = @"";
 	self.configId = 0;
+	self.fullScreen = NO;
 }
 
 - (void)refreshProcs:(NSTimer *)timer
@@ -230,16 +245,16 @@
 
 // Section header/footer will be used as a grid header/footer
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] ? self.header : nil; }
+{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] && !self.fullScreen ? self.header : nil; }
 
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
-{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFooter"] ? self.footer : nil; }
+{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFooter"] && !self.fullScreen ? self.footer : nil; }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
-{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] ? self.tableView.sectionHeaderHeight : 0; }
+{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] && !self.fullScreen ? self.tableView.sectionHeaderHeight : 0; }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
-{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFooter"] ? self.tableView.sectionFooterHeight : 0; }
+{ return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFooter"] && !self.fullScreen ? self.tableView.sectionFooterHeight : 0; }
 
 // Data is acquired from PSProcArray
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
