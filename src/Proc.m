@@ -7,6 +7,7 @@
 #import <mach/thread_info.h>
 #import <mach/mach_interface.h>
 #import <mach/mach_port.h>
+#import <pwd.h>
 
 extern kern_return_t task_for_pid(task_port_t task, pid_t pid, task_port_t *target);
 extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_info_t info, unsigned int *info_count);
@@ -252,6 +253,11 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	if (self = [super init]) {
 		self.procs = [NSMutableArray arrayWithCapacity:200];
 		self.iconSize = size;
+		{
+			unsigned int ncpu; size_t len = sizeof(ncpu);
+			sysctlbyname("hw.ncpu", &ncpu, &len, 0, 0);
+			self.coresCount = ncpu;
+		}
 	}
 	return self;
 }
@@ -286,9 +292,14 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	size_t bufSize;
 	int i, err;
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+	static uid_t mobileuid = 0;
 
+	if (!mobileuid) {
+		struct passwd *mobile = getpwnam("mobile");
+		mobileuid = mobile->pw_uid;
+	}
 	// Reset totals
-	self.totalCpu = self.threadCount = self.portCount = self.machCalls = self.unixCalls = self.switchCount = 0;
+	self.totalCpu = self.threadCount = self.portCount = self.machCalls = self.unixCalls = self.switchCount = self.runningCount = self.mobileCount = self.guiCount = 0;
 	// Remove terminated processes
 	[self.procs filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
 		return obj.display != ProcDisplayTerminated;
@@ -317,6 +328,9 @@ proc_state_t mach_state_order(int s, long sleep_time)
 			}
 			// Compute totals
 			if (proc.pid) self.totalCpu += proc.pcpu;	// Kernel gets all idle CPU time
+			if (proc.uid == mobileuid) self.mobileCount++;
+			if (proc.state == ProcStateRunning) self.runningCount++;
+			if (proc.role != TASK_UNSPECIFIED) self.guiCount++;
 			self.threadCount += proc.threads;
 			self.portCount += proc.ports;
 			self.machCalls += proc->events.syscalls_mach - proc->events_prev.syscalls_mach;

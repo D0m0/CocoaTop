@@ -69,6 +69,10 @@ typedef enum {
 @property (assign) unsigned int machCalls;
 @property (assign) unsigned int unixCalls;
 @property (assign) unsigned int switchCount;
+@property (assign) unsigned int guiCount;
+@property (assign) unsigned int mobileCount;
+@property (assign) unsigned int runningCount;
+@property (assign) unsigned int coresCount;
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size;
 - (int)refresh;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;

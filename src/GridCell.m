@@ -51,6 +51,7 @@
 		[self.labels addObject:label];
 		label.textAlignment = col.align;
 		label.font = [UIFont systemFontOfSize:12.0];
+		label.adjustsFontSizeToFitWidth = YES;
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = col.tag;
 		[self.contentView addSubview:label];

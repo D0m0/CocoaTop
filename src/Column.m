@@ -31,7 +31,7 @@ NSString *psTaskRoleString(PSProc *proc)
 {
 	switch (proc.role) {
 	case TASK_RENICED:					return @"Reniced";
-	case TASK_UNSPECIFIED:				return @"None";
+	case TASK_UNSPECIFIED:				return @"-";
 	case TASK_FOREGROUND_APPLICATION:	return @"Foreground";
 	case TASK_BACKGROUND_APPLICATION:	return @"Background";
 	case TASK_CONTROL_APPLICATION:		return @"Controller";
@@ -91,7 +91,8 @@ NSString *psSystemUptime()
 			summary:^NSString*(PSProcArray* procs) { return psSystemUptime(); }],
 		[PSColumn psColumnWithName:@"S" descr:@"Mach Task State" align:NSTextAlignmentLeft width:30 refresh:YES
 			data:^NSString*(PSProc *proc) { return psProcessStateString(proc); }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.state - b.state; } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.state - b.state; }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%d/%d", procs.runningCount, procs.coresCount]; }],
 		[PSColumn psColumnWithName:@"Flags" descr:@"Raw Process Flags (Hex)" align:NSTextAlignmentLeft width:70 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%08X", proc.flags]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.flags - b.flags; } summary:nil],
@@ -107,7 +108,8 @@ NSString *psSystemUptime()
 			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memTotal countStyle:NSByteCountFormatterCountStyleMemory]; }],
 		[PSColumn psColumnWithName:@"User" descr:@"User Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:user_from_uid(proc.uid, 0) encoding:NSASCIIStringEncoding]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.uid - b.uid; } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.uid - b.uid; }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@" mobile: %d", procs.mobileCount]; }],
 		[PSColumn psColumnWithName:@"Group" descr:@"Group Id" align:NSTextAlignmentLeft width:80 refresh:NO
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.gid - b.gid; } summary:nil],
@@ -145,7 +147,8 @@ NSString *psSystemUptime()
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.nice - b.nice; } summary:nil],
 		[PSColumn psColumnWithName:@"Role" descr:@"Mach Task Role" align:NSTextAlignmentLeft width:75 refresh:YES
 			data:^NSString*(PSProc *proc) { return psTaskRoleString(proc); }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a.role + (a.role <= 0 ? 50 : 0)) - (b.role + (b.role <= 0 ? 50 : 0)); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a.role + (a.role <= 0 ? 50 : 0)) - (b.role + (b.role <= 0 ? 50 : 0)); }
+			summary:^NSString*(PSProcArray* procs) { return procs.guiCount ? [NSString stringWithFormat:@" UIApps: %d", procs.guiCount] : @"   -"; }],
 		] retain];
 	});
 	return allColumns;
