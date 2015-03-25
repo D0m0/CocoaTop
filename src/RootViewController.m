@@ -44,7 +44,19 @@
 {
 	if (gestureRecognizer.state == UIGestureRecognizerStateEnded) {
 		self.fullScreen = !self.navigationController.navigationBarHidden;
-		[self.navigationController setNavigationBarHidden:self.fullScreen animated:YES];
+		// This "scrolls" tableview so that it doesn't actually move when the bars disappear
+		static CGFloat headHeight = 0;
+		if (!headHeight) {
+			CGSize size = [UIApplication sharedApplication].statusBarFrame.size;
+			headHeight = MIN(size.width, size.height) + self.navigationController.navigationBar.frame.size.height;
+		}
+		CGFloat slide = headHeight + ([[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] ? self.tableView.sectionHeaderHeight : 0);
+		CGPoint contentOffset = self.tableView.contentOffset;
+		contentOffset.y += self.fullScreen ? -slide : slide;
+		[self.tableView setContentOffset:contentOffset animated:NO];
+		// Hide/show navbar & scrollbar
+		[self.navigationController setNavigationBarHidden:self.fullScreen animated:NO];
+		[[UIApplication sharedApplication] setStatusBarHidden:self.fullScreen withAnimation:UIStatusBarAnimationNone];
 		[self.timer fire];
 	}
 }
@@ -52,6 +64,7 @@
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
+	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleDefault;
 	bool isPhone = UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone;
 
 	UIBarButtonItem *setupButton = [[UIBarButtonItem alloc] initWithTitle: isPhone ? @"\u2699" : @"Settings"
