@@ -26,8 +26,12 @@
 			}
 			while ([Value isKindOfClass:[NSArray class]] && [Value count])
 				Value = Value[0];
-			if ([Value isKindOfClass:[NSString class]])
+			if ([Value isKindOfClass:[NSString class]]) {
+				// Calendar App returns a white icon by default
+				if ([Value isEqualToString:@"icon"] && [app[@"CFBundleIdentifier"] isEqualToString:@"com.apple.mobilecal"])
+					return @"icon-about";
 				return Value;
+			}
 		}
 	}
 	@finally {}
