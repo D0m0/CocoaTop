@@ -1,22 +1,118 @@
 #import "SetupColumns.h"
 #import "Column.h"
 
+@interface SelectPreset : UITableViewController
+@end
+
+@implementation SelectPreset
+
+- (instancetype)init
+{
+	return [super initWithStyle:UITableViewStyleGrouped];
+}
+
+static NSDictionary *presetList;
+static NSArray *presetNames;
+
+//     0    1   2   3  4   5   6    7    8     9    10    11  12  13   14    15  16  17   18   19   20   21    22
+// Command PID PPID % Time S Flags RMem VSize User Group TTY Thr Ports Mach BSD CSw Prio BPri Nice Role MSent MRecv
+
+- (void)viewDidLoad
+{
+	[super viewDidLoad];
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
+			presetList = [@{
+				@"1: Standard":@[@0, @1, @3, @5, @20, @6, @7],
+				@"2: Inspector":@[@0, @3, @5, @6, @7, @9, @12],
+				@"3: Performance":@[@0, @3, @16, @4, @5, @17, @7, @12],
+				@"4: Minimalistic":@[@0, @3, @7],
+				@"5: Mach-obsessed":@[@0, @3, @12, @13, @15, @14, @21, @22],
+			} retain];
+		else
+			presetList = [@{
+				@"1: Standard":@[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
+				@"2: Inspector":@[@0, @1, @3, @5, @6, @7, @9, @10, @12, @13],
+				@"3: Performance":@[@0, @1, @3, @16, @4, @5, @17, @7, @12, @13, @14, @15, @19],
+				@"4: Minimalistic":@[@0, @1, @3, @5, @7, @20],
+				@"5: Mach-obsessed":@[@0, @1, @5, @6, @7, @3, @12, @16, @13, @15, @14, @21, @22],
+			} retain];
+		presetNames = [[presetList.allKeys sortedArrayUsingSelector:@selector(compare:)] retain];
+	});
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+	[super viewWillAppear:animated];
+	self.navigationItem.title = @"Column presets";
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+	return 1;
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+	return @"Select a preset column layout";
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+	return presetList.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Preset"];
+	if (cell == nil)
+		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"Preset"];
+	cell.textLabel.text = presetNames[indexPath.row];
+	NSString *colNames = @"Command";
+	for (NSNumber *idx in presetList[presetNames[indexPath.row]]) {
+		int i = [idx intValue];
+		if (i) colNames = [colNames stringByAppendingFormat:@", %@", ((PSColumn *)[PSColumn psGetAllColumns][i]).name];
+	}
+	cell.detailTextLabel.text = colNames;
+	return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	[[NSUserDefaults standardUserDefaults] setObject:presetList[presetNames[indexPath.row]] forKey:@"Columns"];
+	[self.navigationController popViewControllerAnimated:YES];
+}
+
+@end
+
+
 @interface SetupColsViewController()
 {
 	NSMutableArray *ar[2];
 }
 @property (retain)NSMutableArray *in;
 @property (retain)NSMutableArray *out;
-
 @end
 
 @implementation SetupColsViewController
+
+- (void)openPresets
+{
+	SelectPreset* preset = [SelectPreset new];
+	[self.navigationController pushViewController:preset animated:YES];
+	[preset release];
+}
 
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
 	self.tableView.editing = YES;
+	UIBarButtonItem *presetButton = [[UIBarButtonItem alloc] initWithTitle:@"Presets" style:UIBarButtonItemStylePlain
+		target:self action:@selector(openPresets)];
+	self.navigationItem.rightBarButtonItem = presetButton;
 	self.navigationItem.title = @"Manage columns";
+	[presetButton release];
 }
 
 - (void)viewWillAppear:(BOOL)animated

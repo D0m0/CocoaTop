@@ -68,6 +68,15 @@
 	[self.navigationController popViewControllerAnimated:YES];
 }
 
+- (void)dealloc
+{
+	[_list release];
+	[_option release];
+	[_value release];
+	[_footer release];
+	[super dealloc];
+}
+
 @end
 
 

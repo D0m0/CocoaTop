@@ -27,8 +27,9 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 + (NSString *)simplifyPathName:(NSString *)path
 {
 	static NSArray *source = nil, *target = nil;
-	// Initialize symlinks
-	if (!target) {
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		// Initialize symlinks
 		source = @[@"/var/", @"/var/stash/", @"/User/", @"/Applications/"];
 		NSArray *defaults = @[@"/private/var/", @"/var/db/stash/", @"/var/mobile/", @""];
 		NSMutableArray *results = [NSMutableArray arrayWithCapacity:5];
@@ -38,7 +39,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 		}
 		[source retain];
 		target = [results copy];
-	}
+	});
 	if (![path hasPrefix:@"/"])
 		return path;
 	// Replace link targets with symlinks

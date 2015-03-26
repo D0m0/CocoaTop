@@ -48,15 +48,23 @@
 		static CGFloat headHeight = 0;
 		if (!headHeight) {
 			CGSize size = [UIApplication sharedApplication].statusBarFrame.size;
-			headHeight = MIN(size.width, size.height) + self.navigationController.navigationBar.frame.size.height;
+			headHeight = MIN(size.width, size.height);// + self.navigationController.navigationBar.frame.size.height;
 		}
 		CGFloat slide = headHeight + ([[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] ? self.tableView.sectionHeaderHeight : 0);
+		if (!self.fullScreen) {
+			[self.navigationController setNavigationBarHidden:NO animated:NO];
+			[[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
+		}
+		slide += self.navigationController.navigationBar.frame.size.height;
 		CGPoint contentOffset = self.tableView.contentOffset;
 		contentOffset.y += self.fullScreen ? -slide : slide;
 		[self.tableView setContentOffset:contentOffset animated:NO];
 		// Hide/show navbar & scrollbar
-		[self.navigationController setNavigationBarHidden:self.fullScreen animated:NO];
-		[[UIApplication sharedApplication] setStatusBarHidden:self.fullScreen withAnimation:UIStatusBarAnimationNone];
+		if (self.fullScreen) {
+			[self.navigationController setNavigationBarHidden:YES animated:NO];
+			[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
+		}
+//		[[UIApplication sharedApplication] setStatusBarHidden:self.fullScreen withAnimation:UIStatusBarAnimationNone];
 		[self.timer fire];
 	}
 }
