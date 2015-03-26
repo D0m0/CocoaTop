@@ -149,6 +149,12 @@ NSString *psSystemUptime()
 			data:^NSString*(PSProc *proc) { return psTaskRoleString(proc); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a.role + (a.role <= 0 ? 50 : 0)) - (b.role + (b.role <= 0 ? 50 : 0)); }
 			summary:^NSString*(PSProcArray* procs) { return procs.guiCount ? [NSString stringWithFormat:@" UIApps: %d", procs.guiCount] : @"   -"; }],
+		[PSColumn psColumnWithName:@"MSent" descr:@"Mach Messages Sent" align:NSTextAlignmentRight width:70 refresh:YES
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.messages_sent]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b->events.messages_sent - a->events.messages_sent; } summary:nil],
+		[PSColumn psColumnWithName:@"MRecv" descr:@"Mach Messages Received" align:NSTextAlignmentRight width:70 refresh:YES
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.messages_received]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return b->events.messages_received - a->events.messages_received; } summary:nil],
 		] retain];
 	});
 	return allColumns;
