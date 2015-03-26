@@ -14,6 +14,48 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 
 @implementation PSProc
 
++ (NSString *)absoluteSymLinkDestination:(NSString *)link
+{
+	if ([link hasSuffix:@"/"])
+		link = [link substringToIndex:link.length - 1];
+	NSString *target = [[NSFileManager defaultManager] destinationOfSymbolicLinkAtPath:link error:NULL];
+	if (![target hasPrefix:@"/"])
+		target = [[link stringByDeletingLastPathComponent] stringByAppendingPathComponent:target];
+	return target;
+}
+
++ (NSString *)simplifyPathName:(NSString *)path
+{
+	static NSArray *source = nil, *target = nil;
+	// Initialize symlinks
+	if (!target) {
+		source = @[@"/var/", @"/var/stash/", @"/User/", @"/Applications/"];
+		NSArray *defaults = @[@"/private/var/", @"/var/db/stash/", @"/var/mobile/", @""];
+		NSMutableArray *results = [NSMutableArray arrayWithCapacity:5];
+		for (int i = 0; i < source.count; i++) {
+			NSString *dest = [PSProc absoluteSymLinkDestination:source[i]];
+			[results addObject:dest ? [dest stringByAppendingString:@"/"] : defaults[i]];
+		}
+		[source retain];
+		target = [results copy];
+	}
+	if (![path hasPrefix:@"/"])
+		return path;
+	// Replace link targets with symlinks
+	for (int i = 0; i < target.count; i++) {
+		NSString *key = target[i], *val = source[i];
+		if (key.length && [path hasPrefix:key])
+			path = [val stringByAppendingString:[path substringFromIndex:key.length]];
+	}
+	// Replace long bundle path with a short "old" version
+	static NSString *bundle = @"/User/Containers/Bundle/Application/";
+	if (path.length > bundle.length + 37 && [path hasPrefix:bundle])
+		path = [NSString stringWithFormat:@"/User/Applications/%@.../%@",
+			[path substringWithRange:NSMakeRange(bundle.length, 4)],	// First four chars from App ID
+			[path substringFromIndex:bundle.length + 37]];				// The rest of the path
+	return path;
+}
+
 - (instancetype)initWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size
 {
 	if (self = [super init]) {
@@ -45,6 +87,11 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 				self.name = [[self.executable lastPathComponent] stringByAppendingString:self.args];
 			if (!self.name || [firslCol isEqualToString:@"Executable Name"])
 				self.name = [self.executable lastPathComponent];
+			// If there's no path, try to guess (i.e. sshd: root@ttys000, -sh)
+			// Replace some symlinks to shorten path
+			self.executable = [self.executable stringByStandardizingPath]; //stringByResolvingSymlinksInPath
+			if ([[NSUserDefaults standardUserDefaults] boolForKey:@"ShortenExecutablePaths"])
+				self.executable = [PSProc simplifyPathName:self.executable];
 			[self updateWithKinfo:ki];
 		}
 	}

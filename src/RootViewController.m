@@ -108,6 +108,7 @@
 		@"FirstColumnStyle" : @"Bundle Identifier",
 		@"ShowHeader" : @YES,
 		@"ShowFooter" : @YES,
+		@"ShortenExecutablePaths" : @YES,
 	}];
 	self.configChange = @"";
 	self.configId = 0;
@@ -188,7 +189,7 @@
 
 	// When major options change, process list is rebuilt from scratch
 	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
-	NSString *configCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"UseAppleIconApi"], [def stringForKey:@"FirstColumnStyle"]];
+	NSString *configCheck = [NSString stringWithFormat:@"%d-%d-%@", [def boolForKey:@"UseAppleIconApi"], [def boolForKey:@"ShortenExecutablePaths"], [def stringForKey:@"FirstColumnStyle"]];
 	if (![self.configChange isEqualToString:configCheck]) {
 		self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 		self.configChange = configCheck;
