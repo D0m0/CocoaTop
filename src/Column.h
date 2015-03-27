@@ -1,8 +1,7 @@
 #import <UIKit/UIKit.h>
 #import "Proc.h"
 
-typedef NSString *(^PSColumnData)(PSProc *proc);
-typedef NSString *(^PSSummaryData)(PSProcArray *procs);
+typedef NSString *(^PSColumnData)(id proc);
 
 @interface PSColumn : NSObject
 // Full column name (in settings)
@@ -13,10 +12,10 @@ typedef NSString *(^PSSummaryData)(PSProcArray *procs);
 @property (assign) NSTextAlignment align;
 // Minimal column width
 @property (assign) NSInteger width;
-// Data displayer (based on PSProc data)
+// Data displayer (based on PSProc/PSSock data)
 @property (assign) PSColumnData getData;
 // Summary displayer (based on PSProcArray data)
-@property (assign) PSSummaryData getSummary;
+@property (assign) PSColumnData getSummary;
 // Sort comparator
 @property (assign) NSComparator sort;
 // Need to refresh
@@ -25,7 +24,7 @@ typedef NSString *(^PSSummaryData)(PSProcArray *procs);
 @property (assign) int tag;
 
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
-	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSSummaryData)summary;
+	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
 + (NSArray *)psGetAllColumns;
 + (NSMutableArray *)psGetShownColumnsWithWidth:(NSUInteger *)width;
 

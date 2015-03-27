@@ -181,7 +181,40 @@ NSString *psSystemUptime()
 	return shownCols;
 }
 
-- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSSummaryData)summary
++ (NSArray *)psGetOpenFilesColumns
+{
+	static NSArray *ofColumns;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		ofColumns = [@[
+		[PSColumn psColumnWithName:@"Open file/socket" descr:@"" align:NSTextAlignmentLeft width:220 refresh:NO
+			data:^NSString*(PSProc *proc) { return proc.name; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
+		[PSColumn psColumnWithName:@"FD" descr:@"" align:NSTextAlignmentRight width:50 refresh:NO
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.pid]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pid - b.pid; } summary:nil],
+		[PSColumn psColumnWithName:@"Type" descr:@"" align:NSTextAlignmentRight width:50 refresh:NO
+			data:^NSString*(PSProc *proc) { return @"File"; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ppid - b.ppid; } summary:nil],
+		] retain];
+	});
+	return ofColumns;
+}
+
++ (NSMutableArray *)psGetOpenFilesColumnsWithWidth:(NSUInteger *)width
+{
+	NSArray *cols = [PSColumn psGetOpenFilesColumns];
+	int tag = 1;
+	for (PSColumn *col in cols) {
+		col.tag = tag++;
+		*width -= col.width;
+	}
+	*width += ((PSColumn *)cols[0]).width;
+	return cols;
+}
+
+- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width
+	refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary
 {
 	if (self = [super init]) {
 		self.name = name;
@@ -196,7 +229,8 @@ NSString *psSystemUptime()
 	return self;
 }
 
-+ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSSummaryData)summary
++ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width
+	refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary
 {
 	return [[[PSColumn alloc] initWithName:name descr:descr align:align width:width refresh:refresh data:data sort:sort summary:summary] autorelease];
 }

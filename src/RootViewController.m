@@ -9,11 +9,11 @@
 @property (assign) NSUInteger firstColWidth;
 @property (retain) GridHeaderView *header;
 @property (retain) GridHeaderView *footer;
-@property (retain) NSArray *columns;
-@property (retain) NSTimer *timer;
 @property (retain) PSProcArray *procs;
-@property (retain) PSColumn *sorter;
+@property (retain) NSTimer *timer;
 @property (retain) UILabel *status;
+@property (retain) NSArray *columns;
+@property (retain) PSColumn *sorter;
 @property (assign) BOOL sortdesc;
 @property (assign) BOOL fullScreen;
 @property (assign) CGFloat interval;
@@ -98,7 +98,7 @@
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
 		[self.tableView setSeparatorInset:UIEdgeInsetsZero];
-	// Default column order
+
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 		@"SortColumn" : @1,
@@ -219,7 +219,6 @@
 - (void)viewDidDisappear:(BOOL)animated
 {
 	[super viewWillDisappear:animated];
-
 	if (self.timer.isValid)
 		[self.timer invalidate];
 	self.header = nil;
@@ -371,6 +370,7 @@
 		[self.timer invalidate];
 	self.status = nil;
 	self.header = nil;
+	self.footer = nil;
 	self.sorter = nil;
 	self.procs = nil;
 	self.columns = nil;
@@ -382,6 +382,9 @@
 		[self.timer invalidate];
 	[_timer release];
 	[_status release];
+	[_header release];
+	[_footer release];
+	[_sorter release];
 	[_procs release];
 	[_columns release];
 	[super dealloc];
