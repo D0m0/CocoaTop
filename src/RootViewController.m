@@ -117,7 +117,7 @@
 		@"FirstColumnStyle" : @"Bundle Identifier",
 		@"ShowHeader" : @YES,
 		@"ShowFooter" : @YES,
-		@"ShortenExecutablePaths" : @YES,
+		@"ShortenPaths" : @YES,
 	}];
 	self.configChange = @"";
 	self.configId = 0;
@@ -197,7 +197,7 @@
 	[super viewWillAppear:animated];
 	// When major options change, process list is rebuilt from scratch
 	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
-	NSString *configCheck = [NSString stringWithFormat:@"%d-%d-%@", [def boolForKey:@"UseAppleIconApi"], [def boolForKey:@"ShortenExecutablePaths"], [def stringForKey:@"FirstColumnStyle"]];
+	NSString *configCheck = [NSString stringWithFormat:@"%d-%d-%@", [def boolForKey:@"UseAppleIconApi"], [def boolForKey:@"ShortenPaths"], [def stringForKey:@"FirstColumnStyle"]];
 	if (![self.configChange isEqualToString:configCheck]) {
 		self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 		self.configChange = configCheck;

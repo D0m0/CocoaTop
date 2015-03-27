@@ -42,7 +42,7 @@ extern int proc_pidpath(int pid, void * buffer, uint32_t  buffersize) __OSX_AVAI
 		target = [results copy];
 	});
 	path = [path stringByStandardizingPath];
-	if (![path hasPrefix:@"/"] || ![[NSUserDefaults standardUserDefaults] boolForKey:@"ShortenExecutablePaths"])
+	if (![path hasPrefix:@"/"] || ![[NSUserDefaults standardUserDefaults] boolForKey:@"ShortenPaths"])
 		return path;
 	// Replace link targets with symlinks
 	for (int i = 0; i < target.count; i++) {

@@ -104,7 +104,7 @@ struct optionsList_t {
 	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"UpdateInterval", @"Update interval (seconds)", nil, @"Note: tap the status header to refresh manually"},
 	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"FirstColumnStyle", @"First column style", nil, nil},
 	{@"UISwitch", UITableViewCellAccessoryNone, @"FullWidthCommandLine", @"Full width command line", nil, nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"ShortenExecutablePaths", @"Shorten executable paths", nil, nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"ShortenPaths", @"Show short (symlinked) paths", nil, nil},
 	{@"UISwitch", UITableViewCellAccessoryNone, @"AutoJumpNewProcess", @"Auto scroll to new/terminated processes", nil, nil},
 	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowHeader", @"Show column sort header", nil, nil},
 	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowFooter", @"Show column totals (footer)", nil, nil},
