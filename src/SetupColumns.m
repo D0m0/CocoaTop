@@ -11,11 +11,10 @@
 	return [super initWithStyle:UITableViewStyleGrouped];
 }
 
+//     0    1   2   3  4   5   6    7     8    9    10   11  12   13    14  15  16   17   18   19   20   21    22
+// Command PID PPID % Time S Flags RMem VSize User Group TTY Thr Ports Mach BSD CSw Prio BPri Nice Role MSent MRecv
 static NSDictionary *presetList;
 static NSArray *presetNames;
-
-//     0    1   2   3  4   5   6    7    8     9    10    11  12  13   14    15  16  17   18   19   20   21    22
-// Command PID PPID % Time S Flags RMem VSize User Group TTY Thr Ports Mach BSD CSw Prio BPri Nice Role MSent MRecv
 
 - (void)viewDidLoad
 {

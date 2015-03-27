@@ -19,9 +19,11 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	if ([link hasSuffix:@"/"])
 		link = [link substringToIndex:link.length - 1];
 	NSString *target = [[NSFileManager defaultManager] destinationOfSymbolicLinkAtPath:link error:NULL];
-	if (![target hasPrefix:@"/"])
+	if (!target)
+		return @"";
+	if (target && ![target hasPrefix:@"/"])
 		target = [[link stringByDeletingLastPathComponent] stringByAppendingPathComponent:target];
-	return target;
+	return [target stringByAppendingString:@"/"];
 }
 
 + (NSString *)simplifyPathName:(NSString *)path
@@ -31,12 +33,9 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	dispatch_once(&onceToken, ^{
 		// Initialize symlinks
 		source = @[@"/var/", @"/var/stash/", @"/User/", @"/Applications/"];
-		NSArray *defaults = @[@"/private/var/", @"/var/db/stash/", @"/var/mobile/", @""];
 		NSMutableArray *results = [NSMutableArray arrayWithCapacity:5];
-		for (int i = 0; i < source.count; i++) {
-			NSString *dest = [PSProc absoluteSymLinkDestination:source[i]];
-			[results addObject:dest ? [dest stringByAppendingString:@"/"] : defaults[i]];
-		}
+		for (NSString *src in source)
+			[results addObject:[PSProc absoluteSymLinkDestination:src]];
 		[source retain];
 		target = [results copy];
 	});

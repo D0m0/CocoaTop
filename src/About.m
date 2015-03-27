@@ -29,12 +29,11 @@
 {
 	[super viewDidLoad];
 	self.navigationItem.title = @"The Story";
-	self.aboutLabel = [[UILabel alloc] init];
+	self.aboutLabel = [UILabel new];
 	self.aboutLabel.font = [UIFont systemFontOfSize:16.0];
 	self.aboutLabel.backgroundColor = [UIColor clearColor];
 	self.aboutLabel.numberOfLines = 0;
 	self.aboutLabel.lineBreakMode = NSLineBreakByWordWrapping;
-	self.aboutLabel.tag = 1;
 	self.aboutLabel.text = @"Hello, friends!\n\n"
 		"This text should clarify some questionable concepts implemented in CocoaTop, the ideas behind those concepts, "
 		"and the idea behind the application itself. Also, it should be a fun read, at least for some ;)\n\n"
