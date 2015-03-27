@@ -11,8 +11,9 @@
 
 extern kern_return_t task_for_pid(task_port_t task, pid_t pid, task_port_t *target);
 extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_info_t info, unsigned int *info_count);
+extern int proc_pidpath(int pid, void * buffer, uint32_t  buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 
-@implementation PSProc
+@implementation PSSymLink
 
 + (NSString *)absoluteSymLinkDestination:(NSString *)link
 {
@@ -26,35 +27,50 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 	return [target stringByAppendingString:@"/"];
 }
 
+// Replace some symlinks to shorten path
 + (NSString *)simplifyPathName:(NSString *)path
 {
 	static NSArray *source = nil, *target = nil;
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		// Initialize symlinks
-		source = @[@"/var/", @"/var/stash/", @"/User/", @"/Applications/"];
-		NSMutableArray *results = [NSMutableArray arrayWithCapacity:5];
+		source = @[@"/var/", @"/var/stash/", @"/usr/include/", @"/usr/share/", @"/usr/lib/pam/", @"/tmp/", @"/User/", @"/Applications/", @"/Library/Ringtones/", @"/Library/Wallpaper/"];
+		NSMutableArray *results = [NSMutableArray arrayWithCapacity:source.count];
 		for (NSString *src in source)
-			[results addObject:[PSProc absoluteSymLinkDestination:src]];
+			[results addObject:[PSSymLink absoluteSymLinkDestination:src]];
 		[source retain];
 		target = [results copy];
 	});
-	if (![path hasPrefix:@"/"])
+	path = [path stringByStandardizingPath];
+	if (![path hasPrefix:@"/"] || ![[NSUserDefaults standardUserDefaults] boolForKey:@"ShortenExecutablePaths"])
 		return path;
 	// Replace link targets with symlinks
 	for (int i = 0; i < target.count; i++) {
 		NSString *key = target[i], *val = source[i];
-		if (key.length && [path hasPrefix:key])
+		if (!key.length)
+			continue;
+		if ([[path stringByAppendingString:@"/"] isEqualToString:key])
+			path = [val substringToIndex:val.length - 1];
+		else if ([path hasPrefix:key])
 			path = [val stringByAppendingString:[path substringFromIndex:key.length]];
 	}
 	// Replace long bundle path with a short "old" version
-	static NSString *bundle = @"/User/Containers/Bundle/Application/";
-	if (path.length > bundle.length + 37 && [path hasPrefix:bundle])
+	static NSString *appBundle = @"/User/Containers/Bundle/Application/";
+	if (path.length > appBundle.length + 37 && [path hasPrefix:appBundle])
 		path = [NSString stringWithFormat:@"/User/Applications/%@.../%@",
-			[path substringWithRange:NSMakeRange(bundle.length, 4)],	// First four chars from App ID
-			[path substringFromIndex:bundle.length + 37]];				// The rest of the path
+			[path substringWithRange:NSMakeRange(appBundle.length, 4)],	// First four chars from App ID
+			[path substringFromIndex:appBundle.length + 37]];				// The rest of the path
+	static NSString *appData = @"/User/Containers/Data/Application/";
+	if (path.length > appData.length + 37 && [path hasPrefix:appData])
+		path = [NSString stringWithFormat:@"%@%@.../%@", appData,
+			[path substringWithRange:NSMakeRange(appData.length, 4)],	// First four chars from App ID
+			[path substringFromIndex:appData.length + 37]];				// The rest of the path
 	return path;
 }
+
+@end
+
+@implementation PSProc
 
 - (instancetype)initWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size
 {
@@ -64,7 +80,11 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 			self.pid = ki->kp_proc.p_pid;
 			self.ppid = ki->kp_eproc.e_ppid;
 			NSArray *args = [PSProc getArgsByKinfo:ki];
-			self.executable = args[0];
+			char buffer[1024];
+			if (proc_pidpath(self.pid, buffer, sizeof(buffer)))
+				self.executable = [NSString stringWithCString:buffer encoding:NSUTF8StringEncoding];
+			else
+				self.executable = args[0];
 			self.args = @"";
 			for (int i = 1; i < args.count; i++)
 				self.args = [self.args stringByAppendingFormat:@" %@", args[i]];
@@ -87,11 +107,7 @@ extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_inf
 				self.name = [[self.executable lastPathComponent] stringByAppendingString:self.args];
 			if (!self.name || [firslCol isEqualToString:@"Executable Name"])
 				self.name = [self.executable lastPathComponent];
-			// If there's no path, try to guess (i.e. sshd: root@ttys000, -sh)
-			// Replace some symlinks to shorten path
-			self.executable = [self.executable stringByStandardizingPath]; //stringByResolvingSymlinksInPath
-			if ([[NSUserDefaults standardUserDefaults] boolForKey:@"ShortenExecutablePaths"])
-				self.executable = [PSProc simplifyPathName:self.executable];
+			self.executable = [PSSymLink simplifyPathName:self.executable];
 			[self updateWithKinfo:ki];
 		}
 	}
@@ -270,7 +286,7 @@ proc_state_t mach_state_order(int s, long sleep_time)
 			while (sp < cp && sp[0] == '/' && sp[1] == '/') sp++;
 			if (sp != cp) {
 				args = [[[[NSString alloc] initWithBytes:sp length:(cp-sp)
-					encoding:NSUTF8StringEncoding] autorelease]		// NSASCIIStringEncoding?
+					encoding:NSUTF8StringEncoding] autorelease]
 					componentsSeparatedByString:@"\0"];
 			}
 		}
@@ -301,11 +317,9 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	if (self = [super init]) {
 		self.procs = [NSMutableArray arrayWithCapacity:200];
 		self.iconSize = size;
-		{
-			unsigned int ncpu; size_t len = sizeof(ncpu);
-			sysctlbyname("hw.ncpu", &ncpu, &len, 0, 0);
-			self.coresCount = ncpu;
-		}
+		NSProcessInfo *procinfo = [NSProcessInfo processInfo];
+		self.memTotal = procinfo.physicalMemory;
+		self.coresCount = procinfo.processorCount;
 	}
 	return self;
 }
@@ -326,22 +340,12 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	if (host_statistics64(host_port, HOST_VM_INFO64, (host_info_t)&vm_stat, &host_size) == KERN_SUCCESS) {
 		self.memUsed = (vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count) * pagesize;
 		self.memFree = vm_stat.free_count * pagesize;
-//		self.memTotal = self.memUsed + self.memFree;
 	}
-	self.memTotal = [NSProcessInfo processInfo].physicalMemory;
-//	[NSProcessInfo processInfo].processorCount
-//	NSTimeInterval systemUptime
 }
 
 - (int)refresh
 {
-	struct kinfo_proc *kp;
-	int nentries;
-	size_t bufSize;
-	int i, err;
-	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
 	static uid_t mobileuid = 0;
-
 	if (!mobileuid) {
 		struct passwd *mobile = getpwnam("mobile");
 		mobileuid = mobile->pw_uid;
@@ -354,23 +358,20 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	}]];
 	[self setAllDisplayed:ProcDisplayTerminated];
 	// Get buffer size
+	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+	size_t bufSize;
 	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
 		return errno;
-	kp = (struct kinfo_proc *)malloc(bufSize);
+	struct kinfo_proc *kp = (struct kinfo_proc *)malloc(bufSize);
 	// Get process list and update the procs array
-	err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
+	int err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
 	if (!err) {
-		nentries = bufSize / sizeof(struct kinfo_proc);
-		for (i = 0; i < nentries; i++) {
-			NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-				return ((PSProc *)obj).pid == kp[i].kp_proc.p_pid;
-			}];
-			PSProc *proc;
-			if (idx == NSNotFound) {
+		for (int i = 0; i < bufSize / sizeof(struct kinfo_proc); i++) {
+			PSProc *proc = [self procForPid:kp[i].kp_proc.p_pid];
+			if (!proc) {
 				proc = [PSProc psProcWithKinfo:&kp[i] iconSize:self.iconSize];
 				[self.procs addObject:proc];
 			} else {
-				proc = self.procs[idx];
 				[proc updateWithKinfo:&kp[i]];
 				proc.display = ProcDisplayUser;
 			}
@@ -384,7 +385,6 @@ proc_state_t mach_state_order(int s, long sleep_time)
 			self.machCalls += proc->events.syscalls_mach - proc->events_prev.syscalls_mach;
 			self.unixCalls += proc->events.syscalls_unix - proc->events_prev.syscalls_unix;
 			self.switchCount += proc->events.csw - proc->events_prev.csw;
-
 		}
 	}
 	free(kp);
@@ -395,7 +395,7 @@ proc_state_t mach_state_order(int s, long sleep_time)
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc
 {
 	if (desc) {
-		[self.procs sortUsingComparator:^NSComparisonResult(PSProc *a, PSProc *b) { return comp(b, a); }];
+		[self.procs sortUsingComparator:^NSComparisonResult(id a, id b) { return comp(b, a); }];
 	} else
 		[self.procs sortUsingComparator:comp];
 }

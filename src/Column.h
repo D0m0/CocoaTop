@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import "Proc.h"
+#import "Sock.h"
 
 typedef NSString *(^PSColumnData)(id proc);
 
@@ -27,5 +28,6 @@ typedef NSString *(^PSColumnData)(id proc);
 	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
 + (NSArray *)psGetAllColumns;
 + (NSMutableArray *)psGetShownColumnsWithWidth:(NSUInteger *)width;
++ (NSArray *)psGetOpenFilesColumnsWithWidth:(NSUInteger *)width;
 
 @end

@@ -1,4 +1,3 @@
-
 #import "AppDelegate.h"
 #import "RootViewController.h"
 
@@ -12,7 +11,7 @@
 	// Override point for customization after application launch.
 	
 	// Allocate the navigation controller
-	RootViewController* rootViewController = [[RootViewController alloc] init];
+	RootViewController* rootViewController = [RootViewController new];
 	self.navigationController = [[UINavigationController alloc] initWithRootViewController:rootViewController];
 	[rootViewController release];
 

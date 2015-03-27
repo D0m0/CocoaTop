@@ -5,7 +5,7 @@ GO_EASY_ON_ME = 1
 include theos/makefiles/common.mk
 
 APPLICATION_NAME = CocoaTop
-CocoaTop_FILES = main.m AppDelegate.m RootViewController.m Setup.m SetupColumns.m About.m AppIcon.m Column.m GridCell.m Proc.m
+CocoaTop_FILES = Sock.m SockViewController.m main.m AppDelegate.m RootViewController.m Setup.m SetupColumns.m About.m AppIcon.m Column.m GridCell.m Proc.m
 CocoaTop_FRAMEWORKS = UIKit CoreGraphics MessageUI
 
 include $(THEOS_MAKE_PATH)/application.mk

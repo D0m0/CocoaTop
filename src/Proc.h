@@ -2,6 +2,16 @@
 #import <sys/sysctl.h>
 #import <UIKit/UIKit.h>
 
+// Display states determine grid row colors
+typedef enum {
+	ProcDisplaySystem,
+	ProcDisplayUser,
+	ProcDisplayNormal,
+	ProcDisplayStarted,
+	ProcDisplayTerminated,
+	ProcDisplayRemove
+} display_t;
+
 // Thread states are sorted by priority, top priority becomes a "task state"
 typedef enum {
 	ProcStateDebugging,
@@ -17,15 +27,9 @@ typedef enum {
 
 #define PROC_STATE_CHARS "DZRUSITH?"
 
-// Display states determine grid row colors
-typedef enum {
-	ProcDisplaySystem,
-	ProcDisplayUser,
-	ProcDisplayNormal,
-	ProcDisplayStarted,
-	ProcDisplayTerminated,
-	ProcDisplayRemove
-} display_t;
+@interface PSSymLink : NSObject
++ (NSString *)simplifyPathName:(NSString *)path;
+@end
 
 @interface PSProc : NSObject
 {
@@ -55,7 +59,6 @@ typedef enum {
 @property (retain) UIImage *icon;
 @property (retain) NSDictionary *app;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
-
 @end
 
 @interface PSProcArray : NSObject
@@ -82,5 +85,4 @@ typedef enum {
 - (NSUInteger)count;
 - (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
 - (PSProc *)procForPid:(pid_t)pid;
-
 @end

@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import "Proc.h"
+#import "Sock.h"
 #import "Column.h"
 
 @interface GridTableCell : UITableViewCell
@@ -12,6 +13,7 @@
 + (instancetype)cellWithIcon:(bool)withicon;
 - (void)configureWithId:(int)id columns:(NSArray *)columns size:(CGSize)size;
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns;
+- (void)updateWithSock:(PSSock *)sock columns:(NSArray *)columns;
 @end
 
 

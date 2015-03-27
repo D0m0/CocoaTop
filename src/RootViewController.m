@@ -1,4 +1,5 @@
 #import "RootViewController.h"
+#import "SockViewController.h"
 #import "Setup.h"
 #import "SetupColumns.h"
 #import "GridCell.h"
@@ -42,7 +43,7 @@
 
 - (void)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
 {
-	if (gestureRecognizer.state == UIGestureRecognizerStateEnded) {
+	if (!gestureRecognizer || gestureRecognizer.state == UIGestureRecognizerStateEnded) {
 		self.fullScreen = !self.navigationController.navigationBarHidden;
 		// This "scrolls" tableview so that it doesn't actually move when the bars disappear
 		if (!self.fullScreen) {			// Show navbar & scrollbar (going out of fullscreen)
@@ -72,8 +73,13 @@
 
 	UIBarButtonItem *setupButton = [[UIBarButtonItem alloc] initWithTitle: isPhone ? @"\u2699" : @"Settings"
 		style:UIBarButtonItemStylePlain target:self action:@selector(openSettings)];
-	UIBarButtonItem *setupColsButton = [[UIBarButtonItem alloc] initWithTitle: isPhone ? @"\u25EB" : @"Columns"
-		style:UIBarButtonItemStylePlain target:self action:@selector(openColSettings)];
+	UIBarButtonItem *setupColsButton;
+	if (isPhone)
+		setupColsButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
+			target:self action:@selector(openColSettings)];
+	else
+		setupColsButton = [[UIBarButtonItem alloc] initWithTitle: /*isPhone ? @"\u25EB" :*/ @"Columns"
+			style:UIBarButtonItemStylePlain target:self action:@selector(openColSettings)];
 	if (isPhone) {
 		NSDictionary *font = [NSDictionary dictionaryWithObject:[UIFont systemFontOfSize:25.0] forKey:NSFontAttributeName];
 		[setupButton setTitleTextAttributes:font forState:UIControlStateNormal];
@@ -155,7 +161,7 @@
 		NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
 		if (idx != NSNotFound)
 			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
-				atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+				atScrollPosition:UITableViewScrollPositionNone animated:YES];
 		// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 		// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	}
@@ -189,7 +195,6 @@
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-
 	// When major options change, process list is rebuilt from scratch
 	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
 	NSString *configCheck = [NSString stringWithFormat:@"%d-%d-%@", [def boolForKey:@"UseAppleIconApi"], [def boolForKey:@"ShortenExecutablePaths"], [def stringForKey:@"FirstColumnStyle"]];
@@ -345,11 +350,13 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-	if (cell) {
-		UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:cell.textLabel.text message:cell.detailTextLabel.text delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-		[alertView show];
-	}
+	// Return from fullscreen, or there's no way back ;)
+	if (self.fullScreen)
+		[self hideShowNavBar:nil];
+	PSProc *proc = self.procs[indexPath.row];
+	SockViewController* sockViewController = [[SockViewController alloc] initWithName:proc.name pid:proc.pid];
+		[self.navigationController pushViewController:sockViewController animated:NO];
+		[sockViewController release];
 }
 
 #pragma mark -

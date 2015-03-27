@@ -38,7 +38,9 @@
 	self.labels = [NSMutableArray arrayWithCapacity:columns.count-1];
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	self.extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
-	if (self.extendArgsLabel)
+	if (size.height < 40)
+		self.textLabel.font = [UIFont systemFontOfSize:12.0];
+	else if (self.extendArgsLabel)
 		size.height /= 2;
 	for (PSColumn *col in columns) if (col.tag > 1) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
@@ -78,6 +80,14 @@
 	for (PSColumn *col in columns)
 		if (col.tag > 1)
 			((UILabel *)[self viewWithTag:col.tag]).text = col.getData(proc);
+}
+
+- (void)updateWithSock:(PSSock *)sock columns:(NSArray *)columns
+{
+	self.textLabel.text = sock.name;
+	for (PSColumn *col in columns)
+		if (col.tag > 1)
+			((UILabel *)[self viewWithTag:col.tag]).text = col.getData(sock);
 }
 
 - (void)layoutSubviews

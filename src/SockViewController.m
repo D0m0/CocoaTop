@@ -1,12 +1,13 @@
 #import "SockViewController.h"
 #import "GridCell.h"
 #import "Column.h"
-#import "Proc.h"
+#import "Sock.h"
 
 @interface SockViewController()
+@property (retain) NSString *name;
+@property (assign) pid_t pid;
 @property (assign) NSUInteger firstColWidth;
 @property (retain) GridHeaderView *header;
-//@property (retain) GridHeaderView *footer;
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
 @property (retain) PSSockArray *socks;
@@ -17,17 +18,33 @@
 @property (assign) NSUInteger configId;
 @end
 
-@implementation RootViewController
+@implementation SockViewController
 
 #pragma mark -
 #pragma mark View lifecycle
 
+- (instancetype)initWithName:(NSString *)name pid:(pid_t)pid
+{
+	self = [super init];
+	self.name = name;
+	self.pid = pid;
+	return self;
+}
+
+- (void)backWithoutAnimation
+{
+	[self.navigationController popViewControllerAnimated:NO];
+}
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
+	UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"\u276C Back"
+		style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
+	self.navigationItem.leftBarButtonItem = item;
+	[item release];
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
-//	if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
-//		[self.tableView setSeparatorInset:UIEdgeInsetsZero];
+	self.tableView.rowHeight = self.tableView.rowHeight * 2 / 3;
 	self.configId = 0;
 	self.fullScreen = NO;
 }
@@ -52,13 +69,32 @@
 		NSUInteger idx = [self.socks indexOfDisplayed:ProcDisplayStarted];
 		if (idx != NSNotFound)
 			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
-				atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+				atScrollPosition:UITableViewScrollPositionNone animated:YES];
+	}
+}
+
+- (void)sortHeader:(UIGestureRecognizer *)gestureRecognizer
+{
+	CGPoint loc = [gestureRecognizer locationInView:self.header];
+	for (PSColumn *col in self.columns) {
+		NSUInteger width = col.tag == 1 ? self.firstColWidth : col.width;
+		if (loc.x > width) {
+			loc.x -= width;
+			continue;
+		}
+		self.sortdesc = self.sorter == col ? !self.sortdesc : NO;
+		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
+		self.sorter = col;
+		[self.timer fire];
+		break;
 	}
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
+	self.navigationItem.title = self.name;
+	self.socks = [PSSockArray psSockArrayWithPid:self.pid];
 	// When configId changes, all cells are reconfigured
 	self.configId++;
 	self.firstColWidth = self.tableView.bounds.size.width;
@@ -67,6 +103,8 @@
 	self.sorter = self.columns[1];
 	self.sortdesc = NO;
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
+	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
+	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	// Refresh interval
 	self.interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	[self refreshSocks:nil];
@@ -94,6 +132,8 @@
 	self.firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetOpenFilesColumnsWithWidth:&_firstColWidth];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
+	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
+	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self.timer fire];
 }
 

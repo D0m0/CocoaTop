@@ -188,20 +188,20 @@ NSString *psSystemUptime()
 	dispatch_once(&onceToken, ^{
 		ofColumns = [@[
 		[PSColumn psColumnWithName:@"Open file/socket" descr:@"" align:NSTextAlignmentLeft width:220 refresh:NO
-			data:^NSString*(PSProc *proc) { return proc.name; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
+			data:^NSString*(PSSock *sock) { return sock.name; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
 		[PSColumn psColumnWithName:@"FD" descr:@"" align:NSTextAlignmentRight width:50 refresh:NO
-			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.pid]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.pid - b.pid; } summary:nil],
+			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%u", sock.fd]; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.fd - b.fd; } summary:nil],
 		[PSColumn psColumnWithName:@"Type" descr:@"" align:NSTextAlignmentRight width:50 refresh:NO
-			data:^NSString*(PSProc *proc) { return @"File"; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.ppid - b.ppid; } summary:nil],
+			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%u", sock.type]; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.type - b.type; } summary:nil],
 		] retain];
 	});
 	return ofColumns;
 }
 
-+ (NSMutableArray *)psGetOpenFilesColumnsWithWidth:(NSUInteger *)width
++ (NSArray *)psGetOpenFilesColumnsWithWidth:(NSUInteger *)width
 {
 	NSArray *cols = [PSColumn psGetOpenFilesColumns];
 	int tag = 1;
