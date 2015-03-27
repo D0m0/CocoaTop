@@ -94,7 +94,10 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 #define KEV_ANY_SUBCLASS		0
 #define KEV_VENDOR_APPLE			1
 #define KEV_NETWORK_CLASS			1
+#define KEV_INET_SUBCLASS				1
 #define KEV_DL_SUBCLASS					2
+#define KEV_ATALK_SUBCLASS				5
+#define KEV_INET6_SUBCLASS				6
 #define KEV_LOG_SUBCLASS				10
 #define KEV_IOKIT_CLASS				2
 #define KEV_SYSTEM_CLASS			3
@@ -102,6 +105,8 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 #define KEV_MEMORYSTATUS_SUBCLASS		3
 #define KEV_APPLESHARE_CLASS		4
 #define KEV_FIREWALL_CLASS			5
+#define KEV_IPFW_SUBCLASS				1
+#define KEV_IP6FW_SUBCLASS				2
 #define KEV_IEEE80211_CLASS			6
 			if (ki->kesi_vendor_code_filter == KEV_VENDOR_APPLE)	kvendor = @"APPLE";
 			if (ki->kesi_vendor_code_filter == KEV_ANY_VENDOR)		kvendor = @"ANY";
@@ -110,7 +115,10 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 			switch (ki->kesi_class_filter) {
 			case KEV_NETWORK_CLASS:				kclass = @"NETWORK";
 				switch (ki->kesi_subclass_filter) {
+				case KEV_INET_SUBCLASS:			ksubcls = @"INET"; break;
 				case KEV_DL_SUBCLASS:			ksubcls = @"DATALINK"; break;
+				case KEV_ATALK_SUBCLASS:		ksubcls = @"APPLETALK"; break;
+				case KEV_INET6_SUBCLASS:		ksubcls = @"INET6"; break;
 				case KEV_LOG_SUBCLASS:			ksubcls = @"LOG"; break;
 				} break;
 			case KEV_IOKIT_CLASS:				kclass = @"IOKIT"; break;
@@ -120,7 +128,11 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 				case KEV_MEMORYSTATUS_SUBCLASS:	ksubcls = @"MEMORYSTATUS"; break;
 				} break;
 			case KEV_APPLESHARE_CLASS:			kclass = @"APPLESHARE"; break;
-			case KEV_FIREWALL_CLASS:			kclass = @"FIREWALL"; break;
+			case KEV_FIREWALL_CLASS:			kclass = @"FIREWALL";
+				switch (ki->kesi_subclass_filter) {
+				case KEV_IPFW_SUBCLASS:			ksubcls = @"IPFW"; break;
+				case KEV_IP6FW_SUBCLASS:		ksubcls = @"IP6FW"; break;
+				} break;
 			case KEV_IEEE80211_CLASS:			kclass = @"WIFI"; break;
 			}
 			name = [NSString stringWithFormat:@"KERNEL_EVENT_SOCKET: %@:%@:%@", kvendor, kclass, ksubcls];
