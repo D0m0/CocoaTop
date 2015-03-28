@@ -19,18 +19,22 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 
 - (instancetype)initWithPid:(pid_t)pid fd:(int32_t)fd type:(uint32_t)type
 {
-	NSString *name = nil;
+	NSString *name = nil, *stype = nil;
+	UIColor *color = [UIColor blackColor];
 	if (type == PROX_FDTYPE_VNODE) {
 		struct vnode_fdinfowithpath info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDVNODEPATHINFO, &info, PROC_PIDFDVNODEPATHINFO_SIZE) != PROC_PIDFDVNODEPATHINFO_SIZE)
 			return nil;
 		name = [NSString stringWithCString:info.pvip.vip_path encoding:NSUTF8StringEncoding];
 		name = [PSSymLink simplifyPathName:name];
+		stype = @"VNODE";
 	} else if (type == PROX_FDTYPE_PIPE) {
 		struct pipe_fdinfo info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDPIPEINFO, &info, PROC_PIDFDPIPEINFO_SIZE) != PROC_PIDFDPIPEINFO_SIZE)
 			return nil;
-		name = [NSString stringWithFormat:@"PIPE: %llX -> %llX %s", info.pipeinfo.pipe_handle, info.pipeinfo.pipe_peerhandle, (info.pipeinfo.pipe_status & 8) ? "Listening" : ""];
+		name = [NSString stringWithFormat:@"%llX -> %llX %s", info.pipeinfo.pipe_handle, info.pipeinfo.pipe_peerhandle, (info.pipeinfo.pipe_status & 8) ? "Listening" : ""];
+		stype = @"PIPE";
+		color = [UIColor blueColor];
 	} else if (type == PROX_FDTYPE_SOCKET) {
 		char lip[INET_ADDRSTRLEN] = "", fip[INET_ADDRSTRLEN] = "";
 		struct in_sockinfo *s;
@@ -53,61 +57,51 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 			struct servent *lsp = 0, *fsp = 0;
 			lsp = s->insi_lport ? getservbyport(s->insi_lport, 0) : &any;
 			fsp = s->insi_fport ? getservbyport(s->insi_fport, 0) : &any;
-			name = (info.psi.soi_kind == SOCKINFO_TCP) ? @"TCP: " : @"UDP: ";
-			if (lsp) name = [name stringByAppendingFormat:@"%s:%s -> ", lip, lsp->s_name];
-				else name = [name stringByAppendingFormat:@"%s:%d -> ", lip, ntohs(s->insi_lport)];
+			stype = (info.psi.soi_kind == SOCKINFO_TCP) ? @"TCP" : @"UDP";
+			if (info.psi.soi_family == AF_INET6)
+				stype = [stype stringByAppendingString:@"6"];
+			if (lsp) name = [NSString stringWithFormat:@"%s:%s -> ", lip, lsp->s_name];
+				else name = [NSString stringWithFormat:@"%s:%d -> ", lip, ntohs(s->insi_lport)];
 			if (!s->insi_fport) name = [name stringByAppendingString:@"Listening"]; else
 			if (fsp) name = [name stringByAppendingFormat:@"%s:%s", fip, fsp->s_name];
 				else name = [name stringByAppendingFormat:@"%s:%d", fip, ntohs(s->insi_fport)];
+			color = [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0];
 			break;
 		case SOCKINFO_UN: {
 			if (!info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path[0] &&
 				!info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path[0]) return nil;
+			stype = @"UNIX";
 			switch (info.psi.soi_type) {
-			case SOCK_STREAM:	name = @"UNIX: STREAM"; break;
-			case SOCK_DGRAM:	name = @"UNIX: DGRAM"; break;
-			case SOCK_RAW:		name = @"UNIX: RAW"; break;
-			case SOCK_RDM:		name = @"UNIX: RDM"; break;
-			case SOCK_SEQPACKET:name = @"UNIX: SEQPACKET"; break;
-			default: name = @"UNIX:";
+			case SOCK_STREAM:	name = @"STREAM"; break;
+			case SOCK_DGRAM:	name = @"DGRAM"; break;
+			case SOCK_RAW:		name = @"RAW"; break;
+			case SOCK_RDM:		name = @"RDM"; break;
+			case SOCK_SEQPACKET:name = @"SEQPACKET"; break;
+			default: name = @"";
 			}
 			NSString *server = [NSString stringWithCString:info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path encoding:NSUTF8StringEncoding],
 					 *client = [NSString stringWithCString:info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path encoding:NSUTF8StringEncoding];
 			name = [name stringByAppendingFormat:@" %@ -> %@", [PSSymLink simplifyPathName:server], [PSSymLink simplifyPathName:client]];
+			color = [UIColor brownColor];
 			break; }
 		case SOCKINFO_GENERIC:
 			name = [NSString stringWithFormat:@"GENERIC: %d", info.psi.soi_family];
+			stype = @"GEN";
 			break;
 		case SOCKINFO_NDRV:
 			name = [NSString stringWithFormat:@"NDRV: %d", info.psi.soi_family];
+			stype = @"NDRV";
 			break;
 		case SOCKINFO_KERN_CTL:
-			name = [NSString stringWithFormat:@"KERNEL_CONTROL_SOCKET: KEXT %s", info.psi.soi_proto.pri_kern_ctl.kcsi_name];
+			name = [NSString stringWithFormat:@"KEXT %s", info.psi.soi_proto.pri_kern_ctl.kcsi_name];
+			stype = @"KCTL";
+			color = [UIColor orangeColor];
 			break;
 		case SOCKINFO_KERN_EVENT: {
 			struct kern_event_info *ki = &info.psi.soi_proto.pri_kern_event;
 			NSString *kvendor = [NSString stringWithFormat:@"%d", ki->kesi_vendor_code_filter];
 			NSString *kclass  = [NSString stringWithFormat:@"%d", ki->kesi_class_filter];
 			NSString *ksubcls = [NSString stringWithFormat:@"%d", ki->kesi_subclass_filter];
-#define KEV_ANY_VENDOR			0
-#define KEV_ANY_CLASS			0
-#define KEV_ANY_SUBCLASS		0
-#define KEV_VENDOR_APPLE			1
-#define KEV_NETWORK_CLASS			1
-#define KEV_INET_SUBCLASS				1
-#define KEV_DL_SUBCLASS					2
-#define KEV_ATALK_SUBCLASS				5
-#define KEV_INET6_SUBCLASS				6
-#define KEV_LOG_SUBCLASS				10
-#define KEV_IOKIT_CLASS				2
-#define KEV_SYSTEM_CLASS			3
-#define KEV_CTL_SUBCLASS				2
-#define KEV_MEMORYSTATUS_SUBCLASS		3
-#define KEV_APPLESHARE_CLASS		4
-#define KEV_FIREWALL_CLASS			5
-#define KEV_IPFW_SUBCLASS				1
-#define KEV_IP6FW_SUBCLASS				2
-#define KEV_IEEE80211_CLASS			6
 			if (ki->kesi_vendor_code_filter == KEV_VENDOR_APPLE)	kvendor = @"APPLE";
 			if (ki->kesi_vendor_code_filter == KEV_ANY_VENDOR)		kvendor = @"ANY";
 			if (ki->kesi_class_filter == KEV_ANY_CLASS)				kclass  = @"ANY";
@@ -117,6 +111,7 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 				switch (ki->kesi_subclass_filter) {
 				case KEV_INET_SUBCLASS:			ksubcls = @"INET"; break;
 				case KEV_DL_SUBCLASS:			ksubcls = @"DATALINK"; break;
+				case KEV_NETPOLICY_SUBCLASS:	ksubcls = @"POLICY"; break;
 				case KEV_ATALK_SUBCLASS:		ksubcls = @"APPLETALK"; break;
 				case KEV_INET6_SUBCLASS:		ksubcls = @"INET6"; break;
 				case KEV_LOG_SUBCLASS:			ksubcls = @"LOG"; break;
@@ -135,7 +130,9 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 				} break;
 			case KEV_IEEE80211_CLASS:			kclass = @"WIFI"; break;
 			}
-			name = [NSString stringWithFormat:@"KERNEL_EVENT_SOCKET: %@:%@:%@", kvendor, kclass, ksubcls];
+			name = [NSString stringWithFormat:@"%@:%@:%@", kvendor, kclass, ksubcls];
+			stype = @"KEVNT";
+			color = [UIColor redColor];
 			break; }
 		}
 	}
@@ -150,6 +147,8 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 		self.display = ProcDisplayStarted;
 		self.fd = fd;
 		self.type = type;
+		self.stype = stype;
+		self.color = color;
 		self.name = name;
 	}
 	return self;
@@ -163,6 +162,8 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 - (void)dealloc
 {
 	[_name release];
+	[_stype release];
+	[_color release];
 	[super dealloc];
 }
 

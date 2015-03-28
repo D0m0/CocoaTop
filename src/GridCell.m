@@ -85,9 +85,13 @@
 - (void)updateWithSock:(PSSock *)sock columns:(NSArray *)columns
 {
 	self.textLabel.text = sock.name;
+	self.textLabel.textColor = sock.color;
 	for (PSColumn *col in columns)
-		if (col.tag > 1)
-			((UILabel *)[self viewWithTag:col.tag]).text = col.getData(sock);
+		if (col.tag > 1) {
+			UILabel *label = (UILabel *)[self viewWithTag:col.tag];
+			label.text = col.getData(sock);
+			label.textColor = sock.color;
+		}
 }
 
 - (void)layoutSubviews

@@ -85,6 +85,8 @@
 		self.sortdesc = self.sorter == col ? !self.sortdesc : NO;
 		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
 		self.sorter = col;
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:@"SockSortColumn"];
+		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:@"SockSortDescending"];
 		[self.timer fire];
 		break;
 	}
@@ -100,8 +102,10 @@
 	self.firstColWidth = self.tableView.bounds.size.width;
 	self.columns = [PSColumn psGetOpenFilesColumnsWithWidth:&_firstColWidth];
 	// Find sort column and create table header
-	self.sorter = self.columns[1];
-	self.sortdesc = NO;
+	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SockSortColumn"];
+	if (sortCol >= self.columns.count) sortCol = 2;
+	self.sorter = self.columns[sortCol];
+	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SockSortDescending"];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];

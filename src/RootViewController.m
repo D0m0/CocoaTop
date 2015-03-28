@@ -109,6 +109,8 @@
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 		@"SortColumn" : @1,
 		@"SortDescending" : @NO,
+		@"SockSortColumn" : @2,
+		@"SockSortDescending" : @YES,
 		@"UpdateInterval" : @"1",
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,

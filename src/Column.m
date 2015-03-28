@@ -193,9 +193,9 @@ NSString *psSystemUptime()
 		[PSColumn psColumnWithName:@"FD" descr:@"" align:NSTextAlignmentRight width:50 refresh:NO
 			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%u", sock.fd]; }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.fd - b.fd; } summary:nil],
-		[PSColumn psColumnWithName:@"Type" descr:@"" align:NSTextAlignmentRight width:50 refresh:NO
-			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%u", sock.type]; }
-			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.type - b.type; } summary:nil],
+		[PSColumn psColumnWithName:@"Type" descr:@"" align:NSTextAlignmentLeft width:50 refresh:NO
+			data:^NSString*(PSSock *sock) { return sock.stype; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.stype caseInsensitiveCompare:b.stype]/*a.type - b.type*/; } summary:nil],
 		] retain];
 	});
 	return ofColumns;
