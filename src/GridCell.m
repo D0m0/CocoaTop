@@ -134,12 +134,13 @@
 - (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size footer:(bool)footer
 {
 	self = [super initWithReuseIdentifier:@"Header"];
-	if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0)
-		self.backgroundView = ({
-			UIView *view = [[UIView alloc] initWithFrame:self.bounds];
-			view.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
-			view;
-		});
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000	// __IPHONE_7_0
+	self.backgroundView = ({
+		UIView *view = [[UIView alloc] initWithFrame:self.bounds];
+		view.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
+		view;
+	});
+#endif
 	NSUInteger totalCol = 0;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];

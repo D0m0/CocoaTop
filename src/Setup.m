@@ -207,29 +207,10 @@ struct optionsList_t {
 	return section ? 1 : sizeof(optionsList) / sizeof(struct optionsList_t);
 }
 
--(CGFloat)cellMargin
-{
-	CGFloat widthTable = self.tableView.bounds.size.width;
-	if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) return (15.0f);
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) return (10.0f);
-	if (widthTable <= 400.0f) return (10.0f);
-	if (widthTable <= 546.0f) return (31.0f);
-	if (widthTable >= 720.0f) return (45.0f);
-	return (31.0f + ceilf((widthTable - 547.0f)/13.0f));
-}
-
--(CGFloat)cellWidth:(UITableView *)tableView
-{
-	CGFloat width = tableView.frame.size.width - [self cellMargin] * 2;
-	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1)
-		width -= 20;
-	return width;
-}
-
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (indexPath.section == 1)
-		return [self.helpLabel sizeThatFits:CGSizeMake([self cellWidth:tableView], MAXFLOAT)].height + 25;
+		return [self.helpLabel sizeThatFits:CGSizeMake(cellWidth(tableView), MAXFLOAT)].height + 25;
 	return UITableViewAutomaticDimension;
 }
 
@@ -297,9 +278,9 @@ struct optionsList_t {
 		label.frame = CGRectMake(labelstart, 0, size.width - labelstart, size.height);
 	}
 	if (indexPath.section == 1) {
-		self.helpLabel.frame = CGRectMake([self cellMargin], 12, [self cellWidth:tableView], MAXFLOAT);
+		self.helpLabel.frame = CGRectMake(cellOrigin(tableView), 12, cellWidth(tableView), MAXFLOAT);
 		[self.helpLabel sizeToFit];
-		self.helpLabel.frame = CGRectMake([self cellMargin], 12, self.helpLabel.frame.size.width, self.helpLabel.frame.size.height);
+		self.helpLabel.frame = CGRectMake(cellOrigin(tableView), 12, self.helpLabel.frame.size.width, self.helpLabel.frame.size.height);
 	}
 }
 

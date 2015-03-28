@@ -39,7 +39,7 @@
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-	UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"\u276C Back"
+	UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"Back"
 		style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
 	self.navigationItem.leftBarButtonItem = item;
 	[item release];

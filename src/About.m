@@ -1,6 +1,38 @@
 #import "About.h"
 #import <MessageUI/MessageUI.h>
 
+CGFloat cellMargin(UITableView *tableView)
+{
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000	// __IPHONE_7_0
+	return 15.0f;
+#else
+	CGFloat widthTable = tableView.bounds.size.width;
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) return 10.0f;
+	if (widthTable <= 400.0f) return 10.0f;
+	if (widthTable <= 546.0f) return 31.0f;
+	if (widthTable >= 720.0f) return 45.0f;
+	return 31.0f + ceilf((widthTable - 547.0f)/13.0f);
+#endif
+}
+
+CGFloat cellOrigin(UITableView *tableView)
+{
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 70000	// __IPHONE_7_0
+	return 10.0f;
+#else
+	return cellMargin(tableView);
+#endif
+}
+
+CGFloat cellWidth(UITableView *tableView)
+{
+	CGFloat width = tableView.frame.size.width - cellMargin(tableView) * 2;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 70000	// __IPHONE_7_0
+	width -= 20;
+#endif
+	return width;
+}
+
 @interface WebViewController : UIViewController
 @end
 
@@ -103,29 +135,10 @@
 	return section ? 2 : 1;
 }
 
--(CGFloat)cellMargin
-{
-	CGFloat widthTable = self.tableView.bounds.size.width;
-	if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) return (15.0f);
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) return (10.0f);
-	if (widthTable <= 400.0f) return (10.0f);
-	if (widthTable <= 546.0f) return (31.0f);
-	if (widthTable >= 720.0f) return (45.0f);
-	return (31.0f + ceilf((widthTable - 547.0f)/13.0f));
-}
-
--(CGFloat)cellWidth:(UITableView *)tableView
-{
-	CGFloat width = tableView.frame.size.width - [self cellMargin] * 2;
-	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1)
-		width -= 20;
-	return width;
-}
-
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (indexPath.section == 0)
-		return [self.aboutLabel sizeThatFits:CGSizeMake([self cellWidth:tableView], MAXFLOAT)].height + 25;
+		return [self.aboutLabel sizeThatFits:CGSizeMake(cellWidth(tableView), MAXFLOAT)].height + 25;
 	return UITableViewAutomaticDimension;
 }
 
@@ -156,9 +169,9 @@
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (indexPath.section == 0) {
-		self.aboutLabel.frame = CGRectMake([self cellMargin], 12, [self cellWidth:tableView], MAXFLOAT);
+		self.aboutLabel.frame = CGRectMake(cellOrigin(tableView), 12, cellWidth(tableView), MAXFLOAT);
 		[self.aboutLabel sizeToFit];
-		self.aboutLabel.frame = CGRectMake([self cellMargin], 12, self.aboutLabel.frame.size.width, self.aboutLabel.frame.size.height);
+		self.aboutLabel.frame = CGRectMake(cellOrigin(tableView), 12, self.aboutLabel.frame.size.width, self.aboutLabel.frame.size.height);
 	}
 }
 

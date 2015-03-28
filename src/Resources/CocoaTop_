@@ -1,4 +1,8 @@
 #!/bin/bash
 C=/${0}
 C=${C%/*}
-exec ${C:-.}/CocoaTop
+if test -e /System/Library/Frameworks/GameController.framework; then
+	exec "${C:-.}"/CocoaTop
+else
+	exec "${C:-.}"/CocoaTop6
+fi

@@ -1,3 +1,5 @@
 #!/bin/bash
 chown root.wheel /Applications/CocoaTop.app/CocoaTop
+chown root.wheel /Applications/CocoaTop.app/CocoaTop6
 chmod +s /Applications/CocoaTop.app/CocoaTop
+chmod +s /Applications/CocoaTop.app/CocoaTop6

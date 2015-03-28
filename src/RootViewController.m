@@ -47,8 +47,8 @@
 		self.fullScreen = !self.navigationController.navigationBarHidden;
 		// This "scrolls" tableview so that it doesn't actually move when the bars disappear
 		if (!self.fullScreen) {			// Show navbar & scrollbar (going out of fullscreen)
-			[self.navigationController setNavigationBarHidden:NO animated:NO];
 			[[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
+			[self.navigationController setNavigationBarHidden:NO animated:NO];
 		}
 		CGSize size = [UIApplication sharedApplication].statusBarFrame.size;
 		CGFloat slide = MIN(size.width, size.height) +
@@ -352,12 +352,17 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+	BOOL anim = NO;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000	// __IPHONE_7_0
+	// Shitty bug in iOS 7
+	if (floor(NSFoundationVersionNumber) <= 1134.0) anim = YES; //NSFoundationVersionNumber_iOS_8_0
+#endif
 	// Return from fullscreen, or there's no way back ;)
 	if (self.fullScreen)
 		[self hideShowNavBar:nil];
 	PSProc *proc = self.procs[indexPath.row];
 	SockViewController* sockViewController = [[SockViewController alloc] initWithName:proc.name pid:proc.pid];
-		[self.navigationController pushViewController:sockViewController animated:NO];
+		[self.navigationController pushViewController:sockViewController animated:anim];
 		[sockViewController release];
 }
 
