@@ -81,10 +81,14 @@
     <ClInclude Include="src\Column.h" />
     <ClInclude Include="src\AppDelegate.h" />
     <ClInclude Include="src\GridCell.h" />
+    <ClInclude Include="src\libproc.h" />
     <ClInclude Include="src\Proc.h" />
+    <ClInclude Include="src\proc_info.h" />
     <ClInclude Include="src\RootViewController.h" />
     <ClInclude Include="src\Setup.h" />
     <ClInclude Include="src\SetupColumns.h" />
+    <ClInclude Include="src\Sock.h" />
+    <ClInclude Include="src\SockViewController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\About.m" />
@@ -97,6 +101,8 @@
     <None Include="src\RootViewController.m" />
     <None Include="src\Setup.m" />
     <None Include="src\SetupColumns.m" />
+    <None Include="src\Sock.m" />
+    <None Include="src\SockViewController.m" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\darwin">
+      <UniqueIdentifier>{2e8e81d6-6631-433a-8766-0bac7077b942}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AppDelegate.h">
@@ -40,6 +43,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\About.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SockViewController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\proc_info.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\libproc.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -72,6 +87,12 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="src\About.m">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\SockViewController.m">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\Sock.m">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
