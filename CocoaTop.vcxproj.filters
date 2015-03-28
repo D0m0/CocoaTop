@@ -51,9 +51,6 @@
     <ClInclude Include="src\proc_info.h">
       <Filter>Header Files\darwin</Filter>
     </ClInclude>
-    <ClInclude Include="src\libproc.h">
-      <Filter>Header Files\darwin</Filter>
-    </ClInclude>
     <ClInclude Include="src\Sock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
