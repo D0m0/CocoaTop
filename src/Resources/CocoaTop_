@@ -3,6 +3,8 @@ C=/${0}
 C=${C%/*}
 if test -e /System/Library/Frameworks/GameController.framework; then
 	exec "${C:-.}"/CocoaTop
-else
+elif test -e /System/Library/Frameworks/MediaToolbox.framework; then
 	exec "${C:-.}"/CocoaTop6
+else
+	exec "${C:-.}"/CocoaTop5
 fi
