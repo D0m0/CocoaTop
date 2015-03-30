@@ -85,5 +85,5 @@ typedef enum {
 - (NSUInteger)indexOfDisplayed:(display_t)display;
 - (NSUInteger)count;
 - (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
-- (PSProc *)procForPid:(pid_t)pid;
+- (NSUInteger)indexForPid:(pid_t)pid;
 @end

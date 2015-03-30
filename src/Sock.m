@@ -196,11 +196,14 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 	int bufSize = proc_pidinfo(self.pid, PROC_PIDLISTFDS, 0, 0, 0);
 	if (bufSize <= 0)
 		return EPERM;
-	// Get socket list and update the socks array
+	// Make sure the buffer is large enough ;)
+	bufSize *= 2;
 	struct proc_fdinfo *fdinfo = (struct proc_fdinfo *)malloc(bufSize);
 	if (!fdinfo)
 		return ENOMEM;
-	if (proc_pidinfo(self.pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize) > 0) {
+	// Get socket list and update the socks array
+	bufSize = proc_pidinfo(self.pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
+	if (bufSize > 0) {
 		for (int i = 0; i < bufSize / PROC_PIDLISTFD_SIZE; i++) {
 			PSSock *sock = [self sockForFd:fdinfo[i].proc_fd];
 			if (!sock) {

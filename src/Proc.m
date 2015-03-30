@@ -362,6 +362,8 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	size_t bufSize;
 	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
 		return errno;
+	// Make sure the buffer is large enough ;)
+	bufSize *= 2;
 	struct kinfo_proc *kp = (struct kinfo_proc *)malloc(bufSize);
 	// Get process list and update the procs array
 	int err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
@@ -423,11 +425,17 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	return (PSProc *)self.procs[idx];
 }
 
-- (PSProc *)procForPid:(pid_t)pid
+- (NSUInteger)indexForPid:(pid_t)pid
 {
 	NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		return ((PSProc *)obj).pid == pid;
 	}];
+	return idx;
+}
+
+- (PSProc *)procForPid:(pid_t)pid
+{
+	NSUInteger idx = [self indexForPid:pid];
 	return idx == NSNotFound ? nil : (PSProc *)self.procs[idx];
 }
 
