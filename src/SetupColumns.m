@@ -41,6 +41,11 @@ static NSArray *presetNames;
 	});
 }
 
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
+}
+
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
@@ -101,6 +106,11 @@ static NSArray *presetNames;
 	SelectPreset* preset = [SelectPreset new];
 	[self.navigationController pushViewController:preset animated:YES];
 	[preset release];
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
 }
 
 - (void)viewDidLoad

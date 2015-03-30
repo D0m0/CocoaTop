@@ -102,9 +102,10 @@
 	[self.tableView addGestureRecognizer:twoTap]; [twoTap release];
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
 		[self.tableView setSeparatorInset:UIEdgeInsetsZero];
-
+#endif
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 		@"SortColumn" : @1,
@@ -230,6 +231,11 @@
 		[self.timer invalidate];
 	self.header = nil;
 	self.columns = nil;
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation

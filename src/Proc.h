@@ -1,6 +1,7 @@
 #import <mach/mach_types.h>
 #import <sys/sysctl.h>
 #import <UIKit/UIKit.h>
+#import "Compat.h"
 
 // Display states determine grid row colors
 typedef enum {

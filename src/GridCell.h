@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import "Compat.h"
 #import "Proc.h"
 #import "Sock.h"
 #import "Column.h"
@@ -15,7 +16,6 @@
 - (void)updateWithProc:(PSProc *)proc columns:(NSArray *)columns;
 - (void)updateWithSock:(PSSock *)sock columns:(NSArray *)columns;
 @end
-
 
 @interface GridHeaderView : UITableViewHeaderFooterView
 @property (retain) NSMutableArray *labels;

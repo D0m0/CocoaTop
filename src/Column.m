@@ -1,6 +1,7 @@
 #import "Column.h"
 #import <pwd.h>
 #import <grp.h>
+#import <sys/stat.h>
 
 @implementation PSColumn
 

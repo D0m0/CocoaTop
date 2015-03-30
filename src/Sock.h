@@ -1,4 +1,5 @@
 #import "Proc.h"
+#import "Compat.h"
 
 #define KEV_ANY_VENDOR				0
 #define KEV_ANY_CLASS				0

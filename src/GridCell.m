@@ -133,13 +133,18 @@
 
 - (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size footer:(bool)footer
 {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	self = [super initWithReuseIdentifier:@"Header"];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000	// __IPHONE_7_0
 	self.backgroundView = ({
 		UIView *view = [[UIView alloc] initWithFrame:self.bounds];
 		view.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
 		view;
 	});
+#elif __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
+	self = [super initWithReuseIdentifier:@"Header"];
+#else
+	self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
+	self.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
 #endif
 	NSUInteger totalCol = 0;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
@@ -155,7 +160,11 @@
 		label.textColor = [UIColor blackColor];
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = col.tag;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
 		[self.contentView addSubview:label];
+#else
+		[self addSubview:label];
+#endif
 		totalCol += col.tag == 1 ? size.width : col.width;
 	}
 	return self;

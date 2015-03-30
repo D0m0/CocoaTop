@@ -10,6 +10,11 @@
 
 @implementation SelectFromList
 
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
+}
+
 - (instancetype)initWithList:(NSArray *)list option:(NSString *)option footer:(NSString *)footer
 {
 	self = [super initWithStyle:UITableViewStyleGrouped];
@@ -85,6 +90,11 @@
 @end
 
 @implementation SetupViewController
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
+}
 
 - (void)openAbout
 {

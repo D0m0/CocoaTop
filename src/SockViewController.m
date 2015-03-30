@@ -36,6 +36,11 @@
 	[self.navigationController popViewControllerAnimated:NO];
 }
 
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
+}
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
