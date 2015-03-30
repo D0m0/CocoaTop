@@ -354,7 +354,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	BOOL anim = NO;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000	// __IPHONE_7_0
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	// Shitty bug in iOS 7
 	if (floor(NSFoundationVersionNumber) <= 1134.0) anim = YES; //NSFoundationVersionNumber_iOS_8_0
 #endif

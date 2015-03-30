@@ -80,6 +80,7 @@
     <ClInclude Include="src\AppIcon.h" />
     <ClInclude Include="src\Column.h" />
     <ClInclude Include="src\AppDelegate.h" />
+    <ClInclude Include="src\Compat.h" />
     <ClInclude Include="src\GridCell.h" />
     <ClInclude Include="src\Proc.h" />
     <ClInclude Include="src\proc_info.h" />
@@ -94,6 +95,7 @@
     <None Include="src\AppIcon.m" />
     <None Include="src\Column.m" />
     <None Include="src\AppDelegate.m" />
+    <None Include="src\Compat.m" />
     <None Include="src\GridCell.m" />
     <None Include="src\main.m" />
     <None Include="src\Proc.m" />

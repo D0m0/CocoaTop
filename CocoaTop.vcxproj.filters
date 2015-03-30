@@ -54,6 +54,9 @@
     <ClInclude Include="src\Sock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Compat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\AppDelegate.m">
@@ -90,6 +93,9 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="src\Sock.m">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\Compat.m">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

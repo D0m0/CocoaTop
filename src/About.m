@@ -3,7 +3,7 @@
 
 CGFloat cellMargin(UITableView *tableView)
 {
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000	// __IPHONE_7_0
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	return 15.0f;
 #else
 	CGFloat widthTable = tableView.bounds.size.width;
@@ -17,7 +17,7 @@ CGFloat cellMargin(UITableView *tableView)
 
 CGFloat cellOrigin(UITableView *tableView)
 {
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < 70000	// __IPHONE_7_0
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
 	return 10.0f;
 #else
 	return cellMargin(tableView);
@@ -27,7 +27,7 @@ CGFloat cellOrigin(UITableView *tableView)
 CGFloat cellWidth(UITableView *tableView)
 {
 	CGFloat width = tableView.frame.size.width - cellMargin(tableView) * 2;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < 70000	// __IPHONE_7_0
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
 	width -= 20;
 #endif
 	return width;
