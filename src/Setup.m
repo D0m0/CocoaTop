@@ -288,9 +288,10 @@ struct optionsList_t {
 		label.frame = CGRectMake(labelstart, 0, size.width - labelstart, size.height);
 	}
 	if (indexPath.section == 1) {
-		self.helpLabel.frame = CGRectMake(cellOrigin(tableView), 12, cellWidth(tableView), MAXFLOAT);
+		CGFloat width = cellWidth(tableView);
+		self.helpLabel.frame = CGRectMake(cellOrigin(tableView), 12, width, MAXFLOAT);
 		[self.helpLabel sizeToFit];
-		self.helpLabel.frame = CGRectMake(cellOrigin(tableView), 12, self.helpLabel.frame.size.width, self.helpLabel.frame.size.height);
+		self.helpLabel.frame = CGRectMake(cellOrigin(tableView), 12, width, self.helpLabel.frame.size.height);
 	}
 }
 
