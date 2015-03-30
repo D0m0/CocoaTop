@@ -96,7 +96,7 @@ NSString *psSystemUptime()
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%d/%d", procs.runningCount, procs.coresCount]; }],
 		[PSColumn psColumnWithName:@"Flags" descr:@"Raw Process Flags (Hex)" align:NSTextAlignmentLeft width:70 refresh:YES
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%08X", proc.flags]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.flags - b.flags; } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [[NSNumber numberWithUnsignedInt:a.flags] compare:[NSNumber numberWithUnsignedInt:b.flags]]; } summary:nil],
 		[PSColumn psColumnWithName:@"RMem" descr:@"Resident Memory Usage" align:NSTextAlignmentRight width:70 refresh:YES
 			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size countStyle:NSByteCountFormatterCountStyleMemory]; }
