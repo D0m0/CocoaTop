@@ -20,6 +20,7 @@
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
 @property (retain) NSString *configChange;
+@property (assign) pid_t selectedPid;
 @end
 
 @implementation RootViewController
@@ -124,6 +125,7 @@
 	}];
 	self.configChange = @"";
 	self.configId = 0;
+	self.selectedPid = -1;
 	self.fullScreen = NO;
 }
 
@@ -159,6 +161,17 @@
 	if (timer == nil) {
 		// We don't need info about new processes, they are all new :)
 		[self.procs setAllDisplayed:ProcDisplayNormal];
+		NSUInteger idx = NSNotFound;
+		if (self.selectedPid != -1)
+			idx = [self.procs indexForPid:self.selectedPid];
+		if (idx != NSNotFound) {
+			[self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
+//			if (floor(NSFoundationVersionNumber) <= 1134.0)		//NSFoundationVersionNumber_iOS_8_0
+			[self.tableView deselectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:YES];
+#endif
+			self.selectedPid = -1;
+		}
 	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
 		// If there's a new process, scroll to it
 		NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
@@ -362,6 +375,7 @@
 	if (self.fullScreen)
 		[self hideShowNavBar:nil];
 	PSProc *proc = self.procs[indexPath.row];
+	self.selectedPid = proc.pid;
 	SockViewController* sockViewController = [[SockViewController alloc] initWithName:proc.name pid:proc.pid];
 		[self.navigationController pushViewController:sockViewController animated:anim];
 		[sockViewController release];
