@@ -174,27 +174,35 @@ CGFloat cellWidth(UITableView *tableView)
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (indexPath.section == 0) {
-		self.aboutLabel.frame = CGRectMake(cellOrigin(tableView), 12, cellWidth(tableView), MAXFLOAT);
+		CGFloat width = cellWidth(tableView);
+		self.aboutLabel.frame = CGRectMake(cellOrigin(tableView), 12, width, MAXFLOAT);
 		[self.aboutLabel sizeToFit];
-		self.aboutLabel.frame = CGRectMake(cellOrigin(tableView), 12, self.aboutLabel.frame.size.width, self.aboutLabel.frame.size.height);
+		self.aboutLabel.frame = CGRectMake(cellOrigin(tableView), 12, width, self.aboutLabel.frame.size.height);
 	}
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (indexPath.section == 1 && indexPath.row == 0) {
-		WebViewController* webView = [[WebViewController alloc] init];
+		WebViewController* webView = [WebViewController new];
 		[self.navigationController pushViewController:webView animated:YES];
 		[webView release];
 	}
 	if (indexPath.section == 1 && indexPath.row == 1) {
-		MFMailComposeViewController* emailView = [[MFMailComposeViewController alloc] init];
-		emailView.mailComposeDelegate = self;
-		[emailView setToRecipients:@[@"domo@rambler.ru"]];
-		[emailView setSubject:@"CocoaTop feedback"];
-		[self presentViewController:emailView animated:YES completion:nil];
-		[emailView release];
-		[tableView deselectRowAtIndexPath:indexPath animated:NO];
+		if ([MFMailComposeViewController canSendMail]) {
+			MFMailComposeViewController* emailView = [MFMailComposeViewController new];
+			emailView.mailComposeDelegate = self;
+			[emailView setToRecipients:@[@"domo@rambler.ru"]];
+			[emailView setSubject:@"CocoaTop feedback"];
+			[self presentViewController:emailView animated:YES completion:nil];
+			[emailView release];
+			[tableView deselectRowAtIndexPath:indexPath animated:NO];
+		} else {
+			UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:@"Send Mail" message:@"Your e-mail is not configured on this device"
+				delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+			[alertView show];
+			[tableView deselectRowAtIndexPath:indexPath animated:NO];
+		}
 	}
 }
 
