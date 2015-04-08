@@ -11,7 +11,7 @@
 @end
 
 @implementation NSByteCountFormatter
-+ (NSString *)stringFromByteCount:(long long)byteCount countStyle:(int)countStyle { return [NSString stringWithFormat:@"%.1f MB", (float)countStyle / 1024 / 1024]; }
++ (NSString *)stringFromByteCount:(long long)byteCount countStyle:(int)countStyle { return [NSString stringWithFormat:@"%.1f MB", (float)byteCount / 1024 / 1024]; }
 @end
 
 #endif

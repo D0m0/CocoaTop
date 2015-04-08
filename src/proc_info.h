@@ -52,6 +52,7 @@ __BEGIN_DECLS
 #define PROC_TTY_ONLY		3
 #define PROC_UID_ONLY		4
 #define PROC_RUID_ONLY		5
+#define PROC_PPID_ONLY		6
 
 struct proc_bsdinfo {
 	uint32_t		pbi_flags;		/* 64bit; emulated etc */
@@ -79,25 +80,45 @@ struct proc_bsdinfo {
 };
 
 
+struct proc_bsdshortinfo {
+        uint32_t                pbsi_pid;		/* process id */
+        uint32_t                pbsi_ppid;		/* process parent id */
+        uint32_t                pbsi_pgid;		/* process perp id */
+	uint32_t                pbsi_status;		/* p_stat value, SZOMB, SRUN, etc */
+	char                    pbsi_comm[MAXCOMLEN];	/* upto 16 characters of process name */
+	uint32_t                pbsi_flags;              /* 64bit; emulated etc */
+        uid_t                   pbsi_uid;		/* current uid on process */
+        gid_t                   pbsi_gid;		/* current gid on process */
+        uid_t                   pbsi_ruid;		/* current ruid on process */
+        gid_t                   pbsi_rgid;		/* current tgid on process */
+        uid_t                   pbsi_svuid;		/* current svuid on process */
+        gid_t                   pbsi_svgid;		/* current svgid on process */
+        uint32_t                pbsi_rfu;		/* reserved for future use*/
+};
+
+
+
 
 /* pbi_flags values */
-#define PROC_FLAG_SYSTEM	1
-#define PROC_FLAG_TRACED	2
-#define PROC_FLAG_INEXIT	4
+#define PROC_FLAG_SYSTEM	1	/*  System process */
+#define PROC_FLAG_TRACED	2	/* process currently being traced, possibly by gdb */
+#define PROC_FLAG_INEXIT	4	/* process is working its way in exit() */
 #define PROC_FLAG_PPWAIT	8
-#define PROC_FLAG_LP64		0x10
-#define PROC_FLAG_SLEADER	0x20
-#define PROC_FLAG_CTTY		0x40
-#define PROC_FLAG_CONTROLT	0x80
-#define PROC_FLAG_THCWD		0x100
+#define PROC_FLAG_LP64		0x10	/* 64bit process */
+#define PROC_FLAG_SLEADER	0x20	/* The process is the session leader */
+#define PROC_FLAG_CTTY		0x40	/* process has a control tty */
+#define PROC_FLAG_CONTROLT	0x80	/* Has a controlling terminal */
+#define PROC_FLAG_THCWD		0x100	/* process has a thread with cwd */
 /* process control bits for resource starvation */
-#define PROC_FLAG_PC_THROTTLE	0x200
-#define PROC_FLAG_PC_SUSP	0x400
-#define PROC_FLAG_PC_KILL	0x600
+#define PROC_FLAG_PC_THROTTLE	0x200	/* In resource starvation situations, this process is to be throttled */
+#define PROC_FLAG_PC_SUSP	0x400	/* In resource starvation situations, this process is to be suspended */
+#define PROC_FLAG_PC_KILL	0x600	/* In resource starvation situations, this process is to be terminated */
 #define PROC_FLAG_PC_MASK	0x600
 /* process action bits for resource starvation */
-#define PROC_FLAG_PA_THROTTLE	0x800
-#define PROC_FLAG_PA_SUSP	0x1000
+#define PROC_FLAG_PA_THROTTLE	0x800	/* The process is currently throttled due to resource starvation */
+#define PROC_FLAG_PA_SUSP	0x1000	/* The process is currently suspended due to resource starvation */
+#define PROC_FLAG_PSUGID        0x2000	 /* process has set privileges since last exec */
+#define PROC_FLAG_EXEC		0x4000	 /* process has called exec  */
 
 
 struct proc_taskinfo {
@@ -176,6 +197,7 @@ struct proc_regioninfo {
 #define SM_TRUESHARED      5
 #define SM_PRIVATE_ALIASED 6
 #define SM_SHARED_ALIASED  7
+#define SM_LARGE_PAGE      8
 
 
 /*
@@ -201,20 +223,33 @@ struct proc_workqueueinfo {
 	uint32_t	pwq_nthreads;		/* total number of workqueue threads */
 	uint32_t	pwq_runthreads;		/* total number of running workqueue threads */
 	uint32_t	pwq_blockedthreads;	/* total number of blocked workqueue threads */
-	uint32_t	reserved[1];		/* reserved for future use */
+	uint32_t	pwq_state;
 };
+
+/*
+ *	workqueue state (pwq_state field)
+ */
+#define WQ_EXCEEDED_CONSTRAINED_THREAD_LIMIT	0x1
+#define WQ_EXCEEDED_TOTAL_THREAD_LIMIT		0x2
+
 
 struct proc_fileinfo {
 	uint32_t		fi_openflags;
 	uint32_t		fi_status;	
 	off_t			fi_offset;
 	int32_t			fi_type;
-	int32_t			rfu_1;	/* reserved */
+	uint32_t		fi_guardflags;
 };
 
 /* stats flags in proc_fileinfo */
 #define PROC_FP_SHARED	1	/* shared by more than one fd */
 #define PROC_FP_CLEXEC	2	/* close on exec */
+#define PROC_FP_GUARDED	4	/* guarded fd */
+
+#define PROC_FI_GUARD_CLOSE		(1u << 0)
+#define PROC_FI_GUARD_DUP		(1u << 1)
+#define PROC_FI_GUARD_SOCKET_IPC	(1u << 2)
+#define PROC_FI_GUARD_FILEPORT		(1u << 3)
 
 /*
  * A copy of stat64 with static sized fields.
@@ -549,13 +584,13 @@ struct appletalk_fdinfo {
 
 
 /* defns of process file desc type */
-#define PROX_FDTYPE_ATALK		0
-#define PROX_FDTYPE_VNODE		1
-#define PROX_FDTYPE_SOCKET		2
-#define PROX_FDTYPE_PSHM		3
-#define PROX_FDTYPE_PSEM		4
-#define PROX_FDTYPE_KQUEUE		5
-#define PROX_FDTYPE_PIPE		6
+#define PROX_FDTYPE_ATALK	0
+#define PROX_FDTYPE_VNODE	1
+#define PROX_FDTYPE_SOCKET	2
+#define PROX_FDTYPE_PSHM	3
+#define PROX_FDTYPE_PSEM	4
+#define PROX_FDTYPE_KQUEUE	5
+#define PROX_FDTYPE_PIPE	6
 #define PROX_FDTYPE_FSEVENTS	7
 
 struct proc_fdinfo {
@@ -563,94 +598,130 @@ struct proc_fdinfo {
 	uint32_t		proc_fdtype;	
 };
 
+struct proc_fileportinfo {
+	uint32_t		proc_fileport;
+	uint32_t		proc_fdtype;
+};
+
 /* Flavors for proc_pidinfo() */
-#define PROC_PIDLISTFDS					1
-#define PROC_PIDLISTFD_SIZE				(sizeof(struct proc_fdinfo))
+#define PROC_PIDLISTFDS			1
+#define PROC_PIDLISTFD_SIZE		(sizeof(struct proc_fdinfo))
 
-#define PROC_PIDTASKALLINFO				2
-#define PROC_PIDTASKALLINFO_SIZE		(sizeof(struct proc_taskallinfo))
+#define PROC_PIDTASKALLINFO		2
+#define PROC_PIDTASKALLINFO_SIZE	(sizeof(struct proc_taskallinfo))
 
-#define PROC_PIDTBSDINFO				3
-#define PROC_PIDTBSDINFO_SIZE			(sizeof(struct proc_bsdinfo))
+#define PROC_PIDTBSDINFO		3
+#define PROC_PIDTBSDINFO_SIZE		(sizeof(struct proc_bsdinfo))
 
-#define PROC_PIDTASKINFO				4
-#define PROC_PIDTASKINFO_SIZE			(sizeof(struct proc_taskinfo))
+#define PROC_PIDTASKINFO		4
+#define PROC_PIDTASKINFO_SIZE		(sizeof(struct proc_taskinfo))
 
-#define PROC_PIDTHREADINFO				5
-#define PROC_PIDTHREADINFO_SIZE			(sizeof(struct proc_threadinfo))
+#define PROC_PIDTHREADINFO		5
+#define PROC_PIDTHREADINFO_SIZE		(sizeof(struct proc_threadinfo))
 
-#define PROC_PIDLISTTHREADS				6
-#define PROC_PIDLISTTHREADS_SIZE		(2* sizeof(uint32_t))
+#define PROC_PIDLISTTHREADS		6
+#define PROC_PIDLISTTHREADS_SIZE	(2* sizeof(uint32_t))
 
 
-#define PROC_PIDREGIONINFO				7
-#define PROC_PIDREGIONINFO_SIZE			(sizeof(struct proc_regioninfo))
+#define PROC_PIDREGIONINFO		7
+#define PROC_PIDREGIONINFO_SIZE		(sizeof(struct proc_regioninfo))
 
-#define PROC_PIDREGIONPATHINFO			8
-#define PROC_PIDREGIONPATHINFO_SIZE		(sizeof(struct proc_regionwithpathinfo))
+#define PROC_PIDREGIONPATHINFO		8
+#define PROC_PIDREGIONPATHINFO_SIZE	(sizeof(struct proc_regionwithpathinfo))
 
-#define PROC_PIDVNODEPATHINFO			9
-#define PROC_PIDVNODEPATHINFO_SIZE		(sizeof(struct proc_vnodepathinfo))
+#define PROC_PIDVNODEPATHINFO		9
+#define PROC_PIDVNODEPATHINFO_SIZE	(sizeof(struct proc_vnodepathinfo))
 
-#define PROC_PIDTHREADPATHINFO			10
-#define PROC_PIDTHREADPATHINFO_SIZE		(sizeof(struct proc_threadwithpathinfo))
+#define PROC_PIDTHREADPATHINFO		10
+#define PROC_PIDTHREADPATHINFO_SIZE	(sizeof(struct proc_threadwithpathinfo))
 
-#define PROC_PIDPATHINFO				11
-#define PROC_PIDPATHINFO_SIZE			(MAXPATHLEN)
-#define PROC_PIDPATHINFO_MAXSIZE		(4*MAXPATHLEN)
+#define PROC_PIDPATHINFO		11
+#define PROC_PIDPATHINFO_SIZE		(MAXPATHLEN)
+#define PROC_PIDPATHINFO_MAXSIZE	(4*MAXPATHLEN)
 
-#define PROC_PIDWORKQUEUEINFO			12
-#define PROC_PIDWORKQUEUEINFO_SIZE		(sizeof(struct proc_workqueueinfo))
+#define PROC_PIDWORKQUEUEINFO		12
+#define PROC_PIDWORKQUEUEINFO_SIZE	(sizeof(struct proc_workqueueinfo))
+
+#define PROC_PIDT_SHORTBSDINFO		13
+#define PROC_PIDT_SHORTBSDINFO_SIZE	(sizeof(struct proc_bsdshortinfo))
+
+#define PROC_PIDLISTFILEPORTS		14
+#define PROC_PIDLISTFILEPORTS_SIZE	(sizeof(struct proc_fileportinfo))
+
+#define PROC_PIDTHREADID64INFO		15
+#define PROC_PIDTHREADID64INFO_SIZE	(sizeof(struct proc_threadinfo))
+
+#define PROC_PID_RUSAGE			16
+#define PROC_PID_RUSAGE_SIZE		0
+
 
 /* Flavors for proc_pidfdinfo */
 
-#define PROC_PIDFDVNODEINFO				1
-#define PROC_PIDFDVNODEINFO_SIZE		(sizeof(struct vnode_fdinfo))
+#define PROC_PIDFDVNODEINFO		1
+#define PROC_PIDFDVNODEINFO_SIZE	(sizeof(struct vnode_fdinfo))
 
-#define PROC_PIDFDVNODEPATHINFO			2
+#define PROC_PIDFDVNODEPATHINFO		2
 #define PROC_PIDFDVNODEPATHINFO_SIZE	(sizeof(struct vnode_fdinfowithpath))
 
-#define PROC_PIDFDSOCKETINFO			3
-#define PROC_PIDFDSOCKETINFO_SIZE		(sizeof(struct socket_fdinfo))
+#define PROC_PIDFDSOCKETINFO		3
+#define PROC_PIDFDSOCKETINFO_SIZE	(sizeof(struct socket_fdinfo))
 
-#define PROC_PIDFDPSEMINFO				4
-#define PROC_PIDFDPSEMINFO_SIZE			(sizeof(struct psem_fdinfo))
+#define PROC_PIDFDPSEMINFO		4
+#define PROC_PIDFDPSEMINFO_SIZE		(sizeof(struct psem_fdinfo))
 
-#define PROC_PIDFDPSHMINFO				5
-#define PROC_PIDFDPSHMINFO_SIZE			(sizeof(struct pshm_fdinfo))
+#define PROC_PIDFDPSHMINFO		5
+#define PROC_PIDFDPSHMINFO_SIZE		(sizeof(struct pshm_fdinfo))
 
-#define PROC_PIDFDPIPEINFO				6
-#define PROC_PIDFDPIPEINFO_SIZE			(sizeof(struct pipe_fdinfo))
+#define PROC_PIDFDPIPEINFO		6
+#define PROC_PIDFDPIPEINFO_SIZE		(sizeof(struct pipe_fdinfo))
 
-#define PROC_PIDFDKQUEUEINFO			7
-#define PROC_PIDFDKQUEUEINFO_SIZE		(sizeof(struct kqueue_fdinfo))
+#define PROC_PIDFDKQUEUEINFO		7
+#define PROC_PIDFDKQUEUEINFO_SIZE	(sizeof(struct kqueue_fdinfo))
 
-#define PROC_PIDFDATALKINFO				8
-#define PROC_PIDFDATALKINFO_SIZE		(sizeof(struct appletalk_fdinfo))
+#define PROC_PIDFDATALKINFO		8
+#define PROC_PIDFDATALKINFO_SIZE	(sizeof(struct appletalk_fdinfo))
+
+/* Flavors for proc_pidfileportinfo */
+
+#define PROC_PIDFILEPORTVNODEPATHINFO	2	/* out: vnode_fdinfowithpath */
+#define PROC_PIDFILEPORTVNODEPATHINFO_SIZE	\
+					PROC_PIDFDVNODEPATHINFO_SIZE
+
+#define PROC_PIDFILEPORTSOCKETINFO	3	/* out: socket_fdinfo */
+#define PROC_PIDFILEPORTSOCKETINFO_SIZE	PROC_PIDFDSOCKETINFO_SIZE
+
+#define PROC_PIDFILEPORTPSHMINFO	5	/* out: pshm_fdinfo */
+#define PROC_PIDFILEPORTPSHMINFO_SIZE	PROC_PIDFDPSHMINFO_SIZE
+
+#define PROC_PIDFILEPORTPIPEINFO	6	/* out: pipe_fdinfo */
+#define PROC_PIDFILEPORTPIPEINFO_SIZE	PROC_PIDFDPIPEINFO_SIZE
 
 /* used for proc_setcontrol */
-#define PROC_SELFSET_PCONTROL			1
+#define PROC_SELFSET_PCONTROL		1
 
-#ifdef XNU_KERNEL_PRIVATE
-#ifndef pshmnode
-struct pshmnode;
-#endif
+#define PROC_SELFSET_THREADNAME		2
+#define PROC_SELFSET_THREADNAME_SIZE	(MAXTHREADNAMESIZE -1)
 
-#ifndef psemnode
-struct psemnode ;
-#endif
+#define PROC_SELFSET_VMRSRCOWNER	3
 
-#ifndef pipe
-struct pipe;
-#endif
+#define PROC_SELFSET_DELAYIDLESLEEP	4
 
-extern int fill_socketinfo(socket_t so, struct socket_info *si);
-extern int fill_pshminfo(struct pshmnode * pshm, struct pshm_info * pinfo);
-extern int fill_pseminfo(struct psemnode * psem, struct psem_info * pinfo);
-extern int fill_pipeinfo(struct pipe * cpipe, struct pipe_info * pinfo);
-extern int fill_kqueueinfo(struct kqueue * kq, struct kqueue_info * kinfo);
-extern int fill_procworkqueue(proc_t, struct proc_workqueueinfo *);
-#endif /* XNU_KERNEL_PRIVATE */
+/* used for proc_dirtycontrol */
+#define PROC_DIRTYCONTROL_TRACK         1
+#define PROC_DIRTYCONTROL_SET           2
+#define PROC_DIRTYCONTROL_GET           3
+
+/* proc_track_dirty() flags */
+#define PROC_DIRTY_TRACK                0x1
+#define PROC_DIRTY_ALLOW_IDLE_EXIT      0x2
+#define PROC_DIRTY_DEFER                0x4
+
+/* proc_get_dirty() flags */
+#define PROC_DIRTY_TRACKED              0x1
+#define PROC_DIRTY_ALLOWS_IDLE_EXIT     0x2
+#define PROC_DIRTY_IS_DIRTY             0x4
+
+
 
 __END_DECLS
 
