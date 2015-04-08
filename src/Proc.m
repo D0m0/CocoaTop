@@ -80,7 +80,7 @@ extern int proc_pidpath(int pid, void * buffer, uint32_t  buffersize) __OSX_AVAI
 			self.pid = ki->kp_proc.p_pid;
 			self.ppid = ki->kp_eproc.e_ppid;
 			NSArray *args = [PSProc getArgsByKinfo:ki];
-			char buffer[1024];
+			char buffer[MAXPATHLEN];
 			if (proc_pidpath(self.pid, buffer, sizeof(buffer)))
 				self.executable = [NSString stringWithCString:buffer encoding:NSUTF8StringEncoding];
 			else

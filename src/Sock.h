@@ -28,6 +28,12 @@
 @property (assign) display_t display;
 @property (assign) int32_t fd;
 @property (assign) uint32_t type;
+
+@property (assign) uint64_t addr;
+@property (assign) uint64_t addrend;
+@property (assign) uint32_t dev;
+@property (assign) uint32_t ino;
+
 @property (retain) NSString *name;
 @property (retain) NSString *stype;
 @property (retain) UIColor *color;

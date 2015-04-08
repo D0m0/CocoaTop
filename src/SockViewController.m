@@ -16,6 +16,9 @@
 @property (assign) BOOL fullScreen;
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
+
+@property (retain) UIBarButtonItem *btnFD;
+@property (retain) UIBarButtonItem *btnRG;
 @end
 
 @implementation SockViewController
@@ -41,6 +44,22 @@
 	return YES;
 }
 
+- (void)modeFD
+{
+	self.btnRG.tintColor = self.btnFD.tintColor;
+	self.btnFD.tintColor = [UIColor redColor];
+	self.btnRG.style = UIBarButtonItemStylePlain;
+	self.btnFD.style = UIBarButtonItemStyleDone;
+}
+
+- (void)modeRG
+{
+	self.btnFD.tintColor = self.btnRG.tintColor;
+	self.btnRG.tintColor = [UIColor redColor];
+	self.btnFD.style = UIBarButtonItemStylePlain;
+	self.btnRG.style = UIBarButtonItemStyleDone;
+}
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
@@ -48,6 +67,12 @@
 		style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
 	self.navigationItem.leftBarButtonItem = item;
 	[item release];
+
+	self.btnFD = [[UIBarButtonItem alloc] initWithTitle:@"Open files" style:UIBarButtonItemStyleDone target:self action:@selector(modeFD)];
+	self.btnRG = [[UIBarButtonItem alloc] initWithTitle:@"Regions" style:UIBarButtonItemStylePlain target:self action:@selector(modeRG)];
+	self.btnFD.tintColor = [UIColor redColor];
+	self.navigationItem.rightBarButtonItems = @[self.btnFD, self.btnRG];
+
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	self.tableView.rowHeight = self.tableView.rowHeight * 2 / 3;
 	self.configId = 0;
