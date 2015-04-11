@@ -10,6 +10,8 @@
 //extern int proc_listchildpids(pid_t ppid, void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_1);
 extern int proc_pidinfo(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
+extern kern_return_t mach_vm_read(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, vm_offset_t *data, mach_msg_type_number_t *dataCnt);
+extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, mach_vm_address_t data, mach_vm_size_t *outsize);
 //extern int proc_pidfileportinfo(int pid, uint32_t fileport, int flavor, void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_3);
 //extern int proc_name(int pid, void * buffer, uint32_t buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 //extern int proc_regionfilename(int pid, uint64_t address, void * buffer, uint32_t buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
@@ -166,13 +168,13 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 		return nil;
 	if (self = [super init]) {
 		self.display = ProcDisplayStarted;
-		self.name = rwpi->prp_vip.vip_path[0] ? [NSString stringWithCString:rwpi->prp_vip.vip_path encoding:NSUTF8StringEncoding] : @"<none>";
+		self.name = rwpi->prp_vip.vip_path[0] ? [PSSymLink simplifyPathName:[NSString stringWithCString:rwpi->prp_vip.vip_path encoding:NSUTF8StringEncoding]] : @"<none>";
 		self.addr = rwpi->prp_prinfo.pri_address;
 		self.addrend = rwpi->prp_prinfo.pri_address + rwpi->prp_prinfo.pri_size;
 		self.dev = rwpi->prp_vip.vip_vi.vi_stat.vst_dev;
 		self.ino = rwpi->prp_vip.vip_vi.vi_stat.vst_ino;
-		self.stype = @"REG";
-		self.color = [UIColor blackColor];
+		self.stype = @"IMG";
+		self.color = self.dev && self.ino ? [UIColor blackColor] : [UIColor grayColor];
 	}
 	return self;
 }
@@ -208,6 +210,40 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 	return [[[PSSockArray alloc] initSockArrayWithPid:pid] autorelease];
 }
 
+
+struct dyld_image_info64 {
+	mach_vm_address_t			imageLoadAddress;	/* base address image is mapped into */
+	mach_vm_address_t			imageFilePath;		/* path dyld used to load the image */
+	mach_vm_size_t				imageFileModDate;	/* time_t of image file */
+													/* if stat().st_mtime of imageFilePath does not match imageFileModDate, */
+													/* then file has been modified since dyld loaded it */
+};
+
+struct dyld_all_image_infos64 {
+	uint32_t						version;
+	uint32_t						infoArrayCount;
+	mach_vm_address_t				infoArray;					// struct dyld_image_info64*
+	dyld_image_notifier				notification;		
+	bool							processDetachedFromSharedRegion;
+	bool							libSystemInitialized;
+	mach_vm_address_t				dyldImageLoadAddress;
+	mach_vm_address_t				jitInfo;
+	mach_vm_address_t				dyldVersion;				// char*
+	mach_vm_address_t				errorMessage;				// char*
+	uint64_t						terminationFlags;
+	mach_vm_address_t				coreSymbolicationShmPage;
+	uint64_t						systemOrderFlag;
+	uint64_t						uuidArrayCount;
+	mach_vm_address_t				uuidArray;					// struct dyld_uuid_info*
+	mach_vm_address_t				dyldAllImageInfosAddress;	// struct dyld_all_image_infos64*
+	uint64_t						initialImageCount;
+	uint64_t						errorKind;
+	mach_vm_address_t				errorClientOfDylibPath;		// char*
+	mach_vm_address_t				errorTargetDylibPath;		// char*
+	mach_vm_address_t				errorSymbol;				// char*
+	uint64_t						sharedCacheSlide;
+};
+
 - (int)refresh
 {
 	// Remove closed sockets
@@ -239,7 +275,7 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 	free(fdinfo);
 */
 	struct proc_regionwithpathinfo rwpi;
-	uint64_t addr = 0;
+	mach_vm_address_t addr = 0;
 /*	while (1) {
 	    if (proc_pidinfo(self.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) < PROC_PIDREGIONPATHINFO_SIZE)
 			break;
@@ -263,70 +299,63 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 		task_dyld_info_data_t task_dyld_info;
 		mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
 		if (task_info(task, TASK_DYLD_INFO, (task_info_t)&task_dyld_info, &count) == KERN_SUCCESS) {
-			NSLog(@"all_image_info_addr(%d) = %llX", self.pid, task_dyld_info.all_image_info_addr);
-			NSLog(@"all_image_info_size = %llX", task_dyld_info.all_image_info_size);
-			NSLog(@"all_image_info_format = %d", task_dyld_info.all_image_info_format);
+//			NSLog(@"all_image_info_addr(%d) = %llX", self.pid, task_dyld_info.all_image_info_addr);
+//			NSLog(@"all_image_info_size = %llX", task_dyld_info.all_image_info_size);
+//			NSLog(@"all_image_info_format = %d", task_dyld_info.all_image_info_format);
 			vm_offset_t ptr;
 			mach_msg_type_number_t size = task_dyld_info.all_image_info_size;
-			kern_return_t ret = vm_read(task, task_dyld_info.all_image_info_addr, size, &ptr, &size);
+		// vvvvv Replace with mach_vm_read_overwrite vvvvv
+			kern_return_t ret = mach_vm_read(task, task_dyld_info.all_image_info_addr, size, &ptr, &size);
 			if (ret == KERN_SUCCESS) {
-				struct dyld_all_image_infos *aii = (struct dyld_all_image_infos *)ptr;
-				NSLog(@"version = %d, count = %d", aii->version, aii->infoArrayCount);
+				struct dyld_all_image_infos64 *aii = (struct dyld_all_image_infos64 *)ptr;
+//				NSLog(@"version = %d, count = %d", aii->version, aii->infoArrayCount);
 				vm_offset_t ptr2;
-				mach_msg_type_number_t size2 = aii->infoArrayCount * sizeof(struct dyld_image_info);
-				if (vm_read(task, (uint64_t)aii->infoArray, size2, &ptr2, &size2) == KERN_SUCCESS) {
-					struct dyld_image_info *info = (struct dyld_image_info *)ptr2;
+				mach_msg_type_number_t size2 = aii->infoArrayCount * sizeof(struct dyld_image_info64);
+		// If infoArray is NULL, it means it is being modified, come back later.
+				ret = mach_vm_read(task, aii->infoArray, size2, &ptr2, &size2);
+				if (ret == KERN_SUCCESS) {
+					struct dyld_image_info64 *info = (struct dyld_image_info64 *)ptr2;
 					for (int i = 0; i < aii->infoArrayCount; i++) {
-						addr = (uint64_t)info[i].imageLoadAddress;
-//						dataCnt = 1024;
-//						char *imageName = readProcessMemory(g_pid, dii[i].imageFilePath, &dataCnt);
-//						if (imageName) g_dii[i].imageFilePath = strdup(imageName);
-//						NSLog(@"%16llX: %s", addr, info[i].imageFilePath);
-//						vm_deallocate(mach_task_self(), ptr3, size3);
-						if (proc_pidinfo(self.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) == PROC_PIDREGIONPATHINFO_SIZE) {
+						addr = (mach_vm_address_t)info[i].imageLoadAddress;
+						if (proc_pidinfo(self.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE)
+							continue;
+						PSSock *sock = nil;
+						if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino)
+							sock = [self sockForDev:rwpi.prp_vip.vip_vi.vi_stat.vst_dev ino:rwpi.prp_vip.vip_vi.vi_stat.vst_ino];
+						else
+							sock = [self sockForAddr:addr];
+						if (!sock) {
 							if (!rwpi.prp_vip.vip_path[0]) {
-								strcpy(rwpi.prp_vip.vip_path, info[i].imageFilePath);
+								mach_vm_size_t size3;
+//								strcpy(rwpi.prp_vip.vip_path, info[i].imageFilePath);
+								if (mach_vm_read_overwrite(task, info[i].imageFilePath, MAXPATHLEN, (mach_vm_address_t)rwpi.prp_vip.vip_path, &size3) != KERN_SUCCESS)
+									strcpy(rwpi.prp_vip.vip_path, "<Unknown>");
+							}
+							// lyld cache...
+							if (!rwpi.prp_vip.vip_vi.vi_stat.vst_dev && !rwpi.prp_vip.vip_vi.vi_stat.vst_ino) {
 								rwpi.prp_prinfo.pri_address = addr;
 								rwpi.prp_prinfo.pri_size = 0;
 							}
-							PSSock *sock = nil;
-							if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino)
-								sock = [self sockForDev:rwpi.prp_vip.vip_vi.vi_stat.vst_dev ino:rwpi.prp_vip.vip_vi.vi_stat.vst_ino];
-							else
-								sock = [self sockForAddr:addr];
-							if (!sock) {
-								sock = [PSSock psSockWithRwpi:&rwpi];
-								if (sock) [self.socks addObject:sock];
-							} else {
-								if (sock.display != ProcDisplayStarted)
-									sock.display = ProcDisplayUser;
-								if (sock.addr > rwpi.prp_prinfo.pri_address)
-									sock.addr = rwpi.prp_prinfo.pri_address;
-								if (sock.addrend < rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size)
+							sock = [PSSock psSockWithRwpi:&rwpi];
+							if (sock) {
+								while (rwpi.prp_prinfo.pri_size) {
+									addr = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
+									if (proc_pidinfo(self.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE) break;
+									if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev != sock.dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino != sock.ino)
+										break;
 									sock.addrend = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
+								}
+								[self.socks addObject:sock];
 							}
-						//} else {
-						//	NSLog(@"%16llX: proc_pidinfo failed, adding manually", addr);
-						//	PSSock *sock = [self sockForAddr:addr];
-						//	if (!sock) {
-						//		rwpi.prp_prinfo.pri_address = addr;
-						//		rwpi.prp_prinfo.pri_size = 0;
-						//		strcpy(rwpi.prp_vip.vip_path, info[i].imageFilePath);
-						//		rwpi.prp_vip.vip_vi.vi_stat.vst_dev = -1;
-						//		rwpi.prp_vip.vip_vi.vi_stat.vst_ino = -1;
-
-						//		sock = [PSSock psSockWithRwpi:&rwpi];
-						//		NSLog(@"    sock = %llX", (uint64_t)sock);
-						//		if (sock) [self.socks addObject:sock];
-						//	} else if (sock.display != ProcDisplayStarted)
-						//		sock.display = ProcDisplayUser;
-						}
+						} else if (sock.display != ProcDisplayStarted)
+							sock.display = ProcDisplayUser;
 					}
 					vm_deallocate(mach_task_self(), ptr2, size2);
-				}
+				} else
+					NSLog(@"mach_vm_read2: %d", ret);
 				vm_deallocate(mach_task_self(), ptr, size);
 			} else
-				NSLog(@"vm_read: %d", ret);
+				NSLog(@"mach_vm_read: %d", ret);
 		}
 		mach_port_deallocate(mach_task_self(), task);
 	}
@@ -381,7 +410,7 @@ extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffer
 	return idx == NSNotFound ? nil : (PSSock *)self.socks[idx];
 }
 
-- (PSSock *)sockForAddr:(uint64_t)addr
+- (PSSock *)sockForAddr:(mach_vm_address_t)addr
 {
 	NSUInteger idx = [self.socks indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		return ((PSSock *)obj).addr == addr;

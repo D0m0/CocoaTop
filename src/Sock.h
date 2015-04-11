@@ -29,8 +29,8 @@
 @property (assign) int32_t fd;
 @property (assign) uint32_t type;
 
-@property (assign) uint64_t addr;
-@property (assign) uint64_t addrend;
+@property (assign) mach_vm_address_t addr;
+@property (assign) mach_vm_address_t addrend;
 @property (assign) uint32_t dev;
 @property (assign) uint32_t ino;
 

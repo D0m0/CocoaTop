@@ -191,18 +191,15 @@ NSString *psSystemUptime()
 		[PSColumn psColumnWithName:@"Open file/socket" descr:@"" align:NSTextAlignmentLeft width:220 refresh:NO
 			data:^NSString*(PSSock *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
-		[PSColumn psColumnWithName:@"Addr" descr:@"" align:NSTextAlignmentRight width:100 refresh:NO
+		[PSColumn psColumnWithName:@"Addr" descr:@"" align:NSTextAlignmentRight width:90 refresh:NO
 			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%llX", sock.addr]; }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.addr == b.addr ? 0 : a.addr > b.addr ? 1 : -1; } summary:nil],
-		[PSColumn psColumnWithName:@"End" descr:@"" align:NSTextAlignmentRight width:100 refresh:NO
-			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%llX", sock.addrend]; }
+		[PSColumn psColumnWithName:@"End" descr:@"" align:NSTextAlignmentRight width:90 refresh:NO
+			data:^NSString*(PSSock *sock) { return sock.addrend == sock.addr ? @"-" : [NSString stringWithFormat:@"%llX", sock.addrend]; }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.addrend == b.addrend ? 0 : a.addrend > b.addrend ? 1 : -1; } summary:nil],
-		[PSColumn psColumnWithName:@"Dev" descr:@"" align:NSTextAlignmentLeft width:70 refresh:NO
-			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%u:%u", sock.dev >> 24, sock.dev & 0xffffff]; }
-			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.dev - b.dev; } summary:nil],
-		[PSColumn psColumnWithName:@"Inode" descr:@"" align:NSTextAlignmentLeft width:70 refresh:NO
-			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%u", sock.ino]; }
-			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.ino - b.ino; } summary:nil],
+		[PSColumn psColumnWithName:@"Inode" descr:@"" align:NSTextAlignmentLeft width:80 refresh:NO
+			data:^NSString*(PSSock *sock) { return sock.dev && sock.ino ? [NSString stringWithFormat:@"%u,%u:%u", sock.dev >> 24, sock.dev & 0xffffff, sock.ino] : @"dyldcache"; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.dev == b.dev ? a.ino - b.ino : a.dev - b.dev; } summary:nil],
 		//[PSColumn psColumnWithName:@"FD" descr:@"" align:NSTextAlignmentRight width:50 refresh:NO
 		//	data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%X", sock.fd]; }
 		//	sort:^NSComparisonResult(PSSock *a, PSSock *b) { return a.fd - b.fd; } summary:nil],
