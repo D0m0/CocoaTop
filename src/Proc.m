@@ -134,121 +134,126 @@ proc_state_t mach_state_order(int s, long sleep_time)
 
 - (void)updateWithKinfo:(struct kinfo_proc *)ki
 {
-	time_value_t total_time = {0};
-	task_port_t task;
-	unsigned int info_count;
 	self.priobase = ki->kp_proc.p_priority;
 	self.flags = ki->kp_proc.p_flag;
 	self.nice = ki->kp_proc.p_nice;
 	self.tdev = ki->kp_eproc.e_tdev;
 	self.uid = ki->kp_eproc.e_ucred.cr_uid;
 	self.gid = ki->kp_eproc.e_pcred.p_rgid;
-	memcpy(&events_prev, &events, sizeof(events_prev));
+	[self updateWithState:ki->kp_proc.p_stat];
+}
+
+- (void)updateWithState:(char)state
+{
+	time_value_t total_time = {0};
+	task_port_t task;
+	unsigned int info_count;
+	// Priority process states
+	self.state = ProcStateMax;
+	if (state == SSTOP) self.state = ProcStateDebugging;
+	if (state == SZOMB) self.state = ProcStateZombie;
 	// Task info
+	memcpy(&events_prev, &events, sizeof(events_prev));
 	self.threads = 0;
 	self.prio = 0;
 	self.pcpu = 0;
-	self.state = ProcStateMax;
-	// Priority process states
-	if (ki->kp_proc.p_stat == SSTOP) self.state = ProcStateDebugging;
-	if (ki->kp_proc.p_stat == SZOMB) self.state = ProcStateZombie;
-	if (task_for_pid(mach_task_self(), ki->kp_proc.p_pid, &task) == KERN_SUCCESS) {
-		// Basic task info
-		info_count = TASK_BASIC_INFO_COUNT;
-		if (task_info(task, TASK_BASIC_INFO, (task_info_t)&basic, &info_count) == KERN_SUCCESS) {
-			// Time
-			total_time = basic.user_time;
-			time_value_add(&total_time, &basic.system_time);
-			// Task scheduler info
-			struct policy_rr_base sched = {0};			// this struct is compatible with all task scheduling policies
-			switch (basic.policy) {
-			case POLICY_TIMESHARE:
-				info_count = POLICY_TIMESHARE_INFO_COUNT;
-				if (task_info(task, TASK_SCHED_TIMESHARE_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
-					self.priobase = sched.base_priority;
-				break;
-			case POLICY_RR:
-				info_count = POLICY_RR_INFO_COUNT;
-				if (task_info(task, TASK_SCHED_RR_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
-					self.priobase = sched.base_priority;
-				break;
-			case POLICY_FIFO:
-				info_count = POLICY_FIFO_INFO_COUNT;
-				if (task_info(task, TASK_SCHED_FIFO_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
-					self.priobase = sched.base_priority;
-				break;
-			}
+	if (task_for_pid(mach_task_self(), self.pid, &task) != KERN_SUCCESS)
+		return;
+	// Basic task info
+	info_count = TASK_BASIC_INFO_COUNT;
+	if (task_info(task, TASK_BASIC_INFO, (task_info_t)&basic, &info_count) == KERN_SUCCESS) {
+		// Time
+		total_time = basic.user_time;
+		time_value_add(&total_time, &basic.system_time);
+		// Task scheduler info
+		struct policy_rr_base sched = {0};			// this struct is compatible with all task scheduling policies
+		switch (basic.policy) {
+		case POLICY_TIMESHARE:
+			info_count = POLICY_TIMESHARE_INFO_COUNT;
+			if (task_info(task, TASK_SCHED_TIMESHARE_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
+				self.priobase = sched.base_priority;
+			break;
+		case POLICY_RR:
+			info_count = POLICY_RR_INFO_COUNT;
+			if (task_info(task, TASK_SCHED_RR_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
+				self.priobase = sched.base_priority;
+			break;
+		case POLICY_FIFO:
+			info_count = POLICY_FIFO_INFO_COUNT;
+			if (task_info(task, TASK_SCHED_FIFO_INFO, (task_info_t)&sched, &info_count) == KERN_SUCCESS)
+				self.priobase = sched.base_priority;
+			break;
 		}
-		// Task policy
-		task_category_policy_data_t policy_info = {TASK_UNSPECIFIED};
-		boolean_t get_default = NO;
-		info_count = TASK_CATEGORY_POLICY_COUNT;
-		task_policy_get(task, TASK_CATEGORY_POLICY, (task_policy_t)&policy_info, &info_count, &get_default);
-		self.role = policy_info.role;
-		// Task times
-		struct task_thread_times_info times;
-		info_count = TASK_THREAD_TIMES_INFO_COUNT;
-		if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS)
-			memset(&times, 0, sizeof(times));
-		time_value_add(&total_time, &times.user_time);
-		time_value_add(&total_time, &times.system_time);
-		// Task events
-		info_count = TASK_EVENTS_INFO_COUNT;
-		if (task_info(task, TASK_EVENTS_INFO, (task_info_t)&events, &info_count) != KERN_SUCCESS)
-			memset(&events, 0, sizeof(events));
-		else if (!events_prev.csw)	// Fill in events_prev on first update
-			memcpy(&events_prev, &events, sizeof(events_prev));
-		// Task ports
-		mach_msg_type_number_t ncnt, tcnt;
-		mach_port_name_array_t names;
-		mach_port_type_array_t types;
-		if (mach_port_names(task, &names, &ncnt, &types, &tcnt) == KERN_SUCCESS) {
-			vm_deallocate(mach_task_self(), (vm_address_t)names, ncnt * sizeof(*names));
-			vm_deallocate(mach_task_self(), (vm_address_t)types, tcnt * sizeof(*types));
-			self.ports = ncnt;
-		} else
-			self.ports = 0;
-		// Enumerate all threads to acquire detailed info
-		unsigned int				thread_count;
-		thread_port_array_t			thread_list;
-		struct thread_basic_info	thval;
-		if (task_threads(task, &thread_list, &thread_count) == KERN_SUCCESS) {
-			self.threads = thread_count;
-			for (unsigned int j = 0; j < thread_count; j++) {
-				info_count = THREAD_BASIC_INFO_COUNT;
-				if (thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&thval, &info_count) == KERN_SUCCESS) {
-					self.pcpu += thval.cpu_usage;
-					// Actual process priority will be the largest priority of a thread
-					struct policy_timeshare_info sched;		// this struct is compatible with all scheduler policies
-					switch (thval.policy) {
-					case POLICY_TIMESHARE:
-						info_count = POLICY_TIMESHARE_INFO_COUNT;
-						if (thread_info(thread_list[j], THREAD_SCHED_TIMESHARE_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
-							if (self.prio < sched.cur_priority) self.prio = sched.cur_priority;
-						break;
-					case POLICY_RR:
-						info_count = POLICY_RR_INFO_COUNT;
-						if (thread_info(thread_list[j], THREAD_SCHED_RR_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
-							if (self.prio < sched.base_priority) self.prio = sched.base_priority;
-						break;
-					case POLICY_FIFO:
-						info_count = POLICY_FIFO_INFO_COUNT;
-						if (thread_info(thread_list[j], THREAD_SCHED_FIFO_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
-							if (self.prio < sched.base_priority) self.prio = sched.base_priority;
-						break;
-					}
-				}
-				// Task state is formed from all thread states
-				proc_state_t thstate = mach_state_order(thval.run_state, thval.sleep_time);
-				if (self.state > thstate)
-					self.state = thstate;
-				mach_port_deallocate(mach_task_self(), thread_list[j]);
-			}
-			// Deallocate the list of threads
-			vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(*thread_list) * thread_count);
-		}
-		mach_port_deallocate(mach_task_self(), task);
 	}
+	// Task policy
+	task_category_policy_data_t policy_info = {TASK_UNSPECIFIED};
+	boolean_t get_default = NO;
+	info_count = TASK_CATEGORY_POLICY_COUNT;
+	task_policy_get(task, TASK_CATEGORY_POLICY, (task_policy_t)&policy_info, &info_count, &get_default);
+	self.role = policy_info.role;
+	// Task times
+	struct task_thread_times_info times;
+	info_count = TASK_THREAD_TIMES_INFO_COUNT;
+	if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&times, &info_count) != KERN_SUCCESS)
+		memset(&times, 0, sizeof(times));
+	time_value_add(&total_time, &times.user_time);
+	time_value_add(&total_time, &times.system_time);
+	// Task events
+	info_count = TASK_EVENTS_INFO_COUNT;
+	if (task_info(task, TASK_EVENTS_INFO, (task_info_t)&events, &info_count) != KERN_SUCCESS)
+		memset(&events, 0, sizeof(events));
+	else if (!events_prev.csw)	// Fill in events_prev on first update
+		memcpy(&events_prev, &events, sizeof(events_prev));
+	// Task ports
+	mach_msg_type_number_t ncnt, tcnt;
+	mach_port_name_array_t names;
+	mach_port_type_array_t types;
+	if (mach_port_names(task, &names, &ncnt, &types, &tcnt) == KERN_SUCCESS) {
+		vm_deallocate(mach_task_self(), (vm_address_t)names, ncnt * sizeof(*names));
+		vm_deallocate(mach_task_self(), (vm_address_t)types, tcnt * sizeof(*types));
+		self.ports = ncnt;
+	} else
+		self.ports = 0;
+	// Enumerate all threads to acquire detailed info
+	unsigned int				thread_count;
+	thread_port_array_t			thread_list;
+	struct thread_basic_info	thval;
+	if (task_threads(task, &thread_list, &thread_count) == KERN_SUCCESS) {
+		self.threads = thread_count;
+		for (unsigned int j = 0; j < thread_count; j++) {
+			info_count = THREAD_BASIC_INFO_COUNT;
+			if (thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&thval, &info_count) == KERN_SUCCESS) {
+				self.pcpu += thval.cpu_usage;
+				// Actual process priority will be the largest priority of a thread
+				struct policy_timeshare_info sched;		// this struct is compatible with all scheduler policies
+				switch (thval.policy) {
+				case POLICY_TIMESHARE:
+					info_count = POLICY_TIMESHARE_INFO_COUNT;
+					if (thread_info(thread_list[j], THREAD_SCHED_TIMESHARE_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+						if (self.prio < sched.cur_priority) self.prio = sched.cur_priority;
+					break;
+				case POLICY_RR:
+					info_count = POLICY_RR_INFO_COUNT;
+					if (thread_info(thread_list[j], THREAD_SCHED_RR_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+						if (self.prio < sched.base_priority) self.prio = sched.base_priority;
+					break;
+				case POLICY_FIFO:
+					info_count = POLICY_FIFO_INFO_COUNT;
+					if (thread_info(thread_list[j], THREAD_SCHED_FIFO_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+						if (self.prio < sched.base_priority) self.prio = sched.base_priority;
+					break;
+				}
+			}
+			// Task state is formed from all thread states
+			proc_state_t thstate = mach_state_order(thval.run_state, thval.sleep_time);
+			if (self.state > thstate)
+				self.state = thstate;
+			mach_port_deallocate(mach_task_self(), thread_list[j]);
+		}
+		// Deallocate the list of threads
+		vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(*thread_list) * thread_count);
+	}
+	mach_port_deallocate(mach_task_self(), task);
 	// Roundup time: 100's of a second
 	self.ptime = total_time.seconds * 100 + (total_time.microseconds + 5000) / 10000;
 }
@@ -413,6 +418,12 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	return [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		return ((PSProc *)obj).display == display;
 	}];
+//	return [self.procs enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^void(id obj, NSUInteger idx, BOOL *stop) {
+//		if (((PSProc *)obj).display == display) *stop = YES;
+//	}];
+//	for (PSProc *proc in [self.procs reverseObjectEnumerator]) {
+//		if (proc.display == display) return idx;
+//	}
 }
 
 - (NSUInteger)count

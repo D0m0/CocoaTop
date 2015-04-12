@@ -4,8 +4,8 @@
 #import "Sock.h"
 
 @interface SockViewController()
+@property (retain) PSProc *proc;
 @property (retain) NSString *name;
-@property (assign) pid_t pid;
 @property (assign) NSUInteger firstColWidth;
 @property (retain) GridHeaderView *header;
 @property (retain) NSArray *columns;
@@ -16,9 +16,7 @@
 @property (assign) BOOL fullScreen;
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
-
-//@property (retain) UIBarButtonItem *btnFD;
-//@property (retain) UIBarButtonItem *btnRG;
+@property (retain) UISegmentedControl *modeSelector;
 @end
 
 @implementation SockViewController
@@ -26,22 +24,30 @@
 #pragma mark -
 #pragma mark View lifecycle
 
-- (instancetype)initWithName:(NSString *)name pid:(pid_t)pid
+- (instancetype)initWithProc:(PSProc *)proc
 {
 	self = [super init];
-	self.name = name;
-	self.pid = pid;
+	self.proc = proc;
 	return self;
-}
-
-- (void)backWithoutAnimation
-{
-	[self.navigationController popViewControllerAnimated:NO];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
 {
 	return YES;
+}
+
+- (IBAction)backWithoutAnimation
+{
+	[self.navigationController popViewControllerAnimated:NO];
+}
+
+- (IBAction)modeChange:(UISegmentedControl *)modeSelector
+{
+	// Mode changed - need to reset all information
+	self.socks = [PSSockArray psSockArrayWithPid:self.proc.pid flags:self.proc.flags];
+	[self setMode:modeSelector.selectedSegmentIndex];
+	[[NSUserDefaults standardUserDefaults] setInteger:modeSelector.selectedSegmentIndex forKey:@"ProcInfoMode"];
+	[self refreshSocks:nil];
 }
 
 - (void)viewDidLoad
@@ -52,9 +58,15 @@
 	self.navigationItem.leftBarButtonItem = item;
 	[item release];
 
-	UISegmentedControl *ctl = [[UISegmentedControl alloc] initWithItems:@[@"Open files", @"Modules", @"Threads"]];
-	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:ctl];
-	[ctl release];
+	self.modeSelector = [[UISegmentedControl alloc] initWithItems:@[@"Open files", @"Modules"]];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED <= __IPHONE_6_0
+	CGRect frame = self.modeSelector.frame;
+		frame.size.height = self.navigationController.navigationBar.frame.size.height * 2 / 3;
+		self.modeSelector.frame = frame;
+#endif
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.modeSelector];
+	[self.modeSelector addTarget:self action:@selector(modeChange:) forControlEvents:UIControlEventValueChanged];
+	self.modeSelector.selectedSegmentIndex = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	self.tableView.rowHeight = self.tableView.rowHeight * 2 / 3;
@@ -70,16 +82,23 @@
 			[self.timer invalidate];
 		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshSocks:) userInfo:nil repeats:NO];
 	}
-	[self.socks refresh];
+	[self.socks refreshWithMode:self.modeSelector.selectedSegmentIndex];
 	[self.socks sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
+
+	[self.proc updateWithState:0];
+	self.navigationItem.title = [self.name stringByAppendingFormat:@" (CPU %.1f%%)", (float)self.proc.pcpu / 10];
+
 	// First time refresh?
 	if (timer == nil) {
 		// We don't need info about new sockets, they are all new :)
 		[self.socks setAllDisplayed:ProcDisplayNormal];
 	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
 		// If there's a new socket, scroll to it
-		NSUInteger idx = [self.socks indexOfDisplayed:ProcDisplayStarted];
+		NSUInteger
+			idx = [self.socks indexOfDisplayed:ProcDisplayStarted];
+		if (idx == NSNotFound)
+			idx = [self.socks indexOfDisplayed:ProcDisplayTerminated];
 		if (idx != NSNotFound)
 			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
 				atScrollPosition:UITableViewScrollPositionNone animated:YES];
@@ -95,33 +114,40 @@
 			loc.x -= width;
 			continue;
 		}
-		self.sortdesc = self.sorter == col ? !self.sortdesc : NO;
+		self.sortdesc = self.sorter == col ? !self.sortdesc : col.sortDesc;
 		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
 		self.sorter = col;
-		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:@"SockSortColumn"];
-		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:@"SockSortDescending"];
+		NSInteger mode = self.modeSelector.selectedSegmentIndex;
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:(mode ? @"ModulesSortColumn" : @"SockSortColumn")];
+		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:(mode ? @"ModulesSortDescending" : @"SockSortDescending")];
 		[self.timer fire];
 		break;
 	}
 }
 
-- (void)viewWillAppear:(BOOL)animated
+- (void)setMode:(NSInteger)mode
 {
-	[super viewWillAppear:animated];
-	self.navigationItem.title = self.name;
-	self.socks = [PSSockArray psSockArrayWithPid:self.pid];
 	// When configId changes, all cells are reconfigured
 	self.configId++;
 	self.firstColWidth = self.tableView.bounds.size.width;
-	self.columns = [PSColumn psGetOpenFilesColumnsWithWidth:&_firstColWidth];
+	self.columns = [PSColumn psGetTaskColumnsWithWidth:&_firstColWidth kind:mode];
 	// Find sort column and create table header
-	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SockSortColumn"];
-	if (sortCol >= self.columns.count) sortCol = 2;
-	self.sorter = self.columns[sortCol];
-	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SockSortDescending"];
+	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:(mode ? @"ModulesSortColumn" : @"SockSortColumn")];
+	NSArray *allColumns = [PSColumn psGetTaskColumns:mode];
+	if (sortCol >= allColumns.count) sortCol = 1;
+	self.sorter = allColumns[sortCol];
+	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:(mode ? @"ModulesSortDescending" : @"SockSortDescending")];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+	[super viewWillAppear:animated];
+	self.socks = [PSSockArray psSockArrayWithPid:self.proc.pid flags:self.proc.flags];
+	self.name = [self.proc.executable lastPathComponent];
+	[self setMode:self.modeSelector.selectedSegmentIndex];
 	// Refresh interval
 	self.interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	[self refreshSocks:nil];
@@ -134,6 +160,7 @@
 		[self.timer invalidate];
 	self.header = nil;
 	self.columns = nil;
+	self.proc = nil;
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
@@ -145,12 +172,7 @@
 		(self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft || self.interfaceOrientation == UIInterfaceOrientationLandscapeRight))
 		return;
 	// Size changed - need to redraw
-	self.configId++;
-	self.firstColWidth = self.tableView.bounds.size.width;
-	self.columns = [PSColumn psGetOpenFilesColumnsWithWidth:&_firstColWidth];
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
-	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
-	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+	[self setMode:self.modeSelector.selectedSegmentIndex];
 	[self.timer fire];
 }
 

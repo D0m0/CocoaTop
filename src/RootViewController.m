@@ -28,21 +28,21 @@
 #pragma mark -
 #pragma mark View lifecycle
 
-- (void)openSettings
+- (IBAction)openSettings
 {
 	SetupViewController* setupViewController = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped];
 	[self.navigationController pushViewController:setupViewController animated:YES];
 	[setupViewController release];
 }
 
-- (void)openColSettings
+- (IBAction)openColSettings
 {
 	SetupColsViewController* setupColsViewController = [[SetupColsViewController alloc] initWithStyle:UITableViewStyleGrouped];
 	[self.navigationController pushViewController:setupColsViewController animated:YES];
 	[setupColsViewController release];
 }
 
-- (void)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
+- (IBAction)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
 {
 	if (!gestureRecognizer || gestureRecognizer.state == UIGestureRecognizerStateEnded) {
 		self.fullScreen = !self.navigationController.navigationBarHidden;
@@ -111,8 +111,11 @@
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 		@"SortColumn" : @1,
 		@"SortDescending" : @NO,
+		@"ProcInfoMode" : @0,
 		@"SockSortColumn" : @2,
 		@"SockSortDescending" : @YES,
+		@"ModulesSortColumn" : @1,
+		@"ModulesSortDescending" : @NO,
 		@"UpdateInterval" : @"1",
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,
@@ -173,8 +176,11 @@
 			self.selectedPid = -1;
 		}
 	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
-		// If there's a new process, scroll to it
-		NSUInteger idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
+		// If there's a new/terminated process, scroll to it
+		NSUInteger
+			idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
+		if (idx == NSNotFound)
+			idx = [self.procs indexOfDisplayed:ProcDisplayTerminated];
 		if (idx != NSNotFound)
 			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
 				atScrollPosition:UITableViewScrollPositionNone animated:YES];
@@ -192,7 +198,7 @@
 			loc.x -= width;
 			continue;
 		}
-		self.sortdesc = self.sorter == col ? !self.sortdesc : NO;
+		self.sortdesc = self.sorter == col ? !self.sortdesc : col.sortDesc;
 		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
 		self.sorter = col;
 		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:@"SortColumn"];
@@ -224,8 +230,9 @@
 	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
 	// Find sort column and create table header
 	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"];
-	if (sortCol >= self.columns.count) sortCol = self.columns.count - 1;
-	self.sorter = self.columns[sortCol];
+	NSArray *allColumns = [PSColumn psGetAllColumns];
+	if (sortCol >= allColumns.count) sortCol = 1;
+	self.sorter = allColumns[sortCol];
 	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
 	self.footer = [GridHeaderView footerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
@@ -376,7 +383,7 @@
 		[self hideShowNavBar:nil];
 	PSProc *proc = self.procs[indexPath.row];
 	self.selectedPid = proc.pid;
-	SockViewController* sockViewController = [[SockViewController alloc] initWithName:proc.name pid:proc.pid];
+	SockViewController* sockViewController = [[SockViewController alloc] initWithProc:proc];
 		[self.navigationController pushViewController:sockViewController animated:anim];
 		[sockViewController release];
 }

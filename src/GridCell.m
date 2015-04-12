@@ -44,18 +44,18 @@
 		size.height /= 2;
 	for (PSColumn *col in columns) if (col.tag > 1) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
-		[self.dividers addObject:divider];
 		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
+		[self.dividers addObject:divider];
 		[self.contentView addSubview:divider];
 		[divider release];
 
 		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
-		[self.labels addObject:label];
 		label.textAlignment = col.align;
-		label.font = [UIFont systemFontOfSize:12.0];
+		label.font = col.monoFont ? [UIFont fontWithName:@"Courier" size:13.0] : [UIFont systemFontOfSize:12.0];
 		label.adjustsFontSizeToFitWidth = YES;
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = col.tag;
+		[self.labels addObject:label];
 		[self.contentView addSubview:label];
 		[label release];
 
@@ -78,8 +78,10 @@
 	if (proc.icon)
 		[self.imageView initWithImage:proc.icon];
 	for (PSColumn *col in columns)
-		if (col.tag > 1)
-			((UILabel *)[self viewWithTag:col.tag]).text = col.getData(proc);
+		if (col.tag > 1) {
+			UILabel *label = (UILabel *)[self viewWithTag:col.tag];
+			if (label) label.text = col.getData(proc);
+		}
 }
 
 - (void)updateWithSock:(PSSock *)sock columns:(NSArray *)columns
@@ -89,8 +91,10 @@
 	for (PSColumn *col in columns)
 		if (col.tag > 1) {
 			UILabel *label = (UILabel *)[self viewWithTag:col.tag];
-			label.text = col.getData(sock);
-			label.textColor = sock.color;
+			if (label) {
+				label.text = col.getData(sock);
+				label.textColor = sock.color;
+			}
 		}
 }
 
@@ -197,8 +201,10 @@
 - (void)updateSummaryWithColumns:(NSArray *)columns procs:(PSProcArray *)procs
 {
 	for (PSColumn *col in columns)
-		if (col.getSummary)
-			((UILabel *)[self viewWithTag:col.tag]).text = col.getSummary(procs);
+		if (col.getSummary) {
+			UILabel *label = (UILabel *)[self viewWithTag:col.tag];
+			if (label) label.text = col.getSummary(procs);
+		}
 }
 
 - (void)dealloc

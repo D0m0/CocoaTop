@@ -20,15 +20,18 @@ typedef NSString *(^PSColumnData)(id proc);
 @property (assign) PSColumnData getSummary;
 // Sort comparator
 @property (assign) NSComparator sort;
-// Need to refresh
-@property (assign) BOOL refresh;
+// Default sort direction
+@property (assign) BOOL sortDesc;
+// Should use monotype font
+@property (assign) BOOL monoFont;
 // Label tag
 @property (assign) int tag;
 
 + (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
-	width:(NSInteger)width refresh:(BOOL)refresh data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
+	width:(NSInteger)width sortDesc:(BOOL)desc monoFont:(BOOL)mono data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
 + (NSArray *)psGetAllColumns;
 + (NSMutableArray *)psGetShownColumnsWithWidth:(NSUInteger *)width;
-+ (NSArray *)psGetOpenFilesColumnsWithWidth:(NSUInteger *)width;
++ (NSArray *)psGetTaskColumns:(NSInteger)kind;
++ (NSArray *)psGetTaskColumnsWithWidth:(NSUInteger *)width kind:(NSInteger)kind;
 
 @end

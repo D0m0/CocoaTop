@@ -42,13 +42,13 @@
 
 @interface PSSockArray : NSObject
 @property (assign) pid_t pid;
+@property (assign) unsigned int flags;
 @property (retain) NSMutableArray *socks;
-+ (instancetype)psSockArrayWithPid:(pid_t)pid;
-- (int)refresh;
++ (instancetype)psSockArrayWithPid:(pid_t)pid flags:(unsigned int)flags;
+- (int)refreshWithMode:(NSInteger)mode;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
 - (void)setAllDisplayed:(display_t)display;
 - (NSUInteger)indexOfDisplayed:(display_t)display;
 - (NSUInteger)count;
 - (PSSock *)objectAtIndexedSubscript:(NSUInteger)idx;
-- (PSSock *)sockForFd:(int32_t)fd;
 @end

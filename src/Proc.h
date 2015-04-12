@@ -60,6 +60,7 @@ typedef enum {
 @property (retain) UIImage *icon;
 @property (retain) NSDictionary *app;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
+- (void)updateWithState:(char)state;
 @end
 
 @interface PSProcArray : NSObject

@@ -96,7 +96,7 @@
 	return YES;
 }
 
-- (void)openAbout
+- (IBAction)openAbout
 {
 	AboutViewController* about = [[AboutViewController alloc] initWithStyle:UITableViewStyleGrouped];
 	[self.navigationController pushViewController:about animated:YES];
