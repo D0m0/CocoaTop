@@ -82,13 +82,13 @@
 			[self.timer invalidate];
 		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshSocks:) userInfo:nil repeats:NO];
 	}
+	// Update tableview
 	[self.socks refreshWithMode:self.modeSelector.selectedSegmentIndex];
 	[self.socks sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
-
+	// Update titlebar
 	[self.proc updateWithState:0];
 	self.navigationItem.title = [self.name stringByAppendingFormat:@" (CPU %.1f%%)", (float)self.proc.pcpu / 10];
-
 	// First time refresh?
 	if (timer == nil) {
 		// We don't need info about new sockets, they are all new :)

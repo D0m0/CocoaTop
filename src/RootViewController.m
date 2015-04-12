@@ -170,7 +170,6 @@
 		if (idx != NSNotFound) {
 			[self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
 #if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
-//			if (floor(NSFoundationVersionNumber) <= 1134.0)		//NSFoundationVersionNumber_iOS_8_0
 			[self.tableView deselectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:YES];
 #endif
 			self.selectedPid = -1;
