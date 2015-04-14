@@ -6,6 +6,10 @@
 #define __IPHONE_7_0 70000
 #endif
 
+#ifndef __MAC_10_9
+#define __MAC_10_9 1090
+#endif
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_6_0
 
 #undef YES
@@ -36,4 +40,15 @@
 
 #define UITableViewHeaderFooterView				UIView
 
+#define mach_task_basic_info_data_t	task_basic_info_data_t
+#define MACH_TASK_BASIC_INFO		TASK_BASIC_INFO
+#define MACH_TASK_BASIC_INFO_COUNT	TASK_BASIC_INFO_COUNT
+
 #endif
+
+uint64_t mach_time_to_milliseconds(uint64_t mach_time);
+
+
+@interface PSSymLink : NSObject
++ (NSString *)simplifyPathName:(NSString *)path;
+@end

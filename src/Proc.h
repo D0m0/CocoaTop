@@ -1,4 +1,5 @@
 #import <mach/mach_types.h>
+#import "resource.h"
 #import <sys/sysctl.h>
 #import <UIKit/UIKit.h>
 #import "Compat.h"
@@ -28,15 +29,13 @@ typedef enum {
 
 #define PROC_STATE_CHARS "DZRUSITH?"
 
-@interface PSSymLink : NSObject
-+ (NSString *)simplifyPathName:(NSString *)path;
-@end
-
 @interface PSProc : NSObject
 {
-@public struct task_basic_info basic;
+@public mach_task_basic_info_data_t basic;
 @public struct task_events_info events;
 @public struct task_events_info events_prev;
+@public struct rusage_info_v2 rusage;
+@public struct rusage_info_v2 rusage_prev;
 }
 @property (assign) display_t display;
 @property (assign) pid_t pid;

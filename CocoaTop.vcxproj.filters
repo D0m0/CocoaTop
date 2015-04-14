@@ -57,6 +57,9 @@
     <ClInclude Include="src\Compat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\resource.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\AppDelegate.m">

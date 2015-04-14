@@ -11,8 +11,8 @@
 	return [super initWithStyle:UITableViewStyleGrouped];
 }
 
-//     0    1   2   3  4   5   6    7     8    9    10   11  12   13    14  15  16   17   18   19   20   21    22
-// Command PID PPID % Time S Flags RMem VSize User Group TTY Thr Ports Mach BSD CSw Prio BPri Nice Role MSent MRecv
+//     0    1   2   3  4   5   6    7     8    9    10   11  12   13    14  15  16   17   18   19   20   21    22    23   24   25    26     27     28    29
+// Command PID PPID % Time S Flags RMem VSize User Group TTY Thr Ports Mach BSD CSw Prio BPri Nice Role MSent MRecv RMax Phys DiskR DiskW SDiskR SDiskW STime
 static NSDictionary *presetList;
 static NSArray *presetNames;
 
@@ -28,14 +28,18 @@ static NSArray *presetNames;
 				@"3: Performance":@[@0, @3, @16, @4, @5, @17, @7, @12],
 				@"4: Minimalistic":@[@0, @3, @7],
 				@"5: Mach-obsessed":@[@0, @3, @12, @13, @15, @14, @21, @22],
+				@"6: RAM usage":@[@0, @1, @7, @23, @24, @8],
+				@"7: Disk usage":@[@0, @1, @25, @26, @27, @28, @23],
 			} retain];
 		else
 			presetList = [@{
 				@"1: Standard":@[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 				@"2: Inspector":@[@0, @1, @3, @5, @6, @7, @9, @10, @12, @13],
-				@"3: Performance":@[@0, @1, @3, @16, @4, @5, @17, @7, @12, @13, @14, @15, @19],
+				@"3: Performance":@[@0, @1, @3, @16, @4, @5, @17, @7, @23, @12, @13, @14, @15, @19],
 				@"4: Minimalistic":@[@0, @1, @3, @5, @7, @20],
 				@"5: Mach-obsessed":@[@0, @1, @5, @6, @7, @3, @12, @16, @13, @15, @14, @21, @22],
+				@"6: RAM usage":@[@0, @1, @3, @5, @7, @23, @24, @8],
+				@"7: Disk usage":@[@0, @1, @9, @25, @26, @27, @28, @24],
 			} retain];
 		presetNames = [[presetList.allKeys sortedArrayUsingSelector:@selector(compare:)] retain];
 	});

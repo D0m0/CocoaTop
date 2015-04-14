@@ -4,19 +4,20 @@
 #import <netdb.h>
 #import "proc_info.h"
 
+//extern int proc_listpidspath(uint32_t type, uint32_t typeinfo, const char *path, uint32_t pathflags, void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 //extern int proc_listpids(uint32_t type, uint32_t typeinfo, void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 //extern int proc_listallpids(void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_1);
 //extern int proc_listpgrppids(pid_t pgrpid, void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_1);
 //extern int proc_listchildpids(pid_t ppid, void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_1);
 extern int proc_pidinfo(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-extern kern_return_t mach_vm_read(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, vm_offset_t *data, mach_msg_type_number_t *dataCnt);
-extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, mach_vm_address_t data, mach_vm_size_t *outsize);
 //extern int proc_pidfileportinfo(int pid, uint32_t fileport, int flavor, void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_3);
 //extern int proc_name(int pid, void * buffer, uint32_t buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 //extern int proc_regionfilename(int pid, uint64_t address, void * buffer, uint32_t buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 //extern int proc_kmsgbuf(void * buffer, uint32_t buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 //extern int proc_libversion(int *major, int * minor) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
+extern kern_return_t mach_vm_read(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, vm_offset_t *data, mach_msg_type_number_t *dataCnt);
+extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, mach_vm_address_t data, mach_vm_size_t *outsize);
 
 @implementation PSSock
 
@@ -24,6 +25,8 @@ extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_addres
 {
 	NSString *name = nil, *stype = nil;
 	UIColor *color = [UIColor blackColor];
+	uint32_t flags = 0;
+
 	if (type == PROX_FDTYPE_VNODE) {
 		struct vnode_fdinfowithpath info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDVNODEPATHINFO, &info, PROC_PIDFDVNODEPATHINFO_SIZE) != PROC_PIDFDVNODEPATHINFO_SIZE)
@@ -31,13 +34,22 @@ extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_addres
 		name = [NSString stringWithCString:info.pvip.vip_path encoding:NSUTF8StringEncoding];
 		name = [PSSymLink simplifyPathName:name];
 		stype = @"VNODE";
+		flags = info.pfi.fi_openflags;
 	} else if (type == PROX_FDTYPE_PIPE) {
 		struct pipe_fdinfo info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDPIPEINFO, &info, PROC_PIDFDPIPEINFO_SIZE) != PROC_PIDFDPIPEINFO_SIZE)
 			return nil;
-		name = [NSString stringWithFormat:@"%llX -> %llX %s", info.pipeinfo.pipe_handle, info.pipeinfo.pipe_peerhandle, (info.pipeinfo.pipe_status & 8) ? "Listening" : ""];
+		name = [NSString stringWithFormat:@"%llX -> %llX", info.pipeinfo.pipe_handle, info.pipeinfo.pipe_peerhandle];
+		if (info.pipeinfo.pipe_status & PIPE_WANTR)		name = [name stringByAppendingString:@" READ"];
+		if (info.pipeinfo.pipe_status & PIPE_WANTW)		name = [name stringByAppendingString:@" WRITE"];
+		if (info.pipeinfo.pipe_status & PIPE_SEL)		name = [name stringByAppendingString:@" SELECT"];
+		if (info.pipeinfo.pipe_status & PIPE_EOF)		name = [name stringByAppendingString:@" EOF"];
+		if (info.pipeinfo.pipe_status & PIPE_KNOTE)		name = [name stringByAppendingString:@" KNOTE"];
+		if (info.pipeinfo.pipe_status & PIPE_DRAIN)		name = [name stringByAppendingString:@" DRAIN"];
+		if (info.pipeinfo.pipe_status & PIPE_DEAD)		name = [name stringByAppendingString:@" DEAD"];
 		stype = @"PIPE";
 		color = [UIColor blueColor];
+		flags = info.pfi.fi_openflags;
 	} else if (type == PROX_FDTYPE_SOCKET) {
 		char lip[INET_ADDRSTRLEN] = "", fip[INET_ADDRSTRLEN] = "";
 		struct in_sockinfo *s;
@@ -138,6 +150,7 @@ extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_addres
 			color = [UIColor redColor];
 			break; }
 		}
+		flags = info.pfi.fi_openflags;
 	}
 	if (!name)
 		return nil;
@@ -153,6 +166,7 @@ extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_addres
 		self.stype = stype;
 		self.color = color;
 		self.name = name;
+		self.flags = flags;
 	}
 	return self;
 }
@@ -366,7 +380,9 @@ struct dyld_all_image_infos64 {
 - (void)setAllDisplayed:(display_t)display
 {
 	for (PSSock *sock in self.socks)
-		sock.display = display;
+		// Setting all items to "normal" is used only to hide "started"
+		if (display != ProcDisplayNormal || sock.display == ProcDisplayStarted)
+			sock.display = display;
 }
 
 - (NSUInteger)indexOfDisplayed:(display_t)display

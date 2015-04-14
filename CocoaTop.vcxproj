@@ -84,6 +84,7 @@
     <ClInclude Include="src\GridCell.h" />
     <ClInclude Include="src\Proc.h" />
     <ClInclude Include="src\proc_info.h" />
+    <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\RootViewController.h" />
     <ClInclude Include="src\Setup.h" />
     <ClInclude Include="src\SetupColumns.h" />

@@ -12,63 +12,7 @@
 extern kern_return_t task_for_pid(task_port_t task, pid_t pid, task_port_t *target);
 extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_info_t info, unsigned int *info_count);
 extern int proc_pidpath(int pid, void * buffer, uint32_t  buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-
-@implementation PSSymLink
-
-+ (NSString *)absoluteSymLinkDestination:(NSString *)link
-{
-	if ([link hasSuffix:@"/"])
-		link = [link substringToIndex:link.length - 1];
-	NSString *target = [[NSFileManager defaultManager] destinationOfSymbolicLinkAtPath:link error:NULL];
-	if (!target)
-		return @"";
-	if (target && ![target hasPrefix:@"/"])
-		target = [[link stringByDeletingLastPathComponent] stringByAppendingPathComponent:target];
-	return [target stringByAppendingString:@"/"];
-}
-
-// Replace some symlinks to shorten path
-+ (NSString *)simplifyPathName:(NSString *)path
-{
-	static NSArray *source = nil, *target = nil;
-	static dispatch_once_t onceToken;
-	dispatch_once(&onceToken, ^{
-		// Initialize symlinks
-		source = @[@"/var/", @"/var/stash/", @"/usr/include/", @"/usr/share/", @"/usr/lib/pam/", @"/tmp/", @"/User/", @"/Applications/", @"/Library/Ringtones/", @"/Library/Wallpaper/"];
-		NSMutableArray *results = [NSMutableArray arrayWithCapacity:source.count];
-		for (NSString *src in source)
-			[results addObject:[PSSymLink absoluteSymLinkDestination:src]];
-		[source retain];
-		target = [results copy];
-	});
-	path = [path stringByStandardizingPath];
-	if (![path hasPrefix:@"/"] || ![[NSUserDefaults standardUserDefaults] boolForKey:@"ShortenPaths"])
-		return path;
-	// Replace link targets with symlinks
-	for (int i = 0; i < target.count; i++) {
-		NSString *key = target[i], *val = source[i];
-		if (!key.length)
-			continue;
-		if ([[path stringByAppendingString:@"/"] isEqualToString:key])
-			path = [val substringToIndex:val.length - 1];
-		else if ([path hasPrefix:key])
-			path = [val stringByAppendingString:[path substringFromIndex:key.length]];
-	}
-	// Replace long bundle path with a short "old" version
-	static NSString *appBundle = @"/User/Containers/Bundle/Application/";
-	if (path.length > appBundle.length + 37 && [path hasPrefix:appBundle])
-		path = [NSString stringWithFormat:@"/User/Applications/%@.../%@",
-			[path substringWithRange:NSMakeRange(appBundle.length, 4)],	// First four chars from App ID
-			[path substringFromIndex:appBundle.length + 37]];				// The rest of the path
-	static NSString *appData = @"/User/Containers/Data/Application/";
-	if (path.length > appData.length + 37 && [path hasPrefix:appData])
-		path = [NSString stringWithFormat:@"%@%@.../%@", appData,
-			[path substringWithRange:NSMakeRange(appData.length, 4)],	// First four chars from App ID
-			[path substringFromIndex:appData.length + 37]];				// The rest of the path
-	return path;
-}
-
-@end
+extern int proc_pid_rusage(int pid, int flavor, struct rusage_info_v2 *rusage);// __OSX_AVAILABLE_STARTING(__MAC_10_9, __IPHONE_7_0);
 
 @implementation PSProc
 
@@ -91,6 +35,7 @@ extern int proc_pidpath(int pid, void * buffer, uint32_t  buffersize) __OSX_AVAI
 			NSString *path = [self.executable stringByDeletingLastPathComponent];
 			self.app = [PSAppIcon getAppByPath:path];
 			memset(&events, 0, sizeof(events));
+			memset(&rusage, 0, sizeof(rusage));
 			NSString *firslCol = [[NSUserDefaults standardUserDefaults] stringForKey:@"FirstColumnStyle"];
 			if (self.app) {
 				NSString *ident = self.app[@"CFBundleIdentifier"];
@@ -141,6 +86,20 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	self.uid = ki->kp_eproc.e_ucred.cr_uid;
 	self.gid = ki->kp_eproc.e_pcred.p_rgid;
 	[self updateWithState:ki->kp_proc.p_stat];
+	memcpy(&rusage_prev, &rusage, sizeof(rusage));
+	memset(&rusage, 0, sizeof(rusage));
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+	if (proc_pid_rusage(ki->kp_proc.p_pid, RUSAGE_INFO_V2, &rusage) == 0) {
+		if (!rusage_prev.ri_proc_start_abstime)
+			// Fill in rusage_prev on first update
+			memcpy(&rusage_prev, &rusage, sizeof(rusage_prev));
+		// Values for kernel (pid 0) can only be acquired from rusage on iOS7+
+		if (!basic.resident_size)
+			basic.resident_size = rusage.ri_resident_size;
+		if (!self.ptime)
+			self.ptime = mach_time_to_milliseconds(rusage.ri_user_time + rusage.ri_system_time) / 10;	// 100's of a second
+	}
+#endif
 }
 
 - (void)updateWithState:(char)state
@@ -154,14 +113,16 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	if (state == SZOMB) self.state = ProcStateZombie;
 	// Task info
 	memcpy(&events_prev, &events, sizeof(events_prev));
+	memset(&basic, 0, sizeof(basic));
 	self.threads = 0;
 	self.prio = 0;
 	self.pcpu = 0;
+	self.ptime = 0;
 	if (task_for_pid(mach_task_self(), self.pid, &task) != KERN_SUCCESS)
 		return;
 	// Basic task info
-	info_count = TASK_BASIC_INFO_COUNT;
-	if (task_info(task, TASK_BASIC_INFO, (task_info_t)&basic, &info_count) == KERN_SUCCESS) {
+	info_count = MACH_TASK_BASIC_INFO_COUNT;
+	if (task_info(task, MACH_TASK_BASIC_INFO, (task_info_t)&basic, &info_count) == KERN_SUCCESS) {
 		// Time
 		total_time = basic.user_time;
 		time_value_add(&total_time, &basic.system_time);
@@ -410,7 +371,9 @@ proc_state_t mach_state_order(int s, long sleep_time)
 - (void)setAllDisplayed:(display_t)display
 {
 	for (PSProc *proc in self.procs)
-		proc.display = display;
+		// Setting all items to "normal" is used only to hide "started"
+		if (display != ProcDisplayNormal || proc.display == ProcDisplayStarted)
+			proc.display = display;
 }
 
 - (NSUInteger)indexOfDisplayed:(display_t)display

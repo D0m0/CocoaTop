@@ -24,10 +24,26 @@
 #define		KEV_IP6FW_SUBCLASS			2
 #define KEV_IEEE80211_CLASS			6
 
+#define PIPE_ASYNC      0x004   /* Async? I/O. */
+#define PIPE_WANTR      0x008   /* Reader wants some characters. */
+#define PIPE_WANTW      0x010   /* Writer wants space to put characters. */
+#define PIPE_WANT       0x020   /* Pipe is wanted to be run-down. */
+#define PIPE_SEL        0x040   /* Pipe has a select active. */
+#define PIPE_EOF        0x080   /* Pipe is in EOF condition. */
+#define PIPE_LOCKFL     0x100   /* Process has exclusive access to pointers/data. */
+#define PIPE_LWANT      0x200   /* Process wants exclusive access to pointers/data. */
+#define PIPE_DIRECTW    0x400   /* Pipe direct write active. */
+#define PIPE_DIRECTOK   0x800   /* Direct mode ok. */
+#define PIPE_KNOTE      0x1000  /* Pipe has kernel events activated */
+#define PIPE_DRAIN      0x2000  /* Waiting for I/O to drop for a close. Treated like EOF; only separate for easier debugging. */
+#define PIPE_WSELECT    0x4000  /* Some thread has done an FWRITE select on the pipe */
+#define PIPE_DEAD       0x8000  /* Pipe is dead and needs garbage collection */
+
 @interface PSSock : NSObject
 @property (assign) display_t display;
 @property (assign) int32_t fd;
 @property (assign) uint32_t type;
+@property (assign) uint32_t flags;
 
 @property (assign) mach_vm_address_t addr;
 @property (assign) mach_vm_address_t addrend;

@@ -3,6 +3,16 @@
 #import "Column.h"
 #import "Sock.h"
 
+typedef enum {
+	SockModeFiles = 0,
+	SockModeModules,
+	SockModes
+} sockview_mode_t;
+
+NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
+
+#define nextmode(m) (((m) + 1) % SockModes)
+
 @interface SockViewController()
 @property (retain) PSProc *proc;
 @property (retain) NSString *name;
@@ -17,6 +27,7 @@
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
 @property (retain) UISegmentedControl *modeSelector;
+@property (assign) NSInteger mode;
 @end
 
 @implementation SockViewController
@@ -45,8 +56,13 @@
 {
 	// Mode changed - need to reset all information
 	self.socks = [PSSockArray psSockArrayWithPid:self.proc.pid flags:self.proc.flags];
-	[self setMode:modeSelector.selectedSegmentIndex];
-	[[NSUserDefaults standardUserDefaults] setInteger:modeSelector.selectedSegmentIndex forKey:@"ProcInfoMode"];
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+		self.mode = nextmode(self.mode);
+		[modeSelector setTitle:SockModeName[nextmode(self.mode)] forSegmentAtIndex:0];
+	} else
+		self.mode = modeSelector.selectedSegmentIndex;
+	[self configureMode];
+	[[NSUserDefaults standardUserDefaults] setInteger:self.mode forKey:@"ProcInfoMode"];
 	[self refreshSocks:nil];
 }
 
@@ -58,7 +74,14 @@
 	self.navigationItem.leftBarButtonItem = item;
 	[item release];
 
-	self.modeSelector = [[UISegmentedControl alloc] initWithItems:@[@"Open files", @"Modules"]];
+	self.mode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+		self.modeSelector = [[UISegmentedControl alloc] initWithItems:@[SockModeName[nextmode(self.mode)]]];
+		self.modeSelector.momentary = YES;
+	} else {
+		self.modeSelector = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:SockModeName count:SockModes]];
+		self.modeSelector.selectedSegmentIndex = self.mode;
+	}
 #if __IPHONE_OS_VERSION_MAX_ALLOWED <= __IPHONE_6_0
 	CGRect frame = self.modeSelector.frame;
 		frame.size.height = self.navigationController.navigationBar.frame.size.height * 2 / 3;
@@ -66,7 +89,6 @@
 #endif
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.modeSelector];
 	[self.modeSelector addTarget:self action:@selector(modeChange:) forControlEvents:UIControlEventValueChanged];
-	self.modeSelector.selectedSegmentIndex = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	self.tableView.rowHeight = self.tableView.rowHeight * 2 / 3;
@@ -83,7 +105,7 @@
 		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshSocks:) userInfo:nil repeats:NO];
 	}
 	// Update tableview
-	[self.socks refreshWithMode:self.modeSelector.selectedSegmentIndex];
+	[self.socks refreshWithMode:self.mode];
 	[self.socks sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
 	// Update titlebar
@@ -93,6 +115,10 @@
 	if (timer == nil) {
 		// We don't need info about new sockets, they are all new :)
 		[self.socks setAllDisplayed:ProcDisplayNormal];
+		// When mode changes return to top
+		if (self.socks.count)
+			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]
+				atScrollPosition:UITableViewScrollPositionNone animated:NO];
 	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
 		// If there's a new socket, scroll to it
 		NSUInteger
@@ -117,26 +143,25 @@
 		self.sortdesc = self.sorter == col ? !self.sortdesc : col.sortDesc;
 		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
 		self.sorter = col;
-		NSInteger mode = self.modeSelector.selectedSegmentIndex;
-		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:(mode ? @"ModulesSortColumn" : @"SockSortColumn")];
-		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:(mode ? @"ModulesSortDescending" : @"SockSortDescending")];
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:(self.mode ? @"ModulesSortColumn" : @"SockSortColumn")];
+		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:(self.mode ? @"ModulesSortDescending" : @"SockSortDescending")];
 		[self.timer fire];
 		break;
 	}
 }
 
-- (void)setMode:(NSInteger)mode
+- (void)configureMode
 {
 	// When configId changes, all cells are reconfigured
 	self.configId++;
 	self.firstColWidth = self.tableView.bounds.size.width;
-	self.columns = [PSColumn psGetTaskColumnsWithWidth:&_firstColWidth kind:mode];
+	self.columns = [PSColumn psGetTaskColumnsWithWidth:&_firstColWidth kind:self.mode];
 	// Find sort column and create table header
-	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:(mode ? @"ModulesSortColumn" : @"SockSortColumn")];
-	NSArray *allColumns = [PSColumn psGetTaskColumns:mode];
+	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:(self.mode ? @"ModulesSortColumn" : @"SockSortColumn")];
+	NSArray *allColumns = [PSColumn psGetTaskColumns:self.mode];
 	if (sortCol >= allColumns.count) sortCol = 1;
 	self.sorter = allColumns[sortCol];
-	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:(mode ? @"ModulesSortDescending" : @"SockSortDescending")];
+	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:(self.mode ? @"ModulesSortDescending" : @"SockSortDescending")];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
@@ -147,7 +172,7 @@
 	[super viewWillAppear:animated];
 	self.socks = [PSSockArray psSockArrayWithPid:self.proc.pid flags:self.proc.flags];
 	self.name = [self.proc.executable lastPathComponent];
-	[self setMode:self.modeSelector.selectedSegmentIndex];
+	[self configureMode];
 	// Refresh interval
 	self.interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	[self refreshSocks:nil];
@@ -172,7 +197,7 @@
 		(self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft || self.interfaceOrientation == UIInterfaceOrientationLandscapeRight))
 		return;
 	// Size changed - need to redraw
-	[self setMode:self.modeSelector.selectedSegmentIndex];
+	[self configureMode];
 	[self.timer fire];
 }
 
