@@ -1,3 +1,4 @@
+#import "Column.h"
 #import "Proc.h"
 #import "Compat.h"
 
@@ -53,15 +54,16 @@
 @property (retain) NSString *name;
 @property (retain) NSString *stype;
 @property (retain) UIColor *color;
+@property (retain) PSProc *proc;
+@property (retain) PSColumn *col;
 + (instancetype)psSockWithPid:(pid_t)pid fd:(int32_t)fd type:(uint32_t)type;
 @end
 
 @interface PSSockArray : NSObject
-@property (assign) pid_t pid;
-@property (assign) unsigned int flags;
+@property (retain) PSProc *proc;
 @property (retain) NSMutableArray *socks;
-+ (instancetype)psSockArrayWithPid:(pid_t)pid flags:(unsigned int)flags;
-- (int)refreshWithMode:(NSInteger)mode;
++ (instancetype)psSockArrayWithProc:(PSProc *)proc;
+- (int)refreshWithMode:(column_mode_t)mode;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
 - (void)setAllDisplayed:(display_t)display;
 - (NSUInteger)indexOfDisplayed:(display_t)display;

@@ -198,11 +198,29 @@ extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_addres
 	return [[[PSSock alloc] initWithRwpi:rwpi] autorelease];
 }
 
+- (instancetype)initWithProc:(PSProc *)proc column:(PSColumn *)col
+{
+	if (self = [super init]) {
+		self.display = ProcDisplayNormal;
+		self.proc = proc;
+		self.col = col;
+		self.name = col.descr;
+	}
+	return self;
+}
+
++ (instancetype)psSockWithProc:(PSProc *)proc column:(PSColumn *)col
+{
+	return [[[PSSock alloc] initWithProc:proc column:col] autorelease];
+}
+
 - (void)dealloc
 {
 	[_name release];
 	[_stype release];
 	[_color release];
+	[_proc release];
+	[_col release];
 	[super dealloc];
 }
 
@@ -210,19 +228,18 @@ extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_addres
 
 @implementation PSSockArray
 
-- (instancetype)initSockArrayWithPid:(pid_t)pid flags:(unsigned int)flags
+- (instancetype)initSockArrayWithProc:(PSProc *)proc
 {
 	if (self = [super init]) {
-		self.pid = pid;
-		self.flags = flags;
+		self.proc = proc;
 		self.socks = [NSMutableArray arrayWithCapacity:300];
 	}
 	return self;
 }
 
-+ (instancetype)psSockArrayWithPid:(pid_t)pid flags:(unsigned int)flags
++ (instancetype)psSockArrayWithProc:(PSProc *)proc
 {
-	return [[[PSSockArray alloc] initSockArrayWithPid:pid flags:flags] autorelease];
+	return [[[PSSockArray alloc] initSockArrayWithProc:proc] autorelease];
 }
 
 
@@ -259,16 +276,22 @@ struct dyld_all_image_infos64 {
 	uint64_t						sharedCacheSlide;
 };
 
-- (int)refreshWithMode:(NSInteger)mode
+- (int)refreshWithMode:(column_mode_t)mode
 {
 	// Remove closed sockets
 	[self.socks filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSSock *obj, NSDictionary *bind) {
 		return obj.display != ProcDisplayTerminated;
 	}]];
 	[self setAllDisplayed:ProcDisplayTerminated];
-	if (mode == 0) {
+	if (mode == ColumnModeSummary) {
+		[self.socks removeAllObjects];
+		for (PSColumn *col in [PSColumn psGetAllColumns]) {
+			PSSock *sock = [PSSock psSockWithProc:self.proc column:col];
+			if (sock) [self.socks addObject:sock];
+		}
+	} else if (mode == ColumnModeFiles) {
 		// Get buffer size
-		int bufSize = proc_pidinfo(self.pid, PROC_PIDLISTFDS, 0, 0, 0);
+		int bufSize = proc_pidinfo(self.proc.pid, PROC_PIDLISTFDS, 0, 0, 0);
 		if (bufSize <= 0)
 			return EPERM;
 		// Make sure the buffer is large enough ;)
@@ -277,22 +300,22 @@ struct dyld_all_image_infos64 {
 		if (!fdinfo)
 			return ENOMEM;
 		// Get socket list and update the socks array
-		bufSize = proc_pidinfo(self.pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
+		bufSize = proc_pidinfo(self.proc.pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
 		if (bufSize > 0) {
 			for (int i = 0; i < bufSize / PROC_PIDLISTFD_SIZE; i++) {
 // This is bad: fds are often reused, so we wouldn't notice if it changed (at least we check the fdtype...)
 				PSSock *sock = [self sockForFd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
 				if (!sock) {
-					sock = [PSSock psSockWithPid:self.pid fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
+					sock = [PSSock psSockWithPid:self.proc.pid fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
 					if (sock) [self.socks addObject:sock];
 				} else if (sock.display != ProcDisplayStarted)
 					sock.display = ProcDisplayUser;
 			}
 		}
 		free(fdinfo);
-	} else {
+	} else if (mode == ColumnModeModules) {
 		task_port_t task;
-		if (task_for_pid(mach_task_self(), self.pid, &task) == KERN_SUCCESS) {
+		if (task_for_pid(mach_task_self(), self.proc.pid, &task) == KERN_SUCCESS) {
 			task_dyld_info_data_t task_dyld_info;
 			mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
 			if (task_info(task, TASK_DYLD_INFO, (task_info_t)&task_dyld_info, &count) == KERN_SUCCESS) {
@@ -302,7 +325,7 @@ struct dyld_all_image_infos64 {
 					mach_vm_address_t		ii;
 					uint32_t				iiCount;
 					mach_msg_type_number_t	iiSize;
-					if (self.flags & P_LP64) {
+					if (self.proc.flags & P_LP64) {
 						ii = aii.infoArray;
 						iiCount = aii.infoArrayCount;
 						iiSize = iiCount * sizeof(struct dyld_image_info64);
@@ -317,7 +340,7 @@ struct dyld_all_image_infos64 {
 						for (int i = 0; i < iiCount; i++) {
 							mach_vm_address_t addr;
 							mach_vm_address_t path;
-							if (self.flags & P_LP64) {
+							if (self.proc.flags & P_LP64) {
 								struct dyld_image_info64 *ii64 = (struct dyld_image_info64 *)ii;
 								addr = ii64[i].imageLoadAddress;
 								path = ii64[i].imageFilePath;
@@ -327,13 +350,9 @@ struct dyld_all_image_infos64 {
 								path = (mach_vm_address_t)ii32[i].imageFilePath;
 							}
 							struct proc_regionwithpathinfo rwpi;
-							if (proc_pidinfo(self.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE)
+							if (proc_pidinfo(self.proc.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE)
 								continue;
-							PSSock *sock;
-							if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino)
-								sock = [self sockForDev:rwpi.prp_vip.vip_vi.vi_stat.vst_dev ino:rwpi.prp_vip.vip_vi.vi_stat.vst_ino];
-							else
-								sock = [self sockForAddr:addr];
+							PSSock *sock = [self sockForAddr:addr];
 							if (!sock) {
 								// dyld cache has the info that proc_pidinfo doesn't give
 								if (!rwpi.prp_vip.vip_path[0]) {
@@ -349,7 +368,7 @@ struct dyld_all_image_infos64 {
 								if (sock) {
 									//while (rwpi.prp_prinfo.pri_size) {
 									//	addr = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
-									//	if (proc_pidinfo(self.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE) break;
+									//	if (proc_pidinfo(self.proc.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE) break;
 									//	if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev != sock.dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino != sock.ino)
 									//		break;
 									//	sock.addrend = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
@@ -406,14 +425,6 @@ struct dyld_all_image_infos64 {
 {
 	NSUInteger idx = [self.socks indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		return ((PSSock *)obj).fd == fd && ((PSSock *)obj).type == type;
-	}];
-	return idx == NSNotFound ? nil : (PSSock *)self.socks[idx];
-}
-
-- (PSSock *)sockForDev:(uint32_t)dev ino:(uint32_t)ino
-{
-	NSUInteger idx = [self.socks indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-		return ((PSSock *)obj).dev == dev && ((PSSock *)obj).ino == ino;
 	}];
 	return idx == NSNotFound ? nil : (PSSock *)self.socks[idx];
 }

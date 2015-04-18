@@ -33,8 +33,6 @@
 	if (self.dividers)
 		for (UIView *item in self.dividers) [item removeFromSuperview];
 	// Create new views
-	self.firstColWidth = size.width - 5;
-	NSUInteger totalCol = self.firstColWidth;
 	self.labels = [NSMutableArray arrayWithCapacity:columns.count-1];
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	self.extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
@@ -42,25 +40,29 @@
 		self.textLabel.font = [UIFont systemFontOfSize:12.0];
 	else if (self.extendArgsLabel)
 		size.height /= 2;
-	for (PSColumn *col in columns) if (col.tag > 1) {
-		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
-		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
-		[self.dividers addObject:divider];
-		[self.contentView addSubview:divider];
-		[divider release];
+	NSUInteger totalCol;
+	for (PSColumn *col in columns)
+		if (col.tag == 1)
+			self.firstColWidth = totalCol = col.width - 5;
+		else {
+			UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
+			divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
+			[self.dividers addObject:divider];
+			[self.contentView addSubview:divider];
+			[divider release];
 
-		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
-		label.textAlignment = col.align;
-		label.font = col.monoFont ? [UIFont fontWithName:@"Courier" size:13.0] : [UIFont systemFontOfSize:12.0];
-		label.adjustsFontSizeToFitWidth = YES;
-		label.backgroundColor = [UIColor clearColor];
-		label.tag = col.tag;
-		[self.labels addObject:label];
-		[self.contentView addSubview:label];
-		[label release];
+			UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
+			label.textAlignment = col.align;
+			label.font = col.style & ColumnStyleMonoFont ? [UIFont fontWithName:@"Courier" size:13.0] : [UIFont systemFontOfSize:12.0];
+			label.adjustsFontSizeToFitWidth = !(col.style & ColumnStyleEllipsis);
+			label.backgroundColor = [UIColor clearColor];
+			label.tag = col.tag;
+			[self.labels addObject:label];
+			[self.contentView addSubview:label];
+			[label release];
 
-		totalCol += col.width;
-	}
+			totalCol += col.width;
+		}
 	if (self.extendArgsLabel) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(self.firstColWidth, size.height, totalCol - self.firstColWidth, 1)];
 		[self.dividers addObject:divider];
@@ -150,11 +152,11 @@
 	self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
 	self.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
 #endif
-	NSUInteger totalCol = 0;
 	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
 	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
+	NSUInteger totalCol = 0;
 	for (PSColumn *col in columns) {
-		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, (col.tag > 1 ? col.width : size.width) - 4, size.height)];
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, col.width - 4, size.height)];
 		[self.labels addObject:label];
 		[label release];
 		label.textAlignment = footer && col.getSummary ? col.align : NSTextAlignmentCenter;
@@ -169,7 +171,7 @@
 #else
 		[self addSubview:label];
 #endif
-		totalCol += col.tag == 1 ? size.width : col.width;
+		totalCol += col.width;
 	}
 	return self;
 }

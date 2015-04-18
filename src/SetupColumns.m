@@ -131,12 +131,12 @@ static NSArray *presetNames;
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	NSUInteger width = 100000000;
-	self.in = [PSColumn psGetShownColumnsWithWidth:&width];
+	self.in = [PSColumn psGetShownColumnsWithWidth:100000000];
 	self.out = [NSMutableArray array];
 	for (PSColumn* col in [PSColumn psGetAllColumns])
-		if (![self.in containsObject:col])
-			[self.out addObject:col];
+		if (!(col.style & ColumnStyleForSummary))
+			if (![self.in containsObject:col])
+				[self.out addObject:col];
 	ar[0] = self.in;
 	ar[1] = self.out;
 	[self.tableView reloadData];

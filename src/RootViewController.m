@@ -7,7 +7,6 @@
 #import "Proc.h"
 
 @interface RootViewController()
-@property (assign) NSUInteger firstColWidth;
 @property (retain) GridHeaderView *header;
 @property (retain) GridHeaderView *footer;
 @property (retain) PSProcArray *procs;
@@ -116,6 +115,8 @@
 		@"SockSortDescending" : @YES,
 		@"ModulesSortColumn" : @1,
 		@"ModulesSortDescending" : @NO,
+		@"SummarySortColumn" : @1,
+		@"SummarySortDescending" : @NO,
 		@"UpdateInterval" : @"1",
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,
@@ -192,9 +193,8 @@
 {
 	CGPoint loc = [gestureRecognizer locationInView:self.header];
 	for (PSColumn *col in self.columns) {
-		NSUInteger width = col.tag == 1 ? self.firstColWidth : col.width;
-		if (loc.x > width) {
-			loc.x -= width;
+		if (loc.x > col.width) {
+			loc.x -= col.width;
 			continue;
 		}
 		self.sortdesc = self.sorter == col ? !self.sortdesc : col.sortDesc;
@@ -225,16 +225,15 @@
 	}
 	// When configId changes, all cells are reconfigured
 	self.configId++;
-	self.firstColWidth = self.tableView.bounds.size.width;
-	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
+	self.columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
 	// Find sort column and create table header
 	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"];
 	NSArray *allColumns = [PSColumn psGetAllColumns];
 	if (sortCol >= allColumns.count) sortCol = 1;
 	self.sorter = allColumns[sortCol];
 	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
-	self.footer = [GridHeaderView footerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionHeaderHeight)];
+	self.footer = [GridHeaderView footerWithColumns:self.columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionFooterHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self.footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
@@ -267,10 +266,9 @@
 		return;
 	// Size changed - need to redraw
 	self.configId++;
-	self.firstColWidth = self.tableView.bounds.size.width;
-	self.columns = [PSColumn psGetShownColumnsWithWidth:&_firstColWidth];
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
-	self.footer = [GridHeaderView footerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionFooterHeight)];
+	self.columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionHeaderHeight)];
+	self.footer = [GridHeaderView footerWithColumns:self.columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionFooterHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[self.footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
@@ -313,7 +311,7 @@
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:proc.icon != nil]];
 	if (cell == nil)
 		cell = [GridTableCell cellWithIcon:proc.icon != nil];
-	[cell configureWithId:self.configId columns:self.columns size:CGSizeMake(self.firstColWidth, tableView.rowHeight)];
+	[cell configureWithId:self.configId columns:self.columns size:CGSizeMake(0, tableView.rowHeight)];
 	[cell updateWithProc:proc columns:self.columns];
 	return cell;
 }

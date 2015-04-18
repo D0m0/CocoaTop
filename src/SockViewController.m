@@ -3,20 +3,9 @@
 #import "Column.h"
 #import "Sock.h"
 
-typedef enum {
-	SockModeFiles = 0,
-	SockModeModules,
-	SockModes
-} sockview_mode_t;
-
-NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
-
-#define nextmode(m) (((m) + 1) % SockModes)
-
 @interface SockViewController()
 @property (retain) PSProc *proc;
 @property (retain) NSString *name;
-@property (assign) NSUInteger firstColWidth;
 @property (retain) GridHeaderView *header;
 @property (retain) NSArray *columns;
 @property (retain) NSTimer *timer;
@@ -27,7 +16,7 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
 @property (retain) UISegmentedControl *modeSelector;
-@property (assign) NSInteger mode;
+@property (assign) column_mode_t mode;
 @end
 
 @implementation SockViewController
@@ -55,10 +44,10 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 - (IBAction)modeChange:(UISegmentedControl *)modeSelector
 {
 	// Mode changed - need to reset all information
-	self.socks = [PSSockArray psSockArrayWithPid:self.proc.pid flags:self.proc.flags];
+	self.socks = [PSSockArray psSockArrayWithProc:self.proc];
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-		self.mode = nextmode(self.mode);
-		[modeSelector setTitle:SockModeName[nextmode(self.mode)] forSegmentAtIndex:0];
+		self.mode = ColumnNextMode(self.mode);
+		[modeSelector setTitle:ColumnModeName[ColumnNextMode(self.mode)] forSegmentAtIndex:0];
 	} else
 		self.mode = modeSelector.selectedSegmentIndex;
 	[self configureMode];
@@ -76,10 +65,10 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 
 	self.mode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-		self.modeSelector = [[UISegmentedControl alloc] initWithItems:@[SockModeName[nextmode(self.mode)]]];
+		self.modeSelector = [[UISegmentedControl alloc] initWithItems:@[ColumnModeName[ColumnNextMode(self.mode)]]];
 		self.modeSelector.momentary = YES;
 	} else {
-		self.modeSelector = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:SockModeName count:SockModes]];
+		self.modeSelector = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:ColumnModeName count:ColumnModes]];
 		self.modeSelector.selectedSegmentIndex = self.mode;
 	}
 #if __IPHONE_OS_VERSION_MAX_ALLOWED <= __IPHONE_6_0
@@ -104,13 +93,13 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 			[self.timer invalidate];
 		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshSocks:) userInfo:nil repeats:NO];
 	}
+	// Update titlebar
+	[self.proc updateWithState:0];
+	self.navigationItem.title = [self.name stringByAppendingFormat:@" (CPU %.1f%%)", (float)self.proc.pcpu / 10];
 	// Update tableview
 	[self.socks refreshWithMode:self.mode];
 	[self.socks sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
-	// Update titlebar
-	[self.proc updateWithState:0];
-	self.navigationItem.title = [self.name stringByAppendingFormat:@" (CPU %.1f%%)", (float)self.proc.pcpu / 10];
 	// First time refresh?
 	if (timer == nil) {
 		// We don't need info about new sockets, they are all new :)
@@ -135,16 +124,15 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 {
 	CGPoint loc = [gestureRecognizer locationInView:self.header];
 	for (PSColumn *col in self.columns) {
-		NSUInteger width = col.tag == 1 ? self.firstColWidth : col.width;
-		if (loc.x > width) {
-			loc.x -= width;
+		if (loc.x > col.width) {
+			loc.x -= col.width;
 			continue;
 		}
 		self.sortdesc = self.sorter == col ? !self.sortdesc : col.sortDesc;
 		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
 		self.sorter = col;
-		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:(self.mode ? @"ModulesSortColumn" : @"SockSortColumn")];
-		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:(self.mode ? @"ModulesSortDescending" : @"SockSortDescending")];
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:ColumnModeSettingSort[self.mode]];
+		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:ColumnModeSettingDesc[self.mode]];
 		[self.timer fire];
 		break;
 	}
@@ -154,15 +142,14 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 {
 	// When configId changes, all cells are reconfigured
 	self.configId++;
-	self.firstColWidth = self.tableView.bounds.size.width;
-	self.columns = [PSColumn psGetTaskColumnsWithWidth:&_firstColWidth kind:self.mode];
+	self.columns = [PSColumn psGetTaskColumnsWithWidth:self.tableView.bounds.size.width mode:self.mode];
 	// Find sort column and create table header
-	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:(self.mode ? @"ModulesSortColumn" : @"SockSortColumn")];
+	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:ColumnModeSettingSort[self.mode]];
 	NSArray *allColumns = [PSColumn psGetTaskColumns:self.mode];
 	if (sortCol >= allColumns.count) sortCol = 1;
 	self.sorter = allColumns[sortCol];
-	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:(self.mode ? @"ModulesSortDescending" : @"SockSortDescending")];
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.firstColWidth, self.tableView.sectionHeaderHeight)];
+	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:ColumnModeSettingDesc[self.mode]];
+	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(0, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 }
@@ -170,7 +157,7 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	self.socks = [PSSockArray psSockArrayWithPid:self.proc.pid flags:self.proc.flags];
+	self.socks = [PSSockArray psSockArrayWithProc:self.proc];
 	self.name = [self.proc.executable lastPathComponent];
 	[self configureMode];
 	// Refresh interval
@@ -183,6 +170,7 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 	[super viewWillDisappear:animated];
 	if (self.timer.isValid)
 		[self.timer invalidate];
+	self.socks = nil;
 	self.header = nil;
 	self.columns = nil;
 	self.proc = nil;
@@ -231,7 +219,7 @@ NSString *SockModeName[SockModes] = {@"Open files", @"Modules"};
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
 	if (cell == nil)
 		cell = [GridTableCell cellWithIcon:NO];
-	[cell configureWithId:self.configId columns:self.columns size:CGSizeMake(self.firstColWidth, tableView.rowHeight)];
+	[cell configureWithId:self.configId columns:self.columns size:CGSizeMake(0, tableView.rowHeight)];
 	[cell updateWithSock:sock columns:self.columns];
 	return cell;
 }
