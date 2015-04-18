@@ -16,6 +16,9 @@
     <Filter Include="Header Files\darwin">
       <UniqueIdentifier>{2e8e81d6-6631-433a-8766-0bac7077b942}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Build">
+      <UniqueIdentifier>{f8bf859f-aa0f-4a25-96e6-17ef9cce2351}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AppDelegate.h">
@@ -101,5 +104,46 @@
     <None Include="src\Compat.m">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="bincopy.cmd">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="build.cmd">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="build.sh">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="build5.cmd">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="build5.sh">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="build6.cmd">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="buildtask.sh">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="Makefile5">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="Makefile6">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="src\Makefile">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="src\postinst">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="src\control">
+      <Filter>Build</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="src\task.xml">
+      <Filter>Build</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

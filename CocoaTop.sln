@@ -5,14 +5,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CocoaTop", "CocoaTop.vcxpro
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
-		Release|Win32 = Release|Win32
+		iOS7|Win32 = iOS7|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C35DAE98-384C-4646-97A5-CF07312D9936}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C35DAE98-384C-4646-97A5-CF07312D9936}.Debug|Win32.Build.0 = Debug|Win32
-		{C35DAE98-384C-4646-97A5-CF07312D9936}.Release|Win32.ActiveCfg = Release|Win32
-		{C35DAE98-384C-4646-97A5-CF07312D9936}.Release|Win32.Build.0 = Release|Win32
+		{C35DAE98-384C-4646-97A5-CF07312D9936}.iOS7|Win32.ActiveCfg = iOS7|Win32
+		{C35DAE98-384C-4646-97A5-CF07312D9936}.iOS7|Win32.Build.0 = iOS7|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
