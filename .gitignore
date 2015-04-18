@@ -4,3 +4,9 @@ build
 /*.opensdf
 *.sdf
 *.suo
+/CocoaTop
+/CocoaTop5
+/CocoaTop6
+/CocoaTop7
+/iOS7
+/CocoaTop.vcxproj.user
