@@ -108,15 +108,7 @@
 #endif
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
-		@"SortColumn" : @1,
-		@"SortDescending" : @NO,
 		@"ProcInfoMode" : @0,
-		@"SockSortColumn" : @2,
-		@"SockSortDescending" : @YES,
-		@"ModulesSortColumn" : @1,
-		@"ModulesSortDescending" : @NO,
-		@"SummarySortColumn" : @1,
-		@"SummarySortDescending" : @NO,
 		@"UpdateInterval" : @"1",
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,
@@ -126,6 +118,10 @@
 		@"ShowHeader" : @YES,
 		@"ShowFooter" : @YES,
 		@"ShortenPaths" : @YES,
+		@"SortColumn" : @1,
+		@"SortDescending" : @NO,
+		@"ModesSortColumn" : @[@1, @2, @1],
+		@"ModesSortDescending" : @[@NO, @YES, @NO],
 	}];
 	self.configChange = @"";
 	self.configId = 0;

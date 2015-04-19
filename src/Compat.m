@@ -7,6 +7,10 @@
 - (id)objectAtIndexedSubscript:(NSUInteger)idx { return [self objectAtIndex:idx]; }
 @end
 
+@implementation NSMutableArray(Subscripts)
+- (void)setObject:(id)obj atIndexedSubscript:(NSUInteger)idx { [self replaceObjectAtIndex:idx withObject:obj]; }
+@end
+
 @implementation NSDictionary(Subscripts)
 - (id)objectForKeyedSubscript:(id)key { return [self objectForKey:key]; }
 @end

@@ -10,10 +10,6 @@ typedef enum {
 
 #define ColumnNextMode(m) (((m) + 1) % ColumnModes)
 
-const NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Open files", @"Modules"};
-const NSString *ColumnModeSettingSort[ColumnModes] = {@"SummarySortColumn", @"ModulesSortColumn", @"SockSortColumn"};
-const NSString *ColumnModeSettingDesc[ColumnModes] = {@"SummarySortDescending", @"ModulesSortDescending", @"SockSortDescending"};
-
 typedef enum {
 	ColumnStyleExtend = 1,
 	ColumnStyleEllipsis = 2,

@@ -28,6 +28,10 @@
 - (id)objectAtIndexedSubscript:(NSUInteger)idx;
 @end
 
+@interface NSMutableArray(Subscripts)
+- (void)setObject:(id)obj atIndexedSubscript:(NSUInteger)idx;
+@end
+
 @interface NSDictionary(Subscripts)
 - (id)objectForKeyedSubscript:(id)key;
 @end
