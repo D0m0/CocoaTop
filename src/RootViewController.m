@@ -376,11 +376,6 @@
 	if (self.fullScreen)
 		[self hideShowNavBar:nil];
 	PSProc *proc = self.procs[indexPath.row];
-	if (proc.pid == 0) {
-		UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:proc.name message:@"Access denied" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-		[alertView show];
-		return;
-	}
 	self.selectedPid = proc.pid;
 	SockViewController* sockViewController = [[SockViewController alloc] initWithProc:proc];
 		[self.navigationController pushViewController:sockViewController animated:anim];

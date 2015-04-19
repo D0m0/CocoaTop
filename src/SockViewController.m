@@ -252,9 +252,11 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Open files", @"Modules"};
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-	if (cell) {
-		UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:@"Open file/socket" message:cell.textLabel.text delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+	PSSock *sock = self.socks[indexPath.row];
+	if (sock) {
+		NSString *title = (self.mode == ColumnModeSummary) ? sock.name : @"Property",
+			   *message = (self.mode == ColumnModeSummary) ? sock.col.getData(sock.proc) : sock.name;
+		UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
 		[alertView show];
 	}
 }

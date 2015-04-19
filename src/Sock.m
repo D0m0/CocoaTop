@@ -308,6 +308,9 @@ struct dyld_all_image_infos64 {
 		}
 		free(fdinfo);
 	} else if (mode == ColumnModeModules) {
+		// Avoid resetting device...
+		if (self.proc.pid == 0)
+			return EPERM;
 		task_port_t task;
 		if (task_for_pid(mach_task_self(), self.proc.pid, &task) == KERN_SUCCESS) {
 			task_dyld_info_data_t task_dyld_info;
