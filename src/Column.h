@@ -3,6 +3,7 @@
 
 typedef enum {
 	ColumnModeSummary = 0,
+	ColumnModeThreads,
 	ColumnModeFiles,
 	ColumnModeModules,
 	ColumnModes

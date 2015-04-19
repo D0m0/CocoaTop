@@ -51,9 +51,14 @@
 @property (assign) uint32_t dev;
 @property (assign) uint32_t ino;
 
+//@property (assign) uint64_t tid;
+@property (assign) int pcpu;
+@property (assign) int policy;
+
 @property (retain) NSString *name;
 @property (retain) NSString *stype;
 @property (retain) UIColor *color;
+
 @property (retain) PSProc *proc;
 @property (retain) PSColumn *col;
 + (instancetype)psSockWithPid:(pid_t)pid fd:(int32_t)fd type:(uint32_t)type;

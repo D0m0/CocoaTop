@@ -3,7 +3,7 @@
 #import "Column.h"
 #import "Sock.h"
 
-NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Open files", @"Modules"};
+NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", @"Modules"};
 
 @interface SockViewController()
 @property (retain) PSProc *proc;

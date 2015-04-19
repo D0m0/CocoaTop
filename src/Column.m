@@ -308,6 +308,20 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			data:^NSString*(PSSock *sock) { return sock.col.getData(sock.proc); }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return 0; } summary:nil],
 		] retain];
+		sockColumns[ColumnModeThreads] = [@[
+		[PSColumn psColumnWithName:@"TID" descr:@"Thread ID" align:NSTextAlignmentRight width:100 sortDesc:NO style:0
+			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%llX", sock.addr]; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { COMPARE(addr); } summary:nil],
+		//[PSColumn psColumnWithName:@"Open file/socket" descr:@"Filename or Socket Address" align:NSTextAlignmentLeft width:220 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
+		//	data:^NSString*(PSSock *sock) { return sock.name; }
+		//	sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
+		[PSColumn psColumnWithName:@"%" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 sortDesc:YES style:0
+			data:^NSString*(PSSock *sock) { return !sock.pcpu ? @"-" : [NSString stringWithFormat:@"%.1f", (float)sock.pcpu / 10]; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { COMPARE(pcpu); } summary:nil],
+		[PSColumn psColumnWithName:@"Policy" descr:@"Scheduling Policy" align:NSTextAlignmentLeft width:50 sortDesc:NO style:0
+			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%d", sock.policy]; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { COMPARE(policy); } summary:nil],
+		] retain];
 		sockColumns[ColumnModeFiles] = [@[
 		[PSColumn psColumnWithName:@"FD" descr:@"File Descriptor" align:NSTextAlignmentRight width:40 sortDesc:NO style:0
 			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%d", sock.fd]; }

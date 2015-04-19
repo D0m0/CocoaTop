@@ -1,5 +1,6 @@
 #import "Sock.h"
 #import <mach-o/dyld_images.h>
+#import <mach/thread_info.h>
 #import <arpa/inet.h>
 #import <netdb.h>
 #import "proc_info.h"
@@ -192,6 +193,24 @@
 	return [[[PSSock alloc] initWithRwpi:rwpi] autorelease];
 }
 
+- (instancetype)initWithId:(uint64_t)tid tbi:(struct thread_basic_info *)tbi
+{
+	if (self = [super init]) {
+		self.display = ProcDisplayStarted;
+		self.name = [NSString stringWithFormat:@"TID: %llX", tid];
+		self.addr = tid;
+		self.pcpu = tbi->cpu_usage;
+		self.policy = tbi->policy;
+		self.color = [UIColor blackColor];
+	}
+	return self;
+}
+
++ (instancetype)psSockWithId:(uint64_t)tid tbi:(struct thread_basic_info *)tbi
+{
+	return [[[PSSock alloc] initWithId:tid tbi:tbi] autorelease];
+}
+
 - (instancetype)initWithProc:(PSProc *)proc column:(PSColumn *)col
 {
 	if (self = [super init]) {
@@ -307,6 +326,36 @@ struct dyld_all_image_infos64 {
 			}
 		}
 		free(fdinfo);
+	} else if (mode == ColumnModeThreads) {
+		task_port_t task;
+		if (task_for_pid(mach_task_self(), self.proc.pid, &task) == KERN_SUCCESS) {
+			thread_port_array_t thread_list;
+			unsigned int thread_count;
+			if (task_threads(task, &thread_list, &thread_count) == KERN_SUCCESS) {
+				for (unsigned int j = 0; j < thread_count; j++) {
+					struct thread_identifier_info tii = {0};
+					struct thread_basic_info tbi = {{0}};
+					unsigned int info_count = THREAD_IDENTIFIER_INFO_COUNT;
+					thread_info(thread_list[j], THREAD_IDENTIFIER_INFO, (thread_info_t)&tii, &info_count);
+					info_count = THREAD_BASIC_INFO_COUNT;
+					thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&tbi, &info_count);
+					if (tii.thread_id) {
+						PSSock *sock = [self sockForAddr:tii.thread_id];
+						if (!sock) {
+							sock = [PSSock psSockWithId:tii.thread_id tbi:&tbi];
+							if (sock) [self.socks addObject:sock];
+						} else if (sock.display != ProcDisplayStarted) {
+							sock.display = ProcDisplayUser;
+							sock.pcpu = tbi.cpu_usage;
+							sock.policy = tbi.policy;
+						}
+					}
+					mach_port_deallocate(mach_task_self(), thread_list[j]);
+				}
+				vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(*thread_list) * thread_count);
+			}
+			mach_port_deallocate(mach_task_self(), task);
+		}
 	} else if (mode == ColumnModeModules) {
 		// Avoid resetting device...
 		if (self.proc.pid == 0)
