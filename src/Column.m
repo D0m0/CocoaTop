@@ -124,7 +124,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		allColumns = [@[
-		[PSColumn psColumnWithName:@"Command line" descr:@"Command line" align:NSTextAlignmentLeft width:170 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Command line" descr:@"Command line" align:NSTextAlignmentLeft width:170 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis | ColumnStyleTooLong
 			data:^NSString*(PSProc *proc) { return [proc.executable stringByAppendingString:proc.args]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"Total processes: %u", procs.count]; }],
@@ -208,6 +208,18 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"MRecv" descr:@"Mach Messages Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.messages_received]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.messages_received); } summary:nil],
+		[PSColumn psColumnWithName:@"\u03A3Mach" descr:@"Mach Total System Calls" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_mach]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_mach); } summary:nil],
+		[PSColumn psColumnWithName:@"\u03A3BSD" descr:@"BSD Total System Calls" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_unix]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_unix); } summary:nil],
+		[PSColumn psColumnWithName:@"\u03A3CSw" descr:@"Context Switches Total" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.csw); } summary:nil],
+		[PSColumn psColumnWithName:@"FDs" descr:@"Open file/socket Descriptors" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
+			data:^NSString*(PSProc *proc) { return !proc.files ? @"-" : [NSString stringWithFormat:@"%u", proc.files]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(files); } summary:nil],
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 		[PSColumn psColumnWithName:@"RMax" descr:@"Maximum Resident Memory Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size_max ? @"-" :
@@ -297,12 +309,12 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return 0; } summary:nil],
 		] retain];
 		sockColumns[ColumnModeFiles] = [@[
-		[PSColumn psColumnWithName:@"Open file/socket" descr:@"Filename or Socket Address" align:NSTextAlignmentLeft width:220 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
-			data:^NSString*(PSSock *sock) { return sock.name; }
-			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
 		[PSColumn psColumnWithName:@"FD" descr:@"File Descriptor" align:NSTextAlignmentRight width:40 sortDesc:NO style:0
 			data:^NSString*(PSSock *sock) { return [NSString stringWithFormat:@"%d", sock.fd]; }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { COMPARE(fd); } summary:nil],
+		[PSColumn psColumnWithName:@"Open file/socket" descr:@"Filename or Socket Address" align:NSTextAlignmentLeft width:220 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
+			data:^NSString*(PSSock *sock) { return sock.name; }
+			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
 		[PSColumn psColumnWithName:@"Type" descr:@"Descriptor Type" align:NSTextAlignmentLeft width:50 sortDesc:NO style:0
 			data:^NSString*(PSSock *sock) { return sock.stype; }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.stype caseInsensitiveCompare:b.stype]/*a.type - b.type*/; } summary:nil],

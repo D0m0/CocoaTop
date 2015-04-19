@@ -15,6 +15,7 @@ typedef enum {
 	ColumnStyleEllipsis = 2,
 	ColumnStyleForSummary = 4,
 	ColumnStyleMonoFont = 8,
+	ColumnStyleTooLong = 16,
 } column_style_t;
 
 typedef NSString *(^PSColumnData)(id proc);

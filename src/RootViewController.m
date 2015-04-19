@@ -103,8 +103,7 @@
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-	if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
-		[self.tableView setSeparatorInset:UIEdgeInsetsZero];
+	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
 #endif
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
@@ -301,8 +300,10 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if (indexPath.row >= self.procs.count)
+	if (indexPath.row >= self.procs.count) {
+		NSLog(@"*** cellForRowAtIndexPath requested row %d of %d", indexPath.row, self.procs.count);
 		return nil;
+	}
 	PSProc *proc = self.procs[indexPath.row];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:proc.icon != nil]];
 	if (cell == nil)

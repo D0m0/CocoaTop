@@ -53,6 +53,7 @@ typedef enum {
 @property (assign) unsigned int pcpu;
 @property (assign) unsigned int threads;
 @property (assign) unsigned int ports;
+@property (assign) unsigned int files;
 @property (retain) NSString *name;
 @property (retain) NSString *executable;
 @property (retain) NSString *args;

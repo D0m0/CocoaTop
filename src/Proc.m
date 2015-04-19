@@ -1,5 +1,3 @@
-#import "Proc.h"
-#import "AppIcon.h"
 #import <mach/mach_init.h>
 #import <mach/mach_host.h>
 #import <mach/host_info.h>
@@ -8,11 +6,10 @@
 #import <mach/mach_interface.h>
 #import <mach/mach_port.h>
 #import <pwd.h>
-
-extern kern_return_t task_for_pid(task_port_t task, pid_t pid, task_port_t *target);
-extern kern_return_t task_info(task_port_t task, unsigned int info_num, task_info_t info, unsigned int *info_count);
-extern int proc_pidpath(int pid, void * buffer, uint32_t  buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-extern int proc_pid_rusage(int pid, int flavor, struct rusage_info_v2 *rusage);// __OSX_AVAILABLE_STARTING(__MAC_10_9, __IPHONE_7_0);
+#import "Proc.h"
+#import "AppIcon.h"
+#import "proc_info.h"
+#import "libproc.h"
 
 @implementation PSProc
 
@@ -86,6 +83,32 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	self.uid = ki->kp_eproc.e_ucred.cr_uid;
 	self.gid = ki->kp_eproc.e_pcred.p_rgid;
 	[self updateWithState:ki->kp_proc.p_stat];
+	// FDs info
+	self.files = 0;
+	int bufSize = proc_pidinfo(ki->kp_proc.p_pid, PROC_PIDLISTFDS, 0, 0, 0);
+	if (bufSize > 0) {
+		// Make sure the buffer is large enough ;)
+		bufSize *= 2;
+		struct proc_fdinfo *fdinfo = (struct proc_fdinfo *)malloc(bufSize);
+		if (fdinfo) {
+			// Get socket list and update the socks array
+			bufSize = proc_pidinfo(ki->kp_proc.p_pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
+			if (bufSize > 0)
+				for (int i = 0; i < bufSize / PROC_PIDLISTFD_SIZE; i++) {
+					switch (fdinfo[i].proc_fdtype) {
+					case PROX_FDTYPE_VNODE:
+					case PROX_FDTYPE_PIPE:
+					case PROX_FDTYPE_KQUEUE:
+					case PROX_FDTYPE_SOCKET:
+						self.files++; break;
+					}
+				}
+			free(fdinfo);
+		}
+	}
+//	int bufSize = proc_pidinfo(ki->kp_proc.p_pid, PROC_PIDLISTFDS, 0, 0, 0);
+//	self.files = bufSize > 0 ? bufSize / PROC_PIDLISTFD_SIZE : 0;
+	// Rusage info (iOS7+)
 	memcpy(&rusage_prev, &rusage, sizeof(rusage));
 	memset(&rusage, 0, sizeof(rusage));
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0

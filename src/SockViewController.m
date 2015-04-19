@@ -73,6 +73,9 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Open files", @"Modules"};
 		self.modeSelector = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:ColumnModeName count:ColumnModes]];
 		self.modeSelector.selectedSegmentIndex = self.mode;
 	}
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
+#endif
 #if __IPHONE_OS_VERSION_MAX_ALLOWED <= __IPHONE_6_0
 	CGRect frame = self.modeSelector.frame;
 		frame.size.height = self.navigationController.navigationBar.frame.size.height * 2 / 3;

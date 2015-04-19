@@ -3,21 +3,7 @@
 #import <arpa/inet.h>
 #import <netdb.h>
 #import "proc_info.h"
-
-//extern int proc_listpidspath(uint32_t type, uint32_t typeinfo, const char *path, uint32_t pathflags, void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-//extern int proc_listpids(uint32_t type, uint32_t typeinfo, void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-//extern int proc_listallpids(void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_1);
-//extern int proc_listpgrppids(pid_t pgrpid, void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_1);
-//extern int proc_listchildpids(pid_t ppid, void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_1);
-extern int proc_pidinfo(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-extern int proc_pidfdinfo(int pid, int fd, int flavor, void * buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-//extern int proc_pidfileportinfo(int pid, uint32_t fileport, int flavor, void *buffer, int buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_3);
-//extern int proc_name(int pid, void * buffer, uint32_t buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-//extern int proc_regionfilename(int pid, uint64_t address, void * buffer, uint32_t buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-//extern int proc_kmsgbuf(void * buffer, uint32_t buffersize) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-//extern int proc_libversion(int *major, int * minor) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
-extern kern_return_t mach_vm_read(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, vm_offset_t *data, mach_msg_type_number_t *dataCnt);
-extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, mach_vm_address_t data, mach_vm_size_t *outsize);
+#import "libproc.h"
 
 @implementation PSSock
 
@@ -50,6 +36,14 @@ extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_addres
 		stype = @"PIPE";
 		color = [UIColor blueColor];
 		flags = info.pfi.fi_openflags;
+	} else if (type == PROX_FDTYPE_KQUEUE) {
+		struct kqueue_fdinfo info;
+		if (proc_pidfdinfo(pid, fd, PROC_PIDFDKQUEUEINFO, &info, PROC_PIDFDKQUEUEINFO_SIZE) != PROC_PIDFDKQUEUEINFO_SIZE)
+			return nil;
+		name = [NSString stringWithFormat:@"KQUEUE: %@", info.kqueueinfo.kq_state == PROC_KQUEUE_SELECT ? @"SELECT" : info.kqueueinfo.kq_state == PROC_KQUEUE_SLEEP ? @"SLEEP" : @"SUSPENDED"];
+		stype = @"QUEUE";
+		color = [UIColor brownColor];
+		flags = info.pfi.fi_openflags;
 	} else if (type == PROX_FDTYPE_SOCKET) {
 		char lip[INET_ADDRSTRLEN] = "", fip[INET_ADDRSTRLEN] = "";
 		struct in_sockinfo *s;
@@ -57,8 +51,8 @@ extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_addres
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDSOCKETINFO, &info, PROC_PIDFDSOCKETINFO_SIZE) != PROC_PIDFDSOCKETINFO_SIZE)
 			return nil;
 		switch (info.psi.soi_kind) {
-		case SOCKINFO_TCP:	// Type: TCP4
-		case SOCKINFO_IN:	// Type: UDP4
+		case SOCKINFO_TCP:	// Type: TCP
+		case SOCKINFO_IN:	// Type: UDP
 			s = info.psi.soi_kind == SOCKINFO_TCP ? &info.psi.soi_proto.pri_tcp.tcpsi_ini : &info.psi.soi_proto.pri_in;
 			if (info.psi.soi_family == AF_INET) {
 				inet_ntop(info.psi.soi_family, &s->insi_faddr.ina_46.i46a_addr4, fip, INET_ADDRSTRLEN);

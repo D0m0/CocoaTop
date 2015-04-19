@@ -88,16 +88,13 @@
 
 - (void)updateWithSock:(PSSock *)sock columns:(NSArray *)columns
 {
-	self.textLabel.text = sock.name;
-	self.textLabel.textColor = sock.color;
-	for (PSColumn *col in columns)
-		if (col.tag > 1) {
-			UILabel *label = (UILabel *)[self viewWithTag:col.tag];
-			if (label) {
-				label.text = col.getData(sock);
-				label.textColor = sock.color;
-			}
+	for (PSColumn *col in columns) {
+		UILabel *label = col.tag > 1 ? (UILabel *)[self viewWithTag:col.tag] : self.textLabel;
+		if (label) {
+			label.text = col.style & ColumnStyleTooLong ? sock.name : col.getData(sock);
+			label.textColor = sock.color;
 		}
+	}
 }
 
 - (void)layoutSubviews
