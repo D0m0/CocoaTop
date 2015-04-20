@@ -59,8 +59,7 @@ typedef enum {
 @property (retain) NSString *args;
 @property (retain) UIImage *icon;
 @property (retain) NSDictionary *app;
-+ (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
-- (void)updateWithState:(char)state;
+- (void)update;
 @end
 
 @interface PSProcArray : NSObject
@@ -88,3 +87,6 @@ typedef enum {
 - (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
 - (NSUInteger)indexForPid:(pid_t)pid;
 @end
+
+proc_state_t mach_state_order(struct thread_basic_info *tbi);
+unsigned int mach_thread_priority(thread_t thread, policy_t policy);

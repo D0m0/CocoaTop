@@ -23,7 +23,7 @@
 			NSArray *args = [PSProc getArgsByKinfo:ki];
 			char buffer[MAXPATHLEN];
 			if (proc_pidpath(self.pid, buffer, sizeof(buffer)))
-				self.executable = [NSString stringWithCString:buffer encoding:NSUTF8StringEncoding];
+				self.executable = [NSString stringWithUTF8String:buffer];
 			else
 				self.executable = args[0];
 			self.args = @"";
@@ -62,16 +62,41 @@
 }
 
 // Thread states are sorted by priority, top priority becomes a "task state"
-proc_state_t mach_state_order(int s, long sleep_time)
-{      
-	switch (s) {
+proc_state_t mach_state_order(struct thread_basic_info *tbi)
+{
+	switch (tbi->run_state) {
 	case TH_STATE_RUNNING:			return ProcStateRunning;
 	case TH_STATE_UNINTERRUPTIBLE:	return ProcStateUninterruptible;
-	case TH_STATE_WAITING:			return sleep_time <= 20 ? ProcStateSleeping : ProcStateIndefiniteSleep;
+	case TH_STATE_WAITING:			return tbi->sleep_time <= 20 ? ProcStateSleeping : ProcStateIndefiniteSleep;
 	case TH_STATE_STOPPED:			return ProcStateTerminated;
 	case TH_STATE_HALTED:			return ProcStateHalted;  
 	default:						return ProcStateMax; 
 	}
+}
+
+unsigned int mach_thread_priority(thread_t thread, policy_t policy)
+{
+	// this struct is compatible with all scheduler policies
+	struct policy_timeshare_info sched;
+	unsigned int info_count;
+	switch (policy) {
+	case POLICY_TIMESHARE:
+		info_count = POLICY_TIMESHARE_INFO_COUNT;
+		if (thread_info(thread, THREAD_SCHED_TIMESHARE_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+			return sched.cur_priority;
+		break;
+	case POLICY_RR:
+		info_count = POLICY_RR_INFO_COUNT;
+		if (thread_info(thread, THREAD_SCHED_RR_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+			return sched.base_priority;
+		break;
+	case POLICY_FIFO:
+		info_count = POLICY_FIFO_INFO_COUNT;
+		if (thread_info(thread, THREAD_SCHED_FIFO_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
+			return sched.base_priority;
+		break;
+	}
+	return 0;
 }
 
 - (void)updateWithKinfo:(struct kinfo_proc *)ki
@@ -82,17 +107,25 @@ proc_state_t mach_state_order(int s, long sleep_time)
 	self.tdev = ki->kp_eproc.e_tdev;
 	self.uid = ki->kp_eproc.e_ucred.cr_uid;
 	self.gid = ki->kp_eproc.e_pcred.p_rgid;
-	[self updateWithState:ki->kp_proc.p_stat];
-	// FDs info
+	// Priority process states
+	self.state = ProcStateMax;
+	if (ki->kp_proc.p_stat == SSTOP) self.state = ProcStateDebugging;
+	if (ki->kp_proc.p_stat == SZOMB) self.state = ProcStateZombie;
+	[self update];
+}
+
+- (void)update
+{
+	// Mach task info
+	[self updateMachInfo];
+	// Open files count
 	self.files = 0;
-	int bufSize = proc_pidinfo(ki->kp_proc.p_pid, PROC_PIDLISTFDS, 0, 0, 0);
+	int bufSize = proc_pidinfo(self.pid, PROC_PIDLISTFDS, 0, 0, 0);
 	if (bufSize > 0) {
-		// Make sure the buffer is large enough ;)
 		bufSize *= 2;
 		struct proc_fdinfo *fdinfo = (struct proc_fdinfo *)malloc(bufSize);
 		if (fdinfo) {
-			// Get socket list and update the socks array
-			bufSize = proc_pidinfo(ki->kp_proc.p_pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
+			bufSize = proc_pidinfo(self.pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
 			if (bufSize > 0)
 				for (int i = 0; i < bufSize / PROC_PIDLISTFD_SIZE; i++) {
 					switch (fdinfo[i].proc_fdtype) {
@@ -106,13 +139,11 @@ proc_state_t mach_state_order(int s, long sleep_time)
 			free(fdinfo);
 		}
 	}
-//	int bufSize = proc_pidinfo(ki->kp_proc.p_pid, PROC_PIDLISTFDS, 0, 0, 0);
-//	self.files = bufSize > 0 ? bufSize / PROC_PIDLISTFD_SIZE : 0;
 	// Rusage info (iOS7+)
 	memcpy(&rusage_prev, &rusage, sizeof(rusage));
 	memset(&rusage, 0, sizeof(rusage));
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-	if (proc_pid_rusage(ki->kp_proc.p_pid, RUSAGE_INFO_V2, &rusage) == 0) {
+	if (proc_pid_rusage(self.pid, RUSAGE_INFO_V2, &rusage) == 0) {
 		if (!rusage_prev.ri_proc_start_abstime)
 			// Fill in rusage_prev on first update
 			memcpy(&rusage_prev, &rusage, sizeof(rusage_prev));
@@ -125,15 +156,11 @@ proc_state_t mach_state_order(int s, long sleep_time)
 #endif
 }
 
-- (void)updateWithState:(char)state
+- (void)updateMachInfo
 {
 	time_value_t total_time = {0};
 	task_port_t task;
 	unsigned int info_count;
-	// Priority process states
-	self.state = ProcStateMax;
-	if (state == SSTOP) self.state = ProcStateDebugging;
-	if (state == SZOMB) self.state = ProcStateZombie;
 	// Task info
 	memcpy(&events_prev, &events, sizeof(events_prev));
 	memset(&basic, 0, sizeof(basic));
@@ -208,28 +235,12 @@ proc_state_t mach_state_order(int s, long sleep_time)
 			info_count = THREAD_BASIC_INFO_COUNT;
 			if (thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&thval, &info_count) == KERN_SUCCESS) {
 				self.pcpu += thval.cpu_usage;
+				unsigned int prio = mach_thread_priority(thread_list[j], thval.policy);
 				// Actual process priority will be the largest priority of a thread
-				struct policy_timeshare_info sched;		// this struct is compatible with all scheduler policies
-				switch (thval.policy) {
-				case POLICY_TIMESHARE:
-					info_count = POLICY_TIMESHARE_INFO_COUNT;
-					if (thread_info(thread_list[j], THREAD_SCHED_TIMESHARE_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
-						if (self.prio < sched.cur_priority) self.prio = sched.cur_priority;
-					break;
-				case POLICY_RR:
-					info_count = POLICY_RR_INFO_COUNT;
-					if (thread_info(thread_list[j], THREAD_SCHED_RR_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
-						if (self.prio < sched.base_priority) self.prio = sched.base_priority;
-					break;
-				case POLICY_FIFO:
-					info_count = POLICY_FIFO_INFO_COUNT;
-					if (thread_info(thread_list[j], THREAD_SCHED_FIFO_INFO, (thread_info_t)&sched, &info_count) == KERN_SUCCESS)
-						if (self.prio < sched.base_priority) self.prio = sched.base_priority;
-					break;
-				}
+				if (self.prio < prio) self.prio = prio;
 			}
 			// Task state is formed from all thread states
-			proc_state_t thstate = mach_state_order(thval.run_state, thval.sleep_time);
+			proc_state_t thstate = mach_state_order(&thval);
 			if (self.state > thstate)
 				self.state = thstate;
 			mach_port_deallocate(mach_task_self(), thread_list[j]);

@@ -66,6 +66,12 @@
     <ClInclude Include="src\libproc.h">
       <Filter>Header Files\darwin</Filter>
     </ClInclude>
+    <ClInclude Include="src\dyld64.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\debug.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\AppDelegate.m">

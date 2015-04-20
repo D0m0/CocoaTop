@@ -107,7 +107,6 @@
 #endif
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
-		@"ProcInfoMode" : @0,
 		@"UpdateInterval" : @"1",
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,
@@ -117,10 +116,12 @@
 		@"ShowHeader" : @YES,
 		@"ShowFooter" : @YES,
 		@"ShortenPaths" : @YES,
-		@"SortColumn" : @1,
-		@"SortDescending" : @NO,
-		@"ModesSortColumn" : @[@1, @2, @1],
-		@"ModesSortDescending" : @[@NO, @YES, @NO],
+		@"SortColumn" : @1,      @"SortDescending" : @NO,		// Main page (sort by pid)
+		@"ProcInfoMode" : @0,
+		@"Mode0SortColumn" : @1, @"Mode0SortDescending" : @NO,	// Summary (by initial column order)
+		@"Mode1SortColumn" : @0, @"Mode1SortDescending" : @NO,	// Threads (by thread id)
+		@"Mode2SortColumn" : @2, @"Mode2SortDescending" : @YES,	// FDs (backwards by type)
+		@"Mode3SortColumn" : @1, @"Mode3SortDescending" : @NO,	// Modules (by address)
 	}];
 	self.configChange = @"";
 	self.configId = 0;

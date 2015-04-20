@@ -56,6 +56,8 @@
     <ClInclude Include="src\Column.h" />
     <ClInclude Include="src\AppDelegate.h" />
     <ClInclude Include="src\Compat.h" />
+    <ClInclude Include="src\debug.h" />
+    <ClInclude Include="src\dyld64.h" />
     <ClInclude Include="src\GridCell.h" />
     <ClInclude Include="src\libproc.h" />
     <ClInclude Include="src\Proc.h" />

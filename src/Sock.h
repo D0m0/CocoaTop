@@ -40,28 +40,39 @@
 #define PIPE_WSELECT    0x4000  /* Some thread has done an FWRITE select on the pipe */
 #define PIPE_DEAD       0x8000  /* Pipe is dead and needs garbage collection */
 
+@class PSSockArray;
+
 @interface PSSock : NSObject
 @property (assign) display_t display;
+@property (retain) NSString *name;
+@property (retain) UIColor *color;
++ (int)refreshArray:(PSSockArray *)socks;
+@end
+
+@interface PSSockSummary : PSSock
+@property (retain) PSProc *proc;
+@property (retain) PSColumn *col;
+@end
+
+@interface PSSockThreads : PSSock
+{ @public struct thread_basic_info tbi; }
+@property (assign) uint64_t tid;
+@property (assign) unsigned int ptime;	// 100's of a second
+@property (assign) unsigned int prio;
+@end
+
+@interface PSSockFiles : PSSock
 @property (assign) int32_t fd;
 @property (assign) uint32_t type;
 @property (assign) uint32_t flags;
+@property (assign) char *stype;
+@end
 
+@interface PSSockModules : PSSock
 @property (assign) mach_vm_address_t addr;
 @property (assign) mach_vm_address_t addrend;
 @property (assign) uint32_t dev;
 @property (assign) uint32_t ino;
-
-//@property (assign) uint64_t tid;
-@property (assign) int pcpu;
-@property (assign) int policy;
-
-@property (retain) NSString *name;
-@property (retain) NSString *stype;
-@property (retain) UIColor *color;
-
-@property (retain) PSProc *proc;
-@property (retain) PSColumn *col;
-+ (instancetype)psSockWithPid:(pid_t)pid fd:(int32_t)fd type:(uint32_t)type;
 @end
 
 @interface PSSockArray : NSObject
@@ -74,4 +85,5 @@
 - (NSUInteger)indexOfDisplayed:(display_t)display;
 - (NSUInteger)count;
 - (PSSock *)objectAtIndexedSubscript:(NSUInteger)idx;
+- (PSSock *)objectPassingTest:(BOOL (^)(id obj, NSUInteger idx, BOOL *stop))predicate;
 @end

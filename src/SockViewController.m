@@ -99,7 +99,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshSocks:) userInfo:nil repeats:NO];
 	}
 	// Update titlebar
-	[self.proc updateWithState:0];
+	[self.proc update];
 	self.navigationItem.title = [self.name stringByAppendingFormat:@" (CPU %.1f%%)", (float)self.proc.pcpu / 10];
 	// Update tableview
 	[self.socks refreshWithMode:self.mode];
@@ -136,13 +136,8 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 		self.sortdesc = self.sorter == col ? !self.sortdesc : col.sortDesc;
 		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
 		self.sorter = col;
-		NSMutableArray *sort;
-		sort = [NSMutableArray arrayWithArray:[[NSUserDefaults standardUserDefaults] arrayForKey:@"ModesSortColumn"]];
-			sort[self.mode] = [NSNumber numberWithUnsignedInteger:col.tag-1];
-			[[NSUserDefaults standardUserDefaults] setObject:sort forKey:@"ModesSortColumn"];
-		sort = [NSMutableArray arrayWithArray:[[NSUserDefaults standardUserDefaults] arrayForKey:@"ModesSortDescending"]];
-			sort[self.mode] = [NSNumber numberWithBool:self.sortdesc];
-			[[NSUserDefaults standardUserDefaults] setObject:sort forKey:@"ModesSortDescending"];
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:[NSString stringWithFormat:@"Mode%dSortColumn", self.mode]];
+		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:[NSString stringWithFormat:@"Mode%dSortDescending", self.mode]];
 		[self.timer fire];
 		break;
 	}
@@ -154,11 +149,11 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	self.configId++;
 	self.columns = [PSColumn psGetTaskColumnsWithWidth:self.tableView.bounds.size.width mode:self.mode];
 	// Find sort column and create table header
-	NSUInteger sortCol = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"ModesSortColumn"][self.mode] unsignedIntValue];
+	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:[NSString stringWithFormat:@"Mode%dSortColumn", self.mode]];
 	NSArray *allColumns = [PSColumn psGetTaskColumns:self.mode];
 	if (sortCol >= allColumns.count) sortCol = 1;
 	self.sorter = allColumns[sortCol];
-	self.sortdesc = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"ModesSortDescending"][self.mode] boolValue];
+	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:[NSString stringWithFormat:@"Mode%dSortDescending", self.mode]];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(0, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
 	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
@@ -252,13 +247,13 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	PSSock *sock = self.socks[indexPath.row];
-	if (sock) {
-		NSString *title = (self.mode == ColumnModeSummary) ? sock.name : @"Property",
-			   *message = (self.mode == ColumnModeSummary) ? sock.col.getData(sock.proc) : sock.name;
-		UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-		[alertView show];
-	}
+	PSSockSummary *sock = (PSSockSummary *)self.socks[indexPath.row];
+	if (!sock)
+		return;
+	NSString *title = (self.mode == ColumnModeSummary) ? sock.name : @"Property",
+		   *message = (self.mode == ColumnModeSummary) ? sock.col.getData(sock.proc) : sock.name;
+	UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+	[alertView show];
 }
 
 #pragma mark -

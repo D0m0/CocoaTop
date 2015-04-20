@@ -2,25 +2,205 @@
 #import <mach-o/dyld_images.h>
 #import <mach/thread_info.h>
 #import <arpa/inet.h>
+#import <sys/syscall.h>
 #import <netdb.h>
 #import "proc_info.h"
 #import "libproc.h"
+#import "debug.h"
+#import "dyld64.h"
 
 @implementation PSSock
 
++ (int)refreshArray:(PSSockArray *)socks
+{
+	return 0;
+}
+
+- (void)dealloc
+{
+	[_name release];
+	[_color release];
+	[super dealloc];
+}
+
+@end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  SUMMARY PAGE
+
+@implementation PSSockSummary
+
+- (instancetype)initWithProc:(PSProc *)proc column:(PSColumn *)col
+{
+	if (self = [super init]) {
+		self.display = ProcDisplayNormal;
+		self.proc = proc;
+		self.col = col;
+		self.name = col.descr;
+	}
+	return self;
+}
+
++ (instancetype)psSockWithProc:(PSProc *)proc column:(PSColumn *)col
+{
+	return [[[PSSockSummary alloc] initWithProc:proc column:col] autorelease];
+}
+
++ (int)refreshArray:(PSSockArray *)socks
+{
+	[socks.socks removeAllObjects];
+	for (PSColumn *col in [PSColumn psGetAllColumns]) {
+		id sock = [PSSockSummary psSockWithProc:socks.proc column:col];
+		if (sock) [socks.socks addObject:sock];
+	}
+	return 0;
+}
+
+- (void)dealloc
+{
+	[_proc release];
+	[_col release];
+	[super dealloc];
+}
+
+@end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  THREADS PAGE
+
+int stack_snapshot(int pid, char *tracebuf, int bufsize, int options)
+{
+	return syscall(SYS_stack_snapshot, pid, tracebuf, bufsize, options);
+}
+
+@implementation PSSockThreads
+
+- (instancetype)initWithId:(uint64_t)tid
+{
+	if (self = [super init]) {
+		self.display = ProcDisplayStarted;
+		self.name = [NSString stringWithFormat:@"TID: %llX", tid];
+		self.tid = tid;
+	}
+	return self;
+}
+
++ (instancetype)psSockWithId:(uint64_t)tid
+{
+	return [[[PSSockThreads alloc] initWithId:tid] autorelease];
+}
+
+struct frame32 {
+	uint32_t	retaddr;
+	uint32_t	fp;
+};
+
+struct frame64 {
+	uint64_t	retaddr;
+	uint64_t	fp;
+};
+
++ (int)refreshArray:(PSSockArray *)socks
+{
+	char buf[0x10000], *cur = buf;
+	int size = stack_snapshot(socks.proc.pid, buf, sizeof(buf), 100);
+	if (size > 0)
+	while (cur < buf + size) {
+		struct task_snapshot *ts = (struct task_snapshot *)cur;
+		struct thread_snapshot *ths = (struct thread_snapshot *)cur;
+		switch (ts->snapshot_magic) {
+		case STACKSHOT_TASK_SNAPSHOT_MAGIC:
+			NSLog(@"PID: %d (%s)", ts->pid, ts->p_comm);
+			NSLog(@"Flags: %x, nloadinfos: %d", ts->ss_flags, ts->nloadinfos);
+			cur += sizeof(struct task_snapshot);
+			break;
+		case STACKSHOT_THREAD_SNAPSHOT_MAGIC:
+			NSLog(@"Thread ID: %llx, flags: %x, state: %x, Frames: %d kernel %d user", ths->thread_id, ths->ss_flags, ths->state, ths->nkern_frames, ths->nuser_frames);
+			//if (ths->wait_event) printf ("\tWaiting on: 0x%x ", ths->wait_event);
+			//if (ths->continuation) printf ("\tContinuation: %p\n", ths->continuation);
+		//if ( g_OsVer == 8 ) *voffs = 65;
+		//if ( g_OsVer == 9 ) *voffs = 69;
+		//if ( g_OsVer == 10 ) *voffs = 311;
+			cur += sizeof(struct thread_snapshot) + 246;	//=311
+			cur += ths->nuser_frames * (socks.proc.flags & P_LP64 ? sizeof(struct frame64) : sizeof(struct frame32));
+			cur += ths->nkern_frames * sizeof(struct frame64);
+			break;
+		case STACKSHOT_MEM_AND_IO_SNAPSHOT_MAGIC:
+			NSLog(@"Mem: %x", ts->snapshot_magic);
+			cur += sizeof(struct mem_and_io_snapshot) + 16;
+			break;
+		default:
+			NSLog(@"%x Unk: %x", cur-buf, ts->snapshot_magic);
+			cur++;
+		}
+	}
+
+	task_port_t task;
+	if (task_for_pid(mach_task_self(), socks.proc.pid, &task) != KERN_SUCCESS)
+		return EPERM;
+	thread_port_array_t thread_list;
+	unsigned int thread_count;
+	if (task_threads(task, &thread_list, &thread_count) != KERN_SUCCESS) {
+		mach_port_deallocate(mach_task_self(), task);
+		return ENOMEM;
+	}
+	for (unsigned int j = 0; j < thread_count; j++) {
+		struct thread_identifier_info tii = {0};
+		struct thread_basic_info tbi = {{0}};
+		unsigned int info_count = THREAD_IDENTIFIER_INFO_COUNT;
+		thread_info(thread_list[j], THREAD_IDENTIFIER_INFO, (thread_info_t)&tii, &info_count);
+		info_count = THREAD_BASIC_INFO_COUNT;
+		thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&tbi, &info_count);
+		// char *dispatch_queue_get_label(*(dispatch_queue_t *)tii.dispatch_qaddr);
+		if (tii.thread_id) {
+			PSSockThreads *sock = (PSSockThreads *)[socks objectPassingTest:^BOOL(PSSockThreads *obj, NSUInteger idx, BOOL *stop) {
+				return obj.tid == tii.thread_id;
+			}];
+			if (!sock) {
+				sock = [PSSockThreads psSockWithId:tii.thread_id];
+				if (sock) [socks.socks addObject:sock];
+			} else if (sock.display != ProcDisplayStarted)
+				sock.display = ProcDisplayUser;
+			sock->tbi = tbi;
+			// Roundup time: 100's of a second
+			sock.ptime = (tbi.system_time.seconds + tbi.user_time.seconds) * 100 + (tbi.system_time.microseconds + tbi.user_time.microseconds + 5000) / 10000;
+			sock.prio = mach_thread_priority(thread_list[j], tbi.policy);
+			switch (sock->tbi.run_state) {
+			case TH_STATE_RUNNING:			sock.color = [UIColor redColor]; break;
+			case TH_STATE_UNINTERRUPTIBLE:	sock.color = [UIColor orangeColor]; break;
+			case TH_STATE_WAITING:			sock.color = sock->tbi.suspend_count ? [UIColor blueColor] : [UIColor blackColor]; break;
+			case TH_STATE_STOPPED:
+			case TH_STATE_HALTED:			sock.color = [UIColor brownColor]; break;
+			default:						sock.color = [UIColor grayColor];
+			}
+		}
+		mach_port_deallocate(mach_task_self(), thread_list[j]);
+	}
+	vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(*thread_list) * thread_count);
+	mach_port_deallocate(mach_task_self(), task);
+	return 0;
+}
+
+@end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  OPEN FILES PAGE
+
+@implementation PSSockFiles
+
 - (instancetype)initWithPid:(pid_t)pid fd:(int32_t)fd type:(uint32_t)type
 {
-	NSString *name = nil, *stype = nil;
+	NSString *name = nil;
 	UIColor *color = [UIColor blackColor];
 	uint32_t flags = 0;
+	char *stype = nil;
 
 	if (type == PROX_FDTYPE_VNODE) {
 		struct vnode_fdinfowithpath info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDVNODEPATHINFO, &info, PROC_PIDFDVNODEPATHINFO_SIZE) != PROC_PIDFDVNODEPATHINFO_SIZE)
 			return nil;
-		name = [NSString stringWithCString:info.pvip.vip_path encoding:NSUTF8StringEncoding];
-		name = [PSSymLink simplifyPathName:name];
-		stype = @"VNODE";
+		name = [PSSymLink simplifyPathName:[NSString stringWithUTF8String:info.pvip.vip_path]];
+		stype = "VNODE";
 		flags = info.pfi.fi_openflags;
 	} else if (type == PROX_FDTYPE_PIPE) {
 		struct pipe_fdinfo info;
@@ -34,7 +214,7 @@
 		if (info.pipeinfo.pipe_status & PIPE_KNOTE)		name = [name stringByAppendingString:@" KNOTE"];
 		if (info.pipeinfo.pipe_status & PIPE_DRAIN)		name = [name stringByAppendingString:@" DRAIN"];
 		if (info.pipeinfo.pipe_status & PIPE_DEAD)		name = [name stringByAppendingString:@" DEAD"];
-		stype = @"PIPE";
+		stype = "PIPE";
 		color = [UIColor blueColor];
 		flags = info.pfi.fi_openflags;
 	} else if (type == PROX_FDTYPE_KQUEUE) {
@@ -42,7 +222,7 @@
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDKQUEUEINFO, &info, PROC_PIDFDKQUEUEINFO_SIZE) != PROC_PIDFDKQUEUEINFO_SIZE)
 			return nil;
 		name = [NSString stringWithFormat:@"KQUEUE: %@", info.kqueueinfo.kq_state == PROC_KQUEUE_SELECT ? @"SELECT" : info.kqueueinfo.kq_state == PROC_KQUEUE_SLEEP ? @"SLEEP" : @"SUSPENDED"];
-		stype = @"QUEUE";
+		stype = "QUEUE";
 		color = [UIColor brownColor];
 		flags = info.pfi.fi_openflags;
 	} else if (type == PROX_FDTYPE_SOCKET) {
@@ -67,9 +247,8 @@
 			struct servent *lsp = 0, *fsp = 0;
 			lsp = s->insi_lport ? getservbyport(s->insi_lport, 0) : &any;
 			fsp = s->insi_fport ? getservbyport(s->insi_fport, 0) : &any;
-			stype = (info.psi.soi_kind == SOCKINFO_TCP) ? @"TCP" : @"UDP";
-			if (info.psi.soi_family == AF_INET6)
-				stype = [stype stringByAppendingString:@"6"];
+			if (info.psi.soi_family == AF_INET6) stype = (info.psi.soi_kind == SOCKINFO_TCP) ? "TCP6" : "UDP6";
+											else stype = (info.psi.soi_kind == SOCKINFO_TCP) ? "TCP" : "UDP";
 			if (lsp) name = [NSString stringWithFormat:@"%s:%s -> ", lip, lsp->s_name];
 				else name = [NSString stringWithFormat:@"%s:%d -> ", lip, ntohs(s->insi_lport)];
 			if (!s->insi_fport) name = [name stringByAppendingString:@"Listening"]; else
@@ -80,7 +259,7 @@
 		case SOCKINFO_UN: {
 			if (!info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path[0] &&
 				!info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path[0]) return nil;
-			stype = @"UNIX";
+			stype = "UNIX";
 			switch (info.psi.soi_type) {
 			case SOCK_STREAM:	name = @"STREAM"; break;
 			case SOCK_DGRAM:	name = @"DGRAM"; break;
@@ -89,22 +268,22 @@
 			case SOCK_SEQPACKET:name = @"SEQPACKET"; break;
 			default: name = @"";
 			}
-			NSString *server = [NSString stringWithCString:info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path encoding:NSUTF8StringEncoding],
-					 *client = [NSString stringWithCString:info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path encoding:NSUTF8StringEncoding];
+			NSString *server = [NSString stringWithUTF8String:info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path],
+					 *client = [NSString stringWithUTF8String:info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path];
 			name = [name stringByAppendingFormat:@" %@ -> %@", [PSSymLink simplifyPathName:server], [PSSymLink simplifyPathName:client]];
 			color = [UIColor brownColor];
 			break; }
 		case SOCKINFO_GENERIC:
 			name = [NSString stringWithFormat:@"GENERIC: %d", info.psi.soi_family];
-			stype = @"GEN";
+			stype = "GEN";
 			break;
 		case SOCKINFO_NDRV:
 			name = [NSString stringWithFormat:@"NDRV: %d", info.psi.soi_family];
-			stype = @"NDRV";
+			stype = "NDRV";
 			break;
 		case SOCKINFO_KERN_CTL:
 			name = [NSString stringWithFormat:@"KEXT: %s", info.psi.soi_proto.pri_kern_ctl.kcsi_name];
-			stype = @"KCTL";
+			stype = "KCTL";
 			color = [UIColor orangeColor];
 			break;
 		case SOCKINFO_KERN_EVENT: {
@@ -141,7 +320,7 @@
 			case KEV_IEEE80211_CLASS:			kclass = @"WIFI"; break;
 			}
 			name = [NSString stringWithFormat:@"%@:%@:%@", kvendor, kclass, ksubcls];
-			stype = @"KEVNT";
+			stype = "KEVNT";
 			color = [UIColor redColor];
 			break; }
 		}
@@ -168,8 +347,45 @@
 
 + (instancetype)psSockWithPid:(pid_t)pid fd:(int32_t)fd type:(uint32_t)type
 {
-	return [[[PSSock alloc] initWithPid:pid fd:fd type:type] autorelease];
+	return [[[PSSockFiles alloc] initWithPid:pid fd:fd type:type] autorelease];
 }
+
++ (int)refreshArray:(PSSockArray *)socks
+{
+	// Get buffer size
+	int bufSize = proc_pidinfo(socks.proc.pid, PROC_PIDLISTFDS, 0, 0, 0);
+	if (bufSize <= 0)
+		return EPERM;
+	// Make sure the buffer is large enough ;)
+	bufSize *= 2;
+	struct proc_fdinfo *fdinfo = (struct proc_fdinfo *)malloc(bufSize);
+	if (!fdinfo)
+		return ENOMEM;
+	// Get socket list and update the socks array
+	bufSize = proc_pidinfo(socks.proc.pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
+	if (bufSize > 0) {
+		for (int i = 0; i < bufSize / PROC_PIDLISTFD_SIZE; i++) {
+// This is bad: fds are often reused, so we wouldn't notice if it changed (at least we check the fdtype...)
+			PSSockFiles *sock = (PSSockFiles *)[socks objectPassingTest:^BOOL(PSSockFiles *obj, NSUInteger idx, BOOL *stop) {
+				return obj.fd == fdinfo[i].proc_fd && obj.type == fdinfo[i].proc_fdtype;
+			}];
+			if (!sock) {
+				sock = [PSSockFiles psSockWithPid:socks.proc.pid fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
+				if (sock) [socks.socks addObject:sock];
+			} else if (sock.display != ProcDisplayStarted)
+				sock.display = ProcDisplayUser;
+		}
+	}
+	free(fdinfo);
+	return 0;
+}
+
+@end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  MODULES PAGE
+
+@implementation PSSockModules
 
 - (instancetype)initWithRwpi:(struct proc_regionwithpathinfo *)rwpi
 {
@@ -177,12 +393,11 @@
 		return nil;
 	if (self = [super init]) {
 		self.display = ProcDisplayStarted;
-		self.name = rwpi->prp_vip.vip_path[0] ? [PSSymLink simplifyPathName:[NSString stringWithCString:rwpi->prp_vip.vip_path encoding:NSUTF8StringEncoding]] : @"<none>";
+		self.name = rwpi->prp_vip.vip_path[0] ? [PSSymLink simplifyPathName:[NSString stringWithUTF8String:rwpi->prp_vip.vip_path]] : @"<none>";
 		self.addr = rwpi->prp_prinfo.pri_address;
 		self.addrend = rwpi->prp_prinfo.pri_address + rwpi->prp_prinfo.pri_size;
 		self.dev = rwpi->prp_vip.vip_vi.vi_stat.vst_dev;
 		self.ino = rwpi->prp_vip.vip_vi.vi_stat.vst_ino;
-		self.stype = @"IMG";
 		self.color = self.dev && self.ino ? [UIColor blackColor] : [UIColor grayColor];
 	}
 	return self;
@@ -190,54 +405,95 @@
 
 + (instancetype)psSockWithRwpi:(struct proc_regionwithpathinfo *)rwpi
 {
-	return [[[PSSock alloc] initWithRwpi:rwpi] autorelease];
+	return [[[PSSockModules alloc] initWithRwpi:rwpi] autorelease];
 }
 
-- (instancetype)initWithId:(uint64_t)tid tbi:(struct thread_basic_info *)tbi
++ (int)refreshArray:(PSSockArray *)socks
 {
-	if (self = [super init]) {
-		self.display = ProcDisplayStarted;
-		self.name = [NSString stringWithFormat:@"TID: %llX", tid];
-		self.addr = tid;
-		self.pcpu = tbi->cpu_usage;
-		self.policy = tbi->policy;
-		self.color = [UIColor blackColor];
+	// Avoid resetting device...
+	if (socks.proc.pid == 0)
+		return EPERM;
+	task_port_t task;
+	if (task_for_pid(mach_task_self(), socks.proc.pid, &task) != KERN_SUCCESS)
+		return EPERM;
+	task_dyld_info_data_t task_dyld_info;
+	mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
+	if (task_info(task, TASK_DYLD_INFO, (task_info_t)&task_dyld_info, &count) != KERN_SUCCESS) {
+		mach_port_deallocate(mach_task_self(), task);
+		return ENOMEM;
 	}
-	return self;
-}
-
-+ (instancetype)psSockWithId:(uint64_t)tid tbi:(struct thread_basic_info *)tbi
-{
-	return [[[PSSock alloc] initWithId:tid tbi:tbi] autorelease];
-}
-
-- (instancetype)initWithProc:(PSProc *)proc column:(PSColumn *)col
-{
-	if (self = [super init]) {
-		self.display = ProcDisplayNormal;
-		self.proc = proc;
-		self.col = col;
-		self.name = col.descr;
+	struct dyld_all_image_infos64 aii;
+	mach_vm_size_t aiiSize = sizeof(aii);
+	if (mach_vm_read_overwrite(task, task_dyld_info.all_image_info_addr, aiiSize, (mach_vm_address_t)&aii, &aiiSize) == KERN_SUCCESS) {
+		mach_vm_address_t		ii;
+		uint32_t				iiCount;
+		mach_msg_type_number_t	iiSize;
+		if (socks.proc.flags & P_LP64) {
+			ii = aii.infoArray;
+			iiCount = aii.infoArrayCount;
+			iiSize = iiCount * sizeof(struct dyld_image_info64);
+		} else {
+			struct dyld_all_image_infos *aii32 = (struct dyld_all_image_infos *)&aii;
+			ii = (mach_vm_address_t)aii32->infoArray;
+			iiCount = aii32->infoArrayCount;
+			iiSize = iiCount * sizeof(struct dyld_image_info);
+		}
+// If ii is NULL, it means it is being modified, come back later.
+		if (mach_vm_read(task, ii, iiSize, (vm_offset_t *)&ii, &iiSize) == KERN_SUCCESS) {
+			for (int i = 0; i < iiCount; i++) {
+				mach_vm_address_t addr;
+				mach_vm_address_t path;
+				if (socks.proc.flags & P_LP64) {
+					struct dyld_image_info64 *ii64 = (struct dyld_image_info64 *)ii;
+					addr = ii64[i].imageLoadAddress;
+					path = ii64[i].imageFilePath;
+				} else {
+					struct dyld_image_info *ii32 = (struct dyld_image_info *)ii;
+					addr = (mach_vm_address_t)ii32[i].imageLoadAddress;
+					path = (mach_vm_address_t)ii32[i].imageFilePath;
+				}
+				struct proc_regionwithpathinfo rwpi;
+				if (proc_pidinfo(socks.proc.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE)
+					continue;
+				PSSockModules *sock = (PSSockModules *)[socks objectPassingTest:^BOOL(PSSockModules *obj, NSUInteger idx, BOOL *stop) {
+					return obj.addr == addr;
+				}];
+				if (!sock) {
+					// dyld cache has the info that proc_pidinfo doesn't give
+					if (!rwpi.prp_vip.vip_path[0]) {
+						mach_vm_size_t size3;
+						if (mach_vm_read_overwrite(task, path, MAXPATHLEN, (mach_vm_address_t)rwpi.prp_vip.vip_path, &size3) != KERN_SUCCESS)
+							strcpy(rwpi.prp_vip.vip_path, "<Unknown>");
+					}
+					if (!rwpi.prp_vip.vip_vi.vi_stat.vst_dev && !rwpi.prp_vip.vip_vi.vi_stat.vst_ino) {
+						rwpi.prp_prinfo.pri_address = addr;
+						rwpi.prp_prinfo.pri_size = 0;
+					}
+					sock = [PSSockModules psSockWithRwpi:&rwpi];
+					if (sock) {
+						//while (rwpi.prp_prinfo.pri_size) {
+						//	addr = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
+						//	if (proc_pidinfo(socks.proc.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE) break;
+						//	if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev != sock.dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino != sock.ino)
+						//		break;
+						//	sock.addrend = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
+						//}
+						[socks.socks addObject:sock];
+					}
+				} else if (sock.display != ProcDisplayStarted)
+					sock.display = ProcDisplayUser;
+			}
+			vm_deallocate(mach_task_self(), ii, iiSize);
+		}
 	}
-	return self;
-}
-
-+ (instancetype)psSockWithProc:(PSProc *)proc column:(PSColumn *)col
-{
-	return [[[PSSock alloc] initWithProc:proc column:col] autorelease];
-}
-
-- (void)dealloc
-{
-	[_name release];
-	[_stype release];
-	[_color release];
-	[_proc release];
-	[_col release];
-	[super dealloc];
+	mach_port_deallocate(mach_task_self(), task);
+	return 0;
 }
 
 @end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  PSSockArray
 
 @implementation PSSockArray
 
@@ -255,40 +511,6 @@
 	return [[[PSSockArray alloc] initSockArrayWithProc:proc] autorelease];
 }
 
-
-struct dyld_image_info64 {
-	mach_vm_address_t			imageLoadAddress;	/* base address image is mapped into */
-	mach_vm_address_t			imageFilePath;		/* path dyld used to load the image */
-	mach_vm_size_t				imageFileModDate;	/* time_t of image file */
-													/* if stat().st_mtime of imageFilePath does not match imageFileModDate, */
-													/* then file has been modified since dyld loaded it */
-};
-
-struct dyld_all_image_infos64 {
-	uint32_t						version;
-	uint32_t						infoArrayCount;
-	mach_vm_address_t				infoArray;					// struct dyld_image_info64*
-	dyld_image_notifier				notification;		
-	bool							processDetachedFromSharedRegion;
-	bool							libSystemInitialized;
-	mach_vm_address_t				dyldImageLoadAddress;
-	mach_vm_address_t				jitInfo;
-	mach_vm_address_t				dyldVersion;				// char*
-	mach_vm_address_t				errorMessage;				// char*
-	uint64_t						terminationFlags;
-	mach_vm_address_t				coreSymbolicationShmPage;
-	uint64_t						systemOrderFlag;
-	uint64_t						uuidArrayCount;
-	mach_vm_address_t				uuidArray;					// struct dyld_uuid_info*
-	mach_vm_address_t				dyldAllImageInfosAddress;	// struct dyld_all_image_infos64*
-	uint64_t						initialImageCount;
-	uint64_t						errorKind;
-	mach_vm_address_t				errorClientOfDylibPath;		// char*
-	mach_vm_address_t				errorTargetDylibPath;		// char*
-	mach_vm_address_t				errorSymbol;				// char*
-	uint64_t						sharedCacheSlide;
-};
-
 - (int)refreshWithMode:(column_mode_t)mode
 {
 	// Remove closed sockets
@@ -296,141 +518,8 @@ struct dyld_all_image_infos64 {
 		return obj.display != ProcDisplayTerminated;
 	}]];
 	[self setAllDisplayed:ProcDisplayTerminated];
-	if (mode == ColumnModeSummary) {
-		[self.socks removeAllObjects];
-		for (PSColumn *col in [PSColumn psGetAllColumns]) {
-			PSSock *sock = [PSSock psSockWithProc:self.proc column:col];
-			if (sock) [self.socks addObject:sock];
-		}
-	} else if (mode == ColumnModeFiles) {
-		// Get buffer size
-		int bufSize = proc_pidinfo(self.proc.pid, PROC_PIDLISTFDS, 0, 0, 0);
-		if (bufSize <= 0)
-			return EPERM;
-		// Make sure the buffer is large enough ;)
-		bufSize *= 2;
-		struct proc_fdinfo *fdinfo = (struct proc_fdinfo *)malloc(bufSize);
-		if (!fdinfo)
-			return ENOMEM;
-		// Get socket list and update the socks array
-		bufSize = proc_pidinfo(self.proc.pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
-		if (bufSize > 0) {
-			for (int i = 0; i < bufSize / PROC_PIDLISTFD_SIZE; i++) {
-// This is bad: fds are often reused, so we wouldn't notice if it changed (at least we check the fdtype...)
-				PSSock *sock = [self sockForFd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
-				if (!sock) {
-					sock = [PSSock psSockWithPid:self.proc.pid fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
-					if (sock) [self.socks addObject:sock];
-				} else if (sock.display != ProcDisplayStarted)
-					sock.display = ProcDisplayUser;
-			}
-		}
-		free(fdinfo);
-	} else if (mode == ColumnModeThreads) {
-		task_port_t task;
-		if (task_for_pid(mach_task_self(), self.proc.pid, &task) == KERN_SUCCESS) {
-			thread_port_array_t thread_list;
-			unsigned int thread_count;
-			if (task_threads(task, &thread_list, &thread_count) == KERN_SUCCESS) {
-				for (unsigned int j = 0; j < thread_count; j++) {
-					struct thread_identifier_info tii = {0};
-					struct thread_basic_info tbi = {{0}};
-					unsigned int info_count = THREAD_IDENTIFIER_INFO_COUNT;
-					thread_info(thread_list[j], THREAD_IDENTIFIER_INFO, (thread_info_t)&tii, &info_count);
-					info_count = THREAD_BASIC_INFO_COUNT;
-					thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&tbi, &info_count);
-					if (tii.thread_id) {
-						PSSock *sock = [self sockForAddr:tii.thread_id];
-						if (!sock) {
-							sock = [PSSock psSockWithId:tii.thread_id tbi:&tbi];
-							if (sock) [self.socks addObject:sock];
-						} else if (sock.display != ProcDisplayStarted) {
-							sock.display = ProcDisplayUser;
-							sock.pcpu = tbi.cpu_usage;
-							sock.policy = tbi.policy;
-						}
-					}
-					mach_port_deallocate(mach_task_self(), thread_list[j]);
-				}
-				vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(*thread_list) * thread_count);
-			}
-			mach_port_deallocate(mach_task_self(), task);
-		}
-	} else if (mode == ColumnModeModules) {
-		// Avoid resetting device...
-		if (self.proc.pid == 0)
-			return EPERM;
-		task_port_t task;
-		if (task_for_pid(mach_task_self(), self.proc.pid, &task) == KERN_SUCCESS) {
-			task_dyld_info_data_t task_dyld_info;
-			mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
-			if (task_info(task, TASK_DYLD_INFO, (task_info_t)&task_dyld_info, &count) == KERN_SUCCESS) {
-				struct dyld_all_image_infos64 aii;
-				mach_vm_size_t aiiSize = sizeof(aii);
-				if (mach_vm_read_overwrite(task, task_dyld_info.all_image_info_addr, aiiSize, (mach_vm_address_t)&aii, &aiiSize) == KERN_SUCCESS) {
-					mach_vm_address_t		ii;
-					uint32_t				iiCount;
-					mach_msg_type_number_t	iiSize;
-					if (self.proc.flags & P_LP64) {
-						ii = aii.infoArray;
-						iiCount = aii.infoArrayCount;
-						iiSize = iiCount * sizeof(struct dyld_image_info64);
-					} else {
-						struct dyld_all_image_infos *aii32 = (struct dyld_all_image_infos *)&aii;
-						ii = (mach_vm_address_t)aii32->infoArray;
-						iiCount = aii32->infoArrayCount;
-						iiSize = iiCount * sizeof(struct dyld_image_info);
-					}
-			// If ii is NULL, it means it is being modified, come back later.
-					if (mach_vm_read(task, ii, iiSize, (vm_offset_t *)&ii, &iiSize) == KERN_SUCCESS) {
-						for (int i = 0; i < iiCount; i++) {
-							mach_vm_address_t addr;
-							mach_vm_address_t path;
-							if (self.proc.flags & P_LP64) {
-								struct dyld_image_info64 *ii64 = (struct dyld_image_info64 *)ii;
-								addr = ii64[i].imageLoadAddress;
-								path = ii64[i].imageFilePath;
-							} else {
-								struct dyld_image_info *ii32 = (struct dyld_image_info *)ii;
-								addr = (mach_vm_address_t)ii32[i].imageLoadAddress;
-								path = (mach_vm_address_t)ii32[i].imageFilePath;
-							}
-							struct proc_regionwithpathinfo rwpi;
-							if (proc_pidinfo(self.proc.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE)
-								continue;
-							PSSock *sock = [self sockForAddr:addr];
-							if (!sock) {
-								// dyld cache has the info that proc_pidinfo doesn't give
-								if (!rwpi.prp_vip.vip_path[0]) {
-									mach_vm_size_t size3;
-									if (mach_vm_read_overwrite(task, path, MAXPATHLEN, (mach_vm_address_t)rwpi.prp_vip.vip_path, &size3) != KERN_SUCCESS)
-										strcpy(rwpi.prp_vip.vip_path, "<Unknown>");
-								}
-								if (!rwpi.prp_vip.vip_vi.vi_stat.vst_dev && !rwpi.prp_vip.vip_vi.vi_stat.vst_ino) {
-									rwpi.prp_prinfo.pri_address = addr;
-									rwpi.prp_prinfo.pri_size = 0;
-								}
-								sock = [PSSock psSockWithRwpi:&rwpi];
-								if (sock) {
-									//while (rwpi.prp_prinfo.pri_size) {
-									//	addr = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
-									//	if (proc_pidinfo(self.proc.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE) break;
-									//	if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev != sock.dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino != sock.ino)
-									//		break;
-									//	sock.addrend = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
-									//}
-									[self.socks addObject:sock];
-								}
-							} else if (sock.display != ProcDisplayStarted)
-								sock.display = ProcDisplayUser;
-						}
-						vm_deallocate(mach_task_self(), ii, iiSize);
-					}
-				}
-			}
-			mach_port_deallocate(mach_task_self(), task);
-		}
-	}
+	Class ModeClass[ColumnModes] = {[PSSockSummary class], [PSSockThreads class], [PSSockFiles class], [PSSockModules class]};
+	[ModeClass[mode] refreshArray:self];
 	return 0;
 }
 
@@ -467,19 +556,9 @@ struct dyld_all_image_infos64 {
 	return (PSSock *)self.socks[idx];
 }
 
-- (PSSock *)sockForFd:(int32_t)fd type:(uint32_t)type
+- (PSSock *)objectPassingTest:(BOOL (^)(id obj, NSUInteger idx, BOOL *stop))predicate
 {
-	NSUInteger idx = [self.socks indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-		return ((PSSock *)obj).fd == fd && ((PSSock *)obj).type == type;
-	}];
-	return idx == NSNotFound ? nil : (PSSock *)self.socks[idx];
-}
-
-- (PSSock *)sockForAddr:(mach_vm_address_t)addr
-{
-	NSUInteger idx = [self.socks indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-		return ((PSSock *)obj).addr == addr;
-	}];
+	NSUInteger idx = [self.socks indexOfObjectPassingTest:predicate];
 	return idx == NSNotFound ? nil : (PSSock *)self.socks[idx];
 }
 
