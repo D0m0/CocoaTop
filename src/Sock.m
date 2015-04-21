@@ -100,10 +100,19 @@ struct frame64 {
 	uint64_t	fp;
 };
 
+void dump(unsigned char *b, int s)
+{
+	for (int i = 0; i < s/16; i++) {
+		NSLog(@"%02X %02X %02X %02X - %02X %02X %02X %02X - %02X %02X %02X %02X - %02X %02X %02X %02X", b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
+		b += 16;
+	}
+}
+
 + (int)refreshArray:(PSSockArray *)socks
 {
-	char buf[0x10000], *cur = buf;
-	int size = stack_snapshot(socks.proc.pid, buf, sizeof(buf), 100);
+/*
+	unsigned char buf[0x10000], *cur = buf;
+	int size = stack_snapshot(socks.proc.pid, (char *)buf, sizeof(buf), 100);
 	if (size > 0)
 	while (cur < buf + size) {
 		struct task_snapshot *ts = (struct task_snapshot *)cur;
@@ -112,10 +121,12 @@ struct frame64 {
 		case STACKSHOT_TASK_SNAPSHOT_MAGIC:
 			NSLog(@"PID: %d (%s)", ts->pid, ts->p_comm);
 			NSLog(@"Flags: %x, nloadinfos: %d", ts->ss_flags, ts->nloadinfos);
+			dump(cur, sizeof(struct task_snapshot));
 			cur += sizeof(struct task_snapshot);
 			break;
 		case STACKSHOT_THREAD_SNAPSHOT_MAGIC:
 			NSLog(@"Thread ID: %llx, flags: %x, state: %x, Frames: %d kernel %d user", ths->thread_id, ths->ss_flags, ths->state, ths->nkern_frames, ths->nuser_frames);
+			dump(cur, sizeof(struct thread_snapshot) + 246);
 			//if (ths->wait_event) printf ("\tWaiting on: 0x%x ", ths->wait_event);
 			//if (ths->continuation) printf ("\tContinuation: %p\n", ths->continuation);
 		//if ( g_OsVer == 8 ) *voffs = 65;
@@ -127,6 +138,7 @@ struct frame64 {
 			break;
 		case STACKSHOT_MEM_AND_IO_SNAPSHOT_MAGIC:
 			NSLog(@"Mem: %x", ts->snapshot_magic);
+			dump(cur, sizeof(struct mem_and_io_snapshot) + 16);
 			cur += sizeof(struct mem_and_io_snapshot) + 16;
 			break;
 		default:
@@ -134,7 +146,7 @@ struct frame64 {
 			cur++;
 		}
 	}
-
+*/
 	task_port_t task;
 	if (task_for_pid(mach_task_self(), socks.proc.pid, &task) != KERN_SUCCESS)
 		return EPERM;
@@ -173,6 +185,55 @@ struct frame64 {
 			case TH_STATE_HALTED:			sock.color = [UIColor brownColor]; break;
 			default:						sock.color = [UIColor grayColor];
 			}
+			sock.name = @"-";
+			if (tii.dispatch_qaddr) {
+				char name[256];
+				uint64_t addr = 0;
+				mach_vm_size_t size;
+				int bits = (socks.proc.flags & P_LP64) ? sizeof(uint64_t) : sizeof(uint32_t),
+					offs = (socks.proc.flags & P_LP64) ? 0x78 : 0x48;
+				if (mach_vm_read_overwrite(task, tii.dispatch_qaddr, bits, (mach_vm_address_t)&addr, &size) == KERN_SUCCESS)
+//				if (mach_vm_read_overwrite(task, addr + offs, bits, (mach_vm_address_t)&addr, &size) == KERN_SUCCESS)
+//				if (mach_vm_read_overwrite(task, addr, sizeof(name), (mach_vm_address_t)name, &size) == KERN_SUCCESS)
+				if (mach_vm_read_overwrite(task, addr + 0x38, sizeof(name), (mach_vm_address_t)name, &size) == KERN_SUCCESS)
+					sock.name = [NSString stringWithUTF8String:name];
+			}
+/*
+#define DISPATCH_QUEUE_MIN_LABEL_SIZE	64
+
+struct dispatch_queue_s {
+	DISPATCH_STRUCT_HEADER(queue);
+		const struct dispatch_queue_vtable_s *do_vtable;	// object operations table
+		int volatile  do_ref_cnt;							// reference count
+		int volatile  do_xref_cnt;							// cross reference count
+		struct dispatch_queue_s *volatile do_next;			// pointer to next object (i.e. linked list)
+		struct dispatch_queue_s *do_targetq;				// Actual target of object (one of the root queues)
+		void *do_ctxt;										// context
+		void *do_finalizer;									// Set with dispatch_set_finalizer[_f]
+		unsigned int do_suspend_cnt;						// increment/decrement with dispatch_queue_suspend/resume
+	DISPATCH_QUEUE_HEADER
+		uint32_t volatile dq_running;						// How many dispatch objects are currently running
+		struct dispatch_object_s *volatile dq_items_head;	// pointer to first item on dispatch queue (for remove)
+		struct dispatch_object_s *volatile dq_items_tail;	// pointer to last item on dispatch queue (for insert)
+		dispatch_queue_t dq_specific_q;						// Used for dispatch_queue_set/get_specific
+		uint16_t dq_width;									// Concurrency "width" (how many objects run in parallel)
+		uint16_t dq_is_thread_bound:1;						// true for main thread
+		pthread_priority_t dq_priority;
+		mach_port_t dq_thread;
+		mach_port_t volatile dq_tqthread;
+		uint32_t volatile dq_override;
+		unsigned long dq_serialnum;							// Serial # (1-12)
+		const char *dq_label;								// User-defined; obtain with get_label
+	DISPATCH_INTROSPECTION_QUEUE_LIST
+  		TAILQ_ENTRY(dispatch_queue_s) diq_list				// introspection builds (-DDISPATCH_INTROSPECTION) only
+};
+*/
+			//pthread_t pt = pthread_from_mach_thread_np(thread_list[j]);
+			//if (pt) {
+			//	char name[300] = "";
+			//	int rc = pthread_getname_np(pt, name, sizeof(name));
+			//	sock.name = [NSString stringWithFormat:@"tid: %llX rc:%d name:%s", tii.thread_id, rc, name];
+			//}
 		}
 		mach_port_deallocate(mach_task_self(), thread_list[j]);
 	}
