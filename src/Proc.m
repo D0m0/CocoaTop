@@ -20,6 +20,7 @@
 			self.display = ProcDisplayStarted;
 			self.pid = ki->kp_proc.p_pid;
 			self.ppid = ki->kp_eproc.e_ppid;
+			self.dispQueue = [NSMutableDictionary new];
 			NSArray *args = [PSProc getArgsByKinfo:ki];
 			char buffer[MAXPATHLEN];
 			if (proc_pidpath(self.pid, buffer, sizeof(buffer)))
@@ -305,6 +306,7 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	[_args release];
 	[_icon release];
 	[_app release];
+	[_dispQueue release];
 	[super dealloc];
 }
 

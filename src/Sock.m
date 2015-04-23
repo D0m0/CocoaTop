@@ -90,6 +90,7 @@ int stack_snapshot(int pid, char *tracebuf, int bufsize, int options)
 	return [[[PSSockThreads alloc] initWithId:tid] autorelease];
 }
 
+/*
 struct frame32 {
 	uint32_t	retaddr;
 	uint32_t	fp;
@@ -99,6 +100,7 @@ struct frame64 {
 	uint64_t	retaddr;
 	uint64_t	fp;
 };
+*/
 
 void dump(unsigned char *b, int s)
 {
@@ -163,7 +165,6 @@ void dump(unsigned char *b, int s)
 		thread_info(thread_list[j], THREAD_IDENTIFIER_INFO, (thread_info_t)&tii, &info_count);
 		info_count = THREAD_BASIC_INFO_COUNT;
 		thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&tbi, &info_count);
-		// char *dispatch_queue_get_label(*(dispatch_queue_t *)tii.dispatch_qaddr);
 		if (tii.thread_id) {
 			PSSockThreads *sock = (PSSockThreads *)[socks objectPassingTest:^BOOL(PSSockThreads *obj, NSUInteger idx, BOOL *stop) {
 				return obj.tid == tii.thread_id;
@@ -185,55 +186,39 @@ void dump(unsigned char *b, int s)
 			case TH_STATE_HALTED:			sock.color = [UIColor brownColor]; break;
 			default:						sock.color = [UIColor grayColor];
 			}
-			sock.name = @"-";
-			if (tii.dispatch_qaddr) {
-				char name[256];
-				uint64_t addr = 0;
-				mach_vm_size_t size;
-				int bits = (socks.proc.flags & P_LP64) ? sizeof(uint64_t) : sizeof(uint32_t),
-					offs = (socks.proc.flags & P_LP64) ? 0x78 : 0x48;
-				if (mach_vm_read_overwrite(task, tii.dispatch_qaddr, bits, (mach_vm_address_t)&addr, &size) == KERN_SUCCESS)
-//				if (mach_vm_read_overwrite(task, addr + offs, bits, (mach_vm_address_t)&addr, &size) == KERN_SUCCESS)
-//				if (mach_vm_read_overwrite(task, addr, sizeof(name), (mach_vm_address_t)name, &size) == KERN_SUCCESS)
-				if (mach_vm_read_overwrite(task, addr + 0x38, sizeof(name), (mach_vm_address_t)name, &size) == KERN_SUCCESS)
-					sock.name = [NSString stringWithUTF8String:name];
-			}
-/*
-#define DISPATCH_QUEUE_MIN_LABEL_SIZE	64
-
-struct dispatch_queue_s {
-	DISPATCH_STRUCT_HEADER(queue);
-		const struct dispatch_queue_vtable_s *do_vtable;	// object operations table
-		int volatile  do_ref_cnt;							// reference count
-		int volatile  do_xref_cnt;							// cross reference count
-		struct dispatch_queue_s *volatile do_next;			// pointer to next object (i.e. linked list)
-		struct dispatch_queue_s *do_targetq;				// Actual target of object (one of the root queues)
-		void *do_ctxt;										// context
-		void *do_finalizer;									// Set with dispatch_set_finalizer[_f]
-		unsigned int do_suspend_cnt;						// increment/decrement with dispatch_queue_suspend/resume
-	DISPATCH_QUEUE_HEADER
-		uint32_t volatile dq_running;						// How many dispatch objects are currently running
-		struct dispatch_object_s *volatile dq_items_head;	// pointer to first item on dispatch queue (for remove)
-		struct dispatch_object_s *volatile dq_items_tail;	// pointer to last item on dispatch queue (for insert)
-		dispatch_queue_t dq_specific_q;						// Used for dispatch_queue_set/get_specific
-		uint16_t dq_width;									// Concurrency "width" (how many objects run in parallel)
-		uint16_t dq_is_thread_bound:1;						// true for main thread
-		pthread_priority_t dq_priority;
-		mach_port_t dq_thread;
-		mach_port_t volatile dq_tqthread;
-		uint32_t volatile dq_override;
-		unsigned long dq_serialnum;							// Serial # (1-12)
-		const char *dq_label;								// User-defined; obtain with get_label
-	DISPATCH_INTROSPECTION_QUEUE_LIST
-  		TAILQ_ENTRY(dispatch_queue_s) diq_list				// introspection builds (-DDISPATCH_INTROSPECTION) only
-};
-*/
-			//pthread_t pt = pthread_from_mach_thread_np(thread_list[j]);
-			//if (pt) {
-			//	char name[300] = "";
-			//	int rc = pthread_getname_np(pt, name, sizeof(name));
-			//	sock.name = [NSString stringWithFormat:@"tid: %llX rc:%d name:%s", tii.thread_id, rc, name];
-			//}
+			int bits = socks.proc.flags & P_LP64 ? sizeof(uint64_t) : sizeof(uint32_t);
+			uint64_t addr = tii.dispatch_qaddr;
+			mach_vm_size_t size;
+			if (addr && mach_vm_read_overwrite(task, addr, bits, (mach_vm_address_t)&addr, &size) == KERN_SUCCESS) {
+				NSNumber *dispQueueAddr = [NSNumber numberWithUnsignedLongLong:addr];
+				sock.name = socks.proc.dispQueue[dispQueueAddr];
+				if (!sock.name) {
+					char buf[256] = {0};
+					if (socks.proc.flags & P_LP64) {
+						// This is just a hard-coded offset to where the name pointer should be
+						if (addr && mach_vm_read_overwrite(task, addr + 0x78, bits, (mach_vm_address_t)&addr, &size) == KERN_SUCCESS)
+						if (addr && mach_vm_read_overwrite(task, addr, sizeof(buf)-1, (mach_vm_address_t)buf, &size) == KERN_SUCCESS)
+							sock.name = [NSString stringWithUTF8String:buf];
+					} else {
+						// This is a super-hacky hack which works on all 32 bit iOSes!
+						if (mach_vm_read_overwrite(task, addr, sizeof(buf), (mach_vm_address_t)buf, &size) == KERN_SUCCESS) {
+							uint64_t addr = (uint64_t)dispatch_queue_get_label((dispatch_queue_t)buf);
+							// addr=buf+0x38 on iOS5
+							if (addr > (uint64_t)buf && addr < (uint64_t)buf + sizeof(buf))
+								sock.name = [NSString stringWithUTF8String:(char *)addr];
+							// addr=buf[0x3C] on iOS7, addr=buf[0x48] on iOS8
+							else if (addr && mach_vm_read_overwrite(task, addr, sizeof(buf)-1, (mach_vm_address_t)buf, &size) == KERN_SUCCESS)
+								sock.name = [NSString stringWithUTF8String:buf];
+						}
+					}
+					if (!sock.name)
+						sock.name = @"-";
+					[socks.proc.dispQueue setObject:sock.name forKey:dispQueueAddr];
+				}
+			} else
+				sock.name = @"-";
+			// Leave this for cool syslogd effects ;)
+			if (!j) NSLog(@"<queue %llX> %@", tii.dispatch_qaddr, sock.name);
 		}
 		mach_port_deallocate(mach_task_self(), thread_list[j]);
 	}

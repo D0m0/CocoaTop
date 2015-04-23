@@ -59,6 +59,7 @@ typedef enum {
 @property (retain) NSString *args;
 @property (retain) UIImage *icon;
 @property (retain) NSDictionary *app;
+@property (retain) NSMutableDictionary *dispQueue;
 - (void)update;
 @end
 
