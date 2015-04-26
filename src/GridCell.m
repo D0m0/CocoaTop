@@ -42,9 +42,10 @@
 		size.height /= 2;
 	NSUInteger totalCol;
 	for (PSColumn *col in columns)
-		if (col.tag == 1)
+		if (col.tag == 1) {
 			self.firstColWidth = totalCol = col.width - 5;
-		else {
+			self.textLabel.adjustsFontSizeToFitWidth = !(col.style & ColumnStyleEllipsis);
+		} else {
 			UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
 			divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 			[self.dividers addObject:divider];
@@ -91,6 +92,7 @@
 	for (PSColumn *col in columns) {
 		UILabel *label = col.tag > 1 ? (UILabel *)[self viewWithTag:col.tag] : self.textLabel;
 		if (label) {
+			// The cell label gets a shorter text (sock.name), but the summary page will get the full one
 			label.text = col.style & ColumnStyleTooLong ? sock.name : col.getData(sock);
 			label.textColor = sock.color;
 		}
