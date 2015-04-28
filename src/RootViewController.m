@@ -303,7 +303,11 @@
 {
 	if (indexPath.row >= self.procs.count) {
 		NSLog(@"*** cellForRowAtIndexPath requested row %d of %d", indexPath.row, self.procs.count);
-		return nil;
+		return [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
+	}
+	if (!self.columns || !self.columns.count) {
+		NSLog(@"*** cellForRowAtIndexPath requested row %d with empty columns", indexPath.row);
+		return [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
 	}
 	PSProc *proc = self.procs[indexPath.row];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:proc.icon != nil]];

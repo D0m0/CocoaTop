@@ -43,6 +43,30 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[self.navigationController popViewControllerAnimated:NO];
 }
 
+- (IBAction)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
+{
+	if (!gestureRecognizer || gestureRecognizer.state == UIGestureRecognizerStateEnded) {
+		self.fullScreen = !self.navigationController.navigationBarHidden;
+		// This "scrolls" tableview so that it doesn't actually move when the bars disappear
+		if (!self.fullScreen) {			// Show navbar & scrollbar (going out of fullscreen)
+			[[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
+			[self.navigationController setNavigationBarHidden:NO animated:NO];
+		}
+		CGSize size = [UIApplication sharedApplication].statusBarFrame.size;
+		CGFloat slide = MIN(size.width, size.height) +
+			self.navigationController.navigationBar.frame.size.height +
+			([[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] ? self.tableView.sectionHeaderHeight : 0);
+		CGPoint contentOffset = self.tableView.contentOffset;
+		contentOffset.y += self.fullScreen ? -slide : slide;
+		[self.tableView setContentOffset:contentOffset animated:NO];
+		if (self.fullScreen) {			// Hide navbar & scrollbar (entering fullscreen)
+			[self.navigationController setNavigationBarHidden:YES animated:NO];
+			[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
+		}
+		[self.timer fire];
+	}
+}
+
 - (IBAction)modeChange:(UISegmentedControl *)modeSelector
 {
 	// Mode changed - need to reset all information
@@ -83,6 +107,10 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 #endif
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.modeSelector];
 	[self.modeSelector addTarget:self action:@selector(modeChange:) forControlEvents:UIControlEventValueChanged];
+
+	UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideShowNavBar:)];
+	twoTap.numberOfTouchesRequired = 2;
+	[self.tableView addGestureRecognizer:twoTap]; [twoTap release];
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	self.tableView.rowHeight = self.tableView.rowHeight * 2 / 3;
