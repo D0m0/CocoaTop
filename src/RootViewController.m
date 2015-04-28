@@ -177,9 +177,14 @@
 			idx = [self.procs indexOfDisplayed:ProcDisplayStarted];
 		if (idx == NSNotFound)
 			idx = [self.procs indexOfDisplayed:ProcDisplayTerminated];
-		if (idx != NSNotFound)
+		if (idx != NSNotFound) {
+			// Processes at the end of the list are in priority for scrolling!
+			PSProc *last = self.procs[self.procs.count-1];
+			if (last.display == ProcDisplayStarted || last.display == ProcDisplayTerminated)
+				idx = self.procs.count-1;
 			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
 				atScrollPosition:UITableViewScrollPositionNone animated:YES];
+		}
 		// [self.tableView insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 		// [self.tableView deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:UITableViewRowAnimationAutomatic]
 	}
