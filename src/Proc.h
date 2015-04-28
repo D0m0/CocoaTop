@@ -60,6 +60,7 @@ typedef enum {
 @property (retain) UIImage *icon;
 @property (retain) NSDictionary *app;
 @property (retain) NSMutableDictionary *dispQueue;
+@property (retain) NSMutableArray *cpuhistory;
 - (void)update;
 @end
 
