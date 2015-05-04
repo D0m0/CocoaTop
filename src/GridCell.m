@@ -21,17 +21,17 @@
 	return [[[SmallGraph alloc] initWithFrame:frame/* dots:dots*/] autorelease];
 }
 
-void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, CGColorRef color)
-{
-	CGContextSaveGState(context);
-	CGContextSetLineCap(context, kCGLineCapSquare);
-	CGContextSetLineWidth(context, 1.0);
-	CGContextSetStrokeColorWithColor(context, color);
-	CGContextMoveToPoint(context, startPoint.x + 0.5, startPoint.y + 0.5);
-	CGContextAddLineToPoint(context, endPoint.x + 0.5, endPoint.y + 0.5);
-	CGContextStrokePath(context);
-	CGContextRestoreGState(context);           
-}
+//void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, CGColorRef color)
+//{
+//	CGContextSaveGState(context);
+//	CGContextSetLineCap(context, kCGLineCapSquare);
+//	CGContextSetLineWidth(context, 1.0);
+//	CGContextSetStrokeColorWithColor(context, color);
+//	CGContextMoveToPoint(context, startPoint.x + 0.5, startPoint.y + 0.5);
+//	CGContextAddLineToPoint(context, endPoint.x + 0.5, endPoint.y + 0.5);
+//	CGContextStrokePath(context);
+//	CGContextRestoreGState(context);
+//}
 
 - (void)drawRect:(CGRect)rect
 {
@@ -40,12 +40,21 @@ void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, C
 	UIColor *color = [UIColor colorWithRed:0.7 green:0.7 blue:1.0 alpha:1.0];
 	CGFloat width = self.bounds.size.width,
 			height = self.bounds.size.height;
-	CGPoint bot = CGPointMake(self.bounds.origin.x, self.bounds.origin.y + height);
+	CGPoint bot = CGPointMake(self.bounds.origin.x + 0.5, self.bounds.origin.y + height + 0.5);
+
+	CGContextSaveGState(context);
+	CGContextSetLineCap(context, kCGLineCapSquare);
+	CGContextSetLineWidth(context, 1.0);
+	CGContextSetStrokeColorWithColor(context, color.CGColor);
 	for (NSNumber *val in self.dots) {
-		draw1PxStroke(context, bot, CGPointMake(bot.x, bot.y - (height * [val unsignedIntegerValue] / 100)), color.CGColor);
+//		draw1PxStroke(context, bot, CGPointMake(bot.x, bot.y - (height * [val unsignedIntegerValue] / 100)), color.CGColor);
+		CGContextMoveToPoint(context, bot.x, bot.y);
+		CGContextAddLineToPoint(context, bot.x, bot.y - (height * [val unsignedIntegerValue] / 200));
+		CGContextStrokePath(context);
 		bot.x++;
 		if (bot.x >= width) break;
 	}
+	CGContextRestoreGState(context);
 }
 
 - (void)dealloc
@@ -88,7 +97,7 @@ void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, C
 	if (self.dividers)
 		for (UIView *item in self.dividers) [item removeFromSuperview];
 	// Create new views
-	self.labels = [NSMutableArray arrayWithCapacity:columns.count-1];
+	self.labels = [NSMutableArray arrayWithCapacity:columns.count/*-1*/];
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	self.extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
 	if (size.height < 40)
@@ -109,11 +118,12 @@ void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, C
 
 			if (col.tag == 4) {
 				SmallGraph *graph = [SmallGraph graphWithFrame:CGRectMake(totalCol + 1, 0, col.width - 1, size.height)];
-				graph.tag = col.tag;
+				graph.tag = 1000;//col.tag;
 				[self.labels addObject:graph];
 				[self.contentView addSubview:graph];
 				[graph release];
-			} else {
+			} //else
+			{
 				UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
 				label.textAlignment = col.align;
 				label.font = col.style & ColumnStyleMonoFont ? [UIFont fontWithName:@"Courier" size:13.0] : [UIFont systemFontOfSize:12.0];
@@ -121,6 +131,7 @@ void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, C
 				label.backgroundColor = [UIColor clearColor];
 				label.tag = col.tag;
 				[self.labels addObject:label];
+//				if (col.tag == 4) [graph addSubview:label]; else
 				[self.contentView addSubview:label];
 				[label release];
 			}
@@ -146,9 +157,10 @@ void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, C
 	for (PSColumn *col in columns)
 		if (col.tag > 1) {
 			if (col.tag == 4) {
-				SmallGraph *graph = (SmallGraph *)[self viewWithTag:col.tag];
+				SmallGraph *graph = (SmallGraph *)[self viewWithTag:1000];//col.tag];
 				if (graph) { graph.dots = [proc.cpuhistory copy]; [graph setNeedsDisplay]; }
-			} else {
+			} //else
+			{
 				UILabel *label = (UILabel *)[self viewWithTag:col.tag];
 				if (label) label.text = col.getData(proc);
 			}
