@@ -21,9 +21,9 @@
 			self.pid = ki->kp_proc.p_pid;
 			self.ppid = ki->kp_eproc.e_ppid;
 			self.dispQueue = [NSMutableDictionary new];
-			self.cpuhistory = [NSMutableArray new];
-			for (int i = 0; i < 50; i++)
-				[self.cpuhistory insertObject:[NSNumber numberWithUnsignedInt:0] atIndex:0];
+//			self.cpuhistory = [NSMutableArray new];
+//			for (int i = 0; i < 50; i++)
+//				[self.cpuhistory insertObject:[NSNumber numberWithUnsignedInt:0] atIndex:0];
 			NSArray *args = [PSProc getArgsByKinfo:ki];
 			char buffer[MAXPATHLEN];
 			if (proc_pidpath(self.pid, buffer, sizeof(buffer)))
@@ -255,9 +255,8 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	mach_port_deallocate(mach_task_self(), task);
 	// Roundup time: 100's of a second
 	self.ptime = total_time.seconds * 100 + (total_time.microseconds + 5000) / 10000;
-
-	[self.cpuhistory insertObject:[NSNumber numberWithUnsignedInt:self.pcpu] atIndex:0];
-	if (self.cpuhistory.count > 50) [self.cpuhistory removeLastObject];
+//	[self.cpuhistory insertObject:[NSNumber numberWithUnsignedInt:self.pcpu] atIndex:0];
+//	if (self.cpuhistory.count > 50) [self.cpuhistory removeLastObject];
 }
 
 + (NSArray *)getArgsByKinfo:(struct kinfo_proc *)ki

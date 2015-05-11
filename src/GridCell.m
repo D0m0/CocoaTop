@@ -2,23 +2,23 @@
 #import "Proc.h"
 #import "Column.h"
 
+/*
 @interface SmallGraph : UIView
 @property (retain) NSArray *dots;
 @end
 
 @implementation SmallGraph
 
-- (id)initWithFrame:(CGRect)frame// dots:(NSArray *)dots
+- (id)initWithFrame:(CGRect)frame
 {
 	self = [super initWithFrame:frame];
-//	self.dots = dots;
 	self.backgroundColor = [UIColor whiteColor]; // clear
 	return self;
 }
 
-+ (id)graphWithFrame:(CGRect)frame// dots:(NSArray *)dots
++ (id)graphWithFrame:(CGRect)frame
 {
-	return [[[SmallGraph alloc] initWithFrame:frame/* dots:dots*/] autorelease];
+	return [[[SmallGraph alloc] initWithFrame:frame] autorelease];
 }
 
 //void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, CGColorRef color)
@@ -64,7 +64,7 @@
 }
 
 @end
-
+*/
 
 @implementation GridTableCell
 
@@ -97,7 +97,7 @@
 	if (self.dividers)
 		for (UIView *item in self.dividers) [item removeFromSuperview];
 	// Create new views
-	self.labels = [NSMutableArray arrayWithCapacity:columns.count/*-1*/];
+	self.labels = [NSMutableArray arrayWithCapacity:columns.count-1];
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	self.extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
 	if (size.height < 40)
@@ -116,25 +116,22 @@
 			[self.contentView addSubview:divider];
 			[divider release];
 
-			if (col.tag == 4) {
-				SmallGraph *graph = [SmallGraph graphWithFrame:CGRectMake(totalCol + 1, 0, col.width - 1, size.height)];
-				graph.tag = 1000;//col.tag;
-				[self.labels addObject:graph];
-				[self.contentView addSubview:graph];
-				[graph release];
-			} //else
-			{
-				UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
-				label.textAlignment = col.align;
-				label.font = col.style & ColumnStyleMonoFont ? [UIFont fontWithName:@"Courier" size:13.0] : [UIFont systemFontOfSize:12.0];
-				label.adjustsFontSizeToFitWidth = !(col.style & ColumnStyleEllipsis);
-				label.backgroundColor = [UIColor clearColor];
-				label.tag = col.tag;
-				[self.labels addObject:label];
-//				if (col.tag == 4) [graph addSubview:label]; else
-				[self.contentView addSubview:label];
-				[label release];
-			}
+			//if (col.tag == 4) {
+			//	SmallGraph *graph = [SmallGraph graphWithFrame:CGRectMake(totalCol + 1, 0, col.width - 1, size.height)];
+			//	graph.tag = 1000;//col.tag;
+			//	[self.labels addObject:graph];
+			//	[self.contentView addSubview:graph];
+			//	[graph release];
+			//}
+			UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
+			label.textAlignment = col.align;
+			label.font = col.style & ColumnStyleMonoFont ? [UIFont fontWithName:@"Courier" size:13.0] : [UIFont systemFontOfSize:12.0];
+			label.adjustsFontSizeToFitWidth = !(col.style & ColumnStyleEllipsis);
+			label.backgroundColor = [UIColor clearColor];
+			label.tag = col.tag;
+			[self.labels addObject:label];
+			[self.contentView addSubview:label];
+			[label release];
 
 			totalCol += col.width;
 		}
@@ -156,14 +153,12 @@
 		[self.imageView initWithImage:proc.icon];
 	for (PSColumn *col in columns)
 		if (col.tag > 1) {
-			if (col.tag == 4) {
-				SmallGraph *graph = (SmallGraph *)[self viewWithTag:1000];//col.tag];
-				if (graph) { graph.dots = [proc.cpuhistory copy]; [graph setNeedsDisplay]; }
-			} //else
-			{
-				UILabel *label = (UILabel *)[self viewWithTag:col.tag];
-				if (label) label.text = col.getData(proc);
-			}
+			//if (col.tag == 4) {
+			//	SmallGraph *graph = (SmallGraph *)[self viewWithTag:1000];//col.tag];
+			//	if (graph) { graph.dots = [proc.cpuhistory copy]; [graph setNeedsDisplay]; }
+			//} //else {
+			UILabel *label = (UILabel *)[self viewWithTag:col.tag];
+			if (label) label.text = col.getData(proc);
 		}
 }
 
