@@ -338,9 +338,11 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 	self.header = nil;
 	self.columns = nil;
 
-	CFSocketInvalidate(self.netStat);
-	CFRelease(self.netStat);
-	self.netStat = 0;
+	if (self.netStat) {
+		CFSocketInvalidate(self.netStat);
+		CFRelease(self.netStat);
+		self.netStat = 0;
+	}
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
