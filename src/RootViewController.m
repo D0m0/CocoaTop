@@ -7,10 +7,10 @@
 #import "Proc.h"
 #import <sys/ioctl.h>
 #import <sys/socket.h>
-#import "kern_control.h"
-#import "sys_domain.h"
+#import "sys/kern_control.h"
+#import "sys/sys_domain.h"
 #define PRIVATE
-#import "ntstat.h"
+#import "net/ntstat.h"
 
 @interface RootViewController()
 @property (retain) GridHeaderView *header;
@@ -101,12 +101,12 @@ int refreshSrc(int fd, int Prov, int Num)
 
 void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void *data, void *info)
 {
-	RootViewController *self = (RootViewController *)info;
+//	RootViewController *self = (RootViewController *)info;
 	nstat_msg_hdr *ns = (nstat_msg_hdr *)CFDataGetBytePtr((CFDataRef)data);
 	int len = CFDataGetLength((CFDataRef)data);
 
 	if (!len)
-		NSLog(@"NSTAT type:%d, datasize:0", callbackType);
+		NSLog(@"NSTAT type:%lu, datasize:0", callbackType);
 	else
 	switch (ns->type) {
 	case NSTAT_MSG_TYPE_SRC_ADDED:		NSLog(@"NSTAT_MSG_TYPE_SRC_ADDED, size:%d", len); /*refreshSrc(int fd, int Prov, int Num);*/ break;
@@ -205,7 +205,7 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 	// Make a connect-callback, then do addAll/queryAllSrc in the callback???
 	CFSocketError err = CFSocketConnectToAddress(self.netStat, addr, .1);
 	if (err != kCFSocketSuccess) {
-		NSLog(@"CFSocketConnectToAddress err=%d", err);
+		NSLog(@"CFSocketConnectToAddress err=%ld", err);
 		CFSocketInvalidate(self.netStat);
 		CFRelease(self.netStat);
 		self.netStat = 0;

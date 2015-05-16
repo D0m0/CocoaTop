@@ -8,8 +8,8 @@
 #import <pwd.h>
 #import "Proc.h"
 #import "AppIcon.h"
-#import "proc_info.h"
-#import "libproc.h"
+#import "sys/proc_info.h"
+#import "sys/libproc.h"
 
 @implementation PSProc
 

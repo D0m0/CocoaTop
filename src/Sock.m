@@ -4,10 +4,10 @@
 #import <arpa/inet.h>
 #import <sys/syscall.h>
 #import <netdb.h>
-#import "proc_info.h"
-#import "libproc.h"
-#import "debug.h"
-#import "dyld64.h"
+#import "sys/proc_info.h"
+#import "sys/libproc.h"
+#import "kern/debug.h"
+#import "sys/dyld64.h"
 
 @implementation PSSock
 

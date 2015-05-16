@@ -1,5 +1,5 @@
 #import <mach/mach_types.h>
-#import "resource.h"
+#import "sys/resource.h"
 #import <sys/sysctl.h>
 #import <UIKit/UIKit.h>
 #import "Compat.h"
