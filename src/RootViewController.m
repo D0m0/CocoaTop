@@ -5,12 +5,7 @@
 #import "GridCell.h"
 #import "Column.h"
 #import "Proc.h"
-#import <sys/ioctl.h>
-#import <sys/socket.h>
-#import "sys/kern_control.h"
-#import "sys/sys_domain.h"
-#define PRIVATE
-#import "net/ntstat.h"
+#import "ProcArray.h"
 
 @interface RootViewController()
 @property (retain) GridHeaderView *header;
@@ -26,7 +21,6 @@
 @property (assign) NSUInteger configId;
 @property (retain) NSString *configChange;
 @property (assign) pid_t selectedPid;
-@property (assign) CFSocketRef netStat;
 @end
 
 @implementation RootViewController
@@ -70,55 +64,6 @@
 		}
 		[self.timer fire];
 	}
-}
-
-int addAll(int fd, int provider)
-{
-	nstat_msg_add_all_srcs aasreq;
-	aasreq.provider = provider;
-	aasreq.hdr.type = NSTAT_MSG_TYPE_ADD_ALL_SRCS;
-	aasreq.hdr.context = 3;						// Some shit
-	return write(fd, &aasreq, sizeof(aasreq));
-}
-
-int queryAllSrc(int fd)
-{
-	nstat_msg_query_src_req qsreq;
-	qsreq.hdr.type = NSTAT_MSG_TYPE_QUERY_SRC;
-	qsreq.srcref = NSTAT_SRC_REF_ALL;
-	qsreq.hdr.context = 1005;					// This way I can tell if errors get returned for dead sources
-	return write(fd, &qsreq, sizeof(qsreq));
-}
-
-int refreshSrc(int fd, int Prov, int Num)
-{
-	nstat_msg_get_src_description gsdreq;
-	gsdreq.hdr.type = NSTAT_MSG_TYPE_GET_SRC_DESC;
-	gsdreq.srcref = Num;
-	gsdreq.hdr.context = Prov;
-	return write(fd, &gsdreq, sizeof(gsdreq));
-}
-
-void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void *data, void *info)
-{
-//	RootViewController *self = (RootViewController *)info;
-	nstat_msg_hdr *ns = (nstat_msg_hdr *)CFDataGetBytePtr((CFDataRef)data);
-	int len = CFDataGetLength((CFDataRef)data);
-
-	if (!len)
-		NSLog(@"NSTAT type:%lu, datasize:0", callbackType);
-	else
-	switch (ns->type) {
-	case NSTAT_MSG_TYPE_SRC_ADDED:		NSLog(@"NSTAT_MSG_TYPE_SRC_ADDED, size:%d", len); /*refreshSrc(int fd, int Prov, int Num);*/ break;
-	case NSTAT_MSG_TYPE_SRC_REMOVED:	NSLog(@"NSTAT_MSG_TYPE_SRC_REMOVED, size:%d", len); break;
-	case NSTAT_MSG_TYPE_SRC_DESC:		NSLog(@"NSTAT_MSG_TYPE_SRC_DESC, size:%d", len); break;
-	case NSTAT_MSG_TYPE_SRC_COUNTS:		NSLog(@"NSTAT_MSG_TYPE_SRC_COUNTS, size:%d", len); break;
-	case NSTAT_MSG_TYPE_SUCCESS:		NSLog(@"NSTAT_MSG_TYPE_SUCCESS, size:%d", len); break;
-	case NSTAT_MSG_TYPE_ERROR:			NSLog(@"NSTAT_MSG_TYPE_ERROR, size:%d", len); break;
-	default:							NSLog(@"NSTAT:%d, size:%d", ns->type, len); break;
-	}
-	// For each NSTAT_MSG_TYPE_SRC_ADDED:
-	// NSTAT_MSG_TYPE_GET_SRC_DESC, srcref...
 }
 
 - (void)viewDidLoad
@@ -183,37 +128,6 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 	self.configId = 0;
 	self.selectedPid = -1;
 	self.fullScreen = NO;
-
-//	kCFSocketReadCallBack
-	CFSocketContext ctx = {0, self, 0, 0, 0};
-	self.netStat = CFSocketCreate(0, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL, kCFSocketDataCallBack, NetStatCallBack, &ctx);
-	CFRunLoopAddSource(
-		[[NSRunLoop currentRunLoop] getCFRunLoop],
-		CFSocketCreateRunLoopSource(0, self.netStat, 0/*order*/),
-		kCFRunLoopCommonModes);
-	struct ctl_info ctlInfo = {0, NET_STAT_CONTROL_NAME};
-	int fd = CFSocketGetNative(self.netStat);
-	if (ioctl(fd, CTLIOCGINFO, &ctlInfo) == -1) {
-		NSLog(@"ioctl failed");
-		CFSocketInvalidate(self.netStat);
-		CFRelease(self.netStat);
-		self.netStat = 0;
-		return;
-	}
-	struct sockaddr_ctl sc = {sizeof(sc), AF_SYSTEM, AF_SYS_CONTROL, ctlInfo.ctl_id, 0};
-	CFDataRef addr = CFDataCreate(0, (const UInt8 *)&sc, sizeof(sc));
-	// Make a connect-callback, then do addAll/queryAllSrc in the callback???
-	CFSocketError err = CFSocketConnectToAddress(self.netStat, addr, .1);
-	if (err != kCFSocketSuccess) {
-		NSLog(@"CFSocketConnectToAddress err=%ld", err);
-		CFSocketInvalidate(self.netStat);
-		CFRelease(self.netStat);
-		self.netStat = 0;
-		return;
-	}
-	addAll(fd, NSTAT_PROVIDER_TCP);
-	addAll(fd, NSTAT_PROVIDER_UDP);
-	queryAllSrc(fd);
 }
 
 - (void)refreshProcs:(NSTimer *)timer
@@ -337,12 +251,6 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 		[self.timer invalidate];
 	self.header = nil;
 	self.columns = nil;
-
-	if (self.netStat) {
-		CFSocketInvalidate(self.netStat);
-		CFRelease(self.netStat);
-		self.netStat = 0;
-	}
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation

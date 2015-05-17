@@ -1,6 +1,7 @@
 #import <UIKit/UIKit.h>
 #import "Compat.h"
 #import "Proc.h"
+#import "ProcArray.h"
 #import "Sock.h"
 #import "Column.h"
 

@@ -1,6 +1,4 @@
 #import "GridCell.h"
-#import "Proc.h"
-#import "Column.h"
 
 /*
 @interface SmallGraph : UIView

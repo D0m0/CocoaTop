@@ -1,5 +1,6 @@
 #import "Column.h"
 #import "Proc.h"
+#import "ProcArray.h"
 #import "Sock.h"
 #import <pwd.h>
 #import <grp.h>

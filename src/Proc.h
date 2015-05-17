@@ -1,7 +1,7 @@
+#import <UIKit/UIKit.h>
 #import <mach/mach_types.h>
 #import "sys/resource.h"
 #import <sys/sysctl.h>
-#import <UIKit/UIKit.h>
 #import "Compat.h"
 
 // Display states determine grid row colors
@@ -61,33 +61,9 @@ typedef enum {
 @property (retain) NSDictionary *app;
 @property (retain) NSMutableDictionary *dispQueue;
 //@property (retain) NSMutableArray *cpuhistory;
++ (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
 - (void)update;
-@end
-
-@interface PSProcArray : NSObject
-@property (retain) NSMutableArray *procs;
-@property (assign) CGFloat iconSize;
-@property (assign) uint64_t memUsed;
-@property (assign) uint64_t memFree;
-@property (assign) uint64_t memTotal;
-@property (assign) unsigned int totalCpu;
-@property (assign) unsigned int threadCount;
-@property (assign) unsigned int portCount;
-@property (assign) unsigned int machCalls;
-@property (assign) unsigned int unixCalls;
-@property (assign) unsigned int switchCount;
-@property (assign) unsigned int guiCount;
-@property (assign) unsigned int mobileCount;
-@property (assign) unsigned int runningCount;
-@property (assign) unsigned int coresCount;
-+ (instancetype)psProcArrayWithIconSize:(CGFloat)size;
-- (int)refresh;
-- (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
-- (void)setAllDisplayed:(display_t)display;
-- (NSUInteger)indexOfDisplayed:(display_t)display;
-- (NSUInteger)count;
-- (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
-- (NSUInteger)indexForPid:(pid_t)pid;
+- (void)updateWithKinfo:(struct kinfo_proc *)ki;
 @end
 
 proc_state_t mach_state_order(struct thread_basic_info *tbi);
