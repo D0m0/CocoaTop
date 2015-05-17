@@ -2,6 +2,8 @@
 #import <mach/mach_types.h>
 #import "sys/resource.h"
 #import <sys/sysctl.h>
+#define PRIVATE
+#import "net/ntstat.h"
 #import "Compat.h"
 
 // Display states determine grid row colors
@@ -36,6 +38,8 @@ typedef enum {
 @public struct task_events_info events_prev;
 @public struct rusage_info_v2 rusage;
 @public struct rusage_info_v2 rusage_prev;
+@public struct nstat_counts netstat;
+@public struct nstat_counts netstat_prev;
 }
 @property (assign) display_t display;
 @property (assign) pid_t pid;

@@ -51,25 +51,40 @@
     <ClInclude Include="src\SockViewController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\proc_info.h">
-      <Filter>Header Files\darwin</Filter>
-    </ClInclude>
     <ClInclude Include="src\Sock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Compat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\resource.h">
+    <ClInclude Include="src\ProcArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\kern\debug.h">
       <Filter>Header Files\darwin</Filter>
     </ClInclude>
-    <ClInclude Include="src\libproc.h">
+    <ClInclude Include="src\net\ntstat.h">
       <Filter>Header Files\darwin</Filter>
     </ClInclude>
-    <ClInclude Include="src\dyld64.h">
+    <ClInclude Include="src\netinet\tcp_fsm.h">
       <Filter>Header Files\darwin</Filter>
     </ClInclude>
-    <ClInclude Include="src\debug.h">
+    <ClInclude Include="src\sys\dyld64.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sys\kern_control.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sys\libproc.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sys\proc_info.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sys\resource.h">
+      <Filter>Header Files\darwin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sys\sys_domain.h">
       <Filter>Header Files\darwin</Filter>
     </ClInclude>
   </ItemGroup>
@@ -148,6 +163,9 @@
     </None>
     <None Include="src\control">
       <Filter>Build</Filter>
+    </None>
+    <None Include="src\ProcArray.m">
+      <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

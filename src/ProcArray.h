@@ -17,6 +17,7 @@
 @property (assign) unsigned int runningCount;
 @property (assign) unsigned int coresCount;
 @property (assign) CFSocketRef netStat;
+@property (assign) CFDataRef netStatAddr;
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size;
 - (int)refresh;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
@@ -25,4 +26,5 @@
 - (NSUInteger)count;
 - (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
 - (NSUInteger)indexForPid:(pid_t)pid;
+- (PSProc *)procForPid:(pid_t)pid;
 @end

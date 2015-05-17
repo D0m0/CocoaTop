@@ -56,18 +56,23 @@
     <ClInclude Include="src\Column.h" />
     <ClInclude Include="src\AppDelegate.h" />
     <ClInclude Include="src\Compat.h" />
-    <ClInclude Include="src\debug.h" />
-    <ClInclude Include="src\dyld64.h" />
     <ClInclude Include="src\GridCell.h" />
-    <ClInclude Include="src\libproc.h" />
+    <ClInclude Include="src\kern\debug.h" />
+    <ClInclude Include="src\netinet\tcp_fsm.h" />
+    <ClInclude Include="src\net\ntstat.h" />
     <ClInclude Include="src\Proc.h" />
-    <ClInclude Include="src\proc_info.h" />
-    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\ProcArray.h" />
     <ClInclude Include="src\RootViewController.h" />
     <ClInclude Include="src\Setup.h" />
     <ClInclude Include="src\SetupColumns.h" />
     <ClInclude Include="src\Sock.h" />
     <ClInclude Include="src\SockViewController.h" />
+    <ClInclude Include="src\sys\dyld64.h" />
+    <ClInclude Include="src\sys\kern_control.h" />
+    <ClInclude Include="src\sys\libproc.h" />
+    <ClInclude Include="src\sys\proc_info.h" />
+    <ClInclude Include="src\sys\resource.h" />
+    <ClInclude Include="src\sys\sys_domain.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="bincopy.cmd" />
@@ -90,6 +95,7 @@
     <None Include="src\Makefile" />
     <None Include="src\postinst" />
     <None Include="src\Proc.m" />
+    <None Include="src\ProcArray.m" />
     <None Include="src\RootViewController.m" />
     <None Include="src\Setup.m" />
     <None Include="src\SetupColumns.m" />

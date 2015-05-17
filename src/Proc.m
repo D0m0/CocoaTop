@@ -33,6 +33,7 @@
 			NSString *path = [self.executable stringByDeletingLastPathComponent];
 			self.app = [PSAppIcon getAppByPath:path];
 			memset(&events, 0, sizeof(events));
+			memset(&netstat, 0, sizeof(netstat));
 			memset(&rusage, 0, sizeof(rusage));
 			NSString *firslCol = [[NSUserDefaults standardUserDefaults] stringForKey:@"FirstColumnStyle"];
 			if (self.app) {
@@ -140,6 +141,9 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 			free(fdinfo);
 		}
 	}
+	// NetStat info
+	memcpy(&netstat_prev, &netstat, sizeof(netstat));
+	memset(&netstat, 0, sizeof(netstat));
 	// Rusage info (iOS7+)
 	memcpy(&rusage_prev, &rusage, sizeof(rusage));
 	memset(&rusage, 0, sizeof(rusage));

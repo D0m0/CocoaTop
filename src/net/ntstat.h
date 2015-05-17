@@ -184,6 +184,74 @@ typedef struct nstat_tcp_descriptor
 	uint8_t		vuuid[16];
 } nstat_tcp_descriptor;
 
+typedef struct nstat_tcp_descriptor_10_8
+{
+	union
+	{
+		struct sockaddr_in	v4;
+		struct sockaddr_in6	v6;
+	} local;
+	
+	union
+	{
+		struct sockaddr_in	v4;
+		struct sockaddr_in6	v6;
+	} remote;
+	
+	u_int32_t	ifindex;
+	
+	u_int32_t	state;
+	
+	u_int32_t	sndbufsize;
+	u_int32_t	sndbufused;
+	u_int32_t	rcvbufsize;
+	u_int32_t	rcvbufused;
+	u_int32_t	txunacked;
+	u_int32_t	txwindow;
+	u_int32_t	txcwindow;
+	u_int32_t	traffic_class;
+	
+	u_int64_t	upid;
+	u_int32_t	pid;
+	char		pname[64];
+	u_int64_t	eupid;
+	u_int32_t	epid;
+
+	uint8_t		uuid[16];
+	uint8_t		euuid[16];
+} nstat_tcp_descriptor_10_8;
+
+typedef struct nstat_tcp_descriptor_10_7
+{
+	union
+	{
+		struct sockaddr_in	v4;
+		struct sockaddr_in6	v6;
+	} local;
+	
+	union
+	{
+		struct sockaddr_in	v4;
+		struct sockaddr_in6	v6;
+	} remote;
+	
+	u_int32_t	ifindex;
+	
+	u_int32_t	state;
+	
+	u_int32_t	sndbufsize;
+	u_int32_t	sndbufused;
+	u_int32_t	rcvbufsize;
+	u_int32_t	rcvbufused;
+	u_int32_t	txunacked;
+	u_int32_t	txwindow;
+	u_int32_t	txcwindow;
+	
+	u_int64_t	upid;
+	u_int32_t	pid;
+	char		pname[64];
+} nstat_tcp_descriptor_10_7;
+
 typedef struct nstat_tcp_add_param	nstat_udp_add_param;
 
 typedef struct nstat_udp_descriptor

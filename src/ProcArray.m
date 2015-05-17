@@ -4,6 +4,7 @@
 #import <pwd.h>
 #import "ProcArray.h"
 
+#import <sys/utsname.h>
 #import <sys/ioctl.h>
 #import <sys/socket.h>
 #import "sys/kern_control.h"
@@ -11,50 +12,124 @@
 #define PRIVATE
 #import "net/ntstat.h"
 
-int nstatAddSrc(int fd, int provider)
+int g_OsVer = 10;//7;
+
+void getOsVer()
+{ 
+	struct utsname name;
+	uname(&name);
+	if (strstr(name.version, "xnu-24"))			// iOS7
+		g_OsVer = 9;
+	else if (strstr(name.version, "xnu-20"))	// ?
+		g_OsVer = 8;
+	else if (strstr(name.version, "xnu-27"))	// iOS8
+		g_OsVer = 10;
+}
+
+int nstatAddSrc(int fd, int provider, u_int64_t ctx)
 {
-	nstat_msg_add_all_srcs aasreq;
-	aasreq.provider = provider;
-	aasreq.hdr.type = NSTAT_MSG_TYPE_ADD_ALL_SRCS;
-	aasreq.hdr.context = 3;						// Some shit
+	nstat_msg_add_all_srcs aasreq = {{ctx, NSTAT_MSG_TYPE_ADD_ALL_SRCS, 0}, provider};
 	return write(fd, &aasreq, sizeof(aasreq));
 }
 
-int nstatQuerySrc(int fd, nstat_src_ref_t srcref)
+int nstatQuerySrc(int fd, nstat_src_ref_t srcref, u_int64_t ctx)
 {
-	nstat_msg_query_src_req qsreq;
-	qsreq.hdr.type = NSTAT_MSG_TYPE_QUERY_SRC;
-	qsreq.srcref = srcref;
-	qsreq.hdr.context = 1005;					// This way I can tell if errors get returned for dead sources
+	nstat_msg_query_src_req qsreq = {{ctx, NSTAT_MSG_TYPE_QUERY_SRC, 0}, srcref};
 	return write(fd, &qsreq, sizeof(qsreq));
 }
 
 int nstatGetSrcDesc(int fd, nstat_provider_id_t provider, nstat_src_ref_t srcref)
 {
-	nstat_msg_get_src_description gsdreq;
-	gsdreq.hdr.type = NSTAT_MSG_TYPE_GET_SRC_DESC;
-	gsdreq.hdr.context = provider;
-	gsdreq.srcref = srcref;
+	nstat_msg_get_src_description gsdreq = {{provider, NSTAT_MSG_TYPE_GET_SRC_DESC, 0}, srcref};
 	return write(fd, &gsdreq, sizeof(gsdreq));
 }
 
 void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void *data, void *info)
 {
-//	RootViewController *self = (RootViewController *)info;
+	PSProcArray *self = (PSProcArray *)info;
+//	int fd = self.netStat;
+	int fd = CFSocketGetNative(s);
 	nstat_msg_hdr *ns = (nstat_msg_hdr *)CFDataGetBytePtr((CFDataRef)data);
 	int len = CFDataGetLength((CFDataRef)data);
 
-	if (!len)
-		NSLog(@"NSTAT type:%lu, datasize:0", callbackType);
-	else
+	if (!len) {
+		NSLog(@"NSTAT type:%lu, datasize:0, RECONNECTING...", callbackType);
+
+		// Connect to netstat kernel extension
+		CFSocketInvalidate(s);
+		CFRelease(s);
+		CFSocketContext ctx = {0, self};
+		self.netStat = CFSocketCreate(0, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL, kCFSocketDataCallBack, NetStatCallBack, &ctx);
+
+		CFRunLoopAddSource(
+			[[NSRunLoop currentRunLoop] getCFRunLoop],
+			CFSocketCreateRunLoopSource(0, self.netStat, 0/*order*/),
+			kCFRunLoopCommonModes);
+
+		fd = CFSocketGetNative(self.netStat);
+		// Make a connect-callback, then do nstatAddSrc/nstatQuerySrc in the callback???
+		CFSocketError err = CFSocketConnectToAddress(self.netStat, self.netStatAddr, .1);
+		if (err != kCFSocketSuccess) {
+			NSLog(@"CFSocketConnectToAddress err=%ld", err);
+			CFSocketInvalidate(self.netStat);
+			CFRelease(self.netStat);
+			self.netStat = 0;
+		} else {
+			NSLog(@"Got net sock: %d", fd);
+			nstatAddSrc(fd, NSTAT_PROVIDER_TCP, 3);
+			nstatAddSrc(fd, NSTAT_PROVIDER_UDP, 3);
+//			nstatQuerySrc(fd, NSTAT_SRC_REF_ALL, 4);
+		}
+	} else
 	switch (ns->type) {
-	case NSTAT_MSG_TYPE_SRC_ADDED:		NSLog(@"NSTAT_MSG_TYPE_SRC_ADDED, size:%d", len); /*nstatGetSrcDesc(int fd, int Prov, int Num);*/ break;
-	case NSTAT_MSG_TYPE_SRC_REMOVED:	NSLog(@"NSTAT_MSG_TYPE_SRC_REMOVED, size:%d", len); break;
-	case NSTAT_MSG_TYPE_SRC_DESC:		NSLog(@"NSTAT_MSG_TYPE_SRC_DESC, size:%d", len); break;
-	case NSTAT_MSG_TYPE_SRC_COUNTS:		NSLog(@"NSTAT_MSG_TYPE_SRC_COUNTS, size:%d", len); break;
-	case NSTAT_MSG_TYPE_SUCCESS:		NSLog(@"NSTAT_MSG_TYPE_SUCCESS, size:%d", len); break;
-	case NSTAT_MSG_TYPE_ERROR:			NSLog(@"NSTAT_MSG_TYPE_ERROR, size:%d", len); break;
-	default:							NSLog(@"NSTAT:%d, size:%d", ns->type, len); break;
+	case NSTAT_MSG_TYPE_SRC_ADDED: {
+		NSLog(@"NSTAT_MSG_TYPE_SRC_ADDED, size:%d", len);
+		nstat_msg_src_added *nsa = (nstat_msg_src_added *)ns;
+		nstatGetSrcDesc(fd, nsa->provider, nsa->srcref);
+		break; }
+	case NSTAT_MSG_TYPE_SRC_REMOVED: {
+		NSLog(@"NSTAT_MSG_TYPE_SRC_REMOVED, size:%d", len);
+//		nstat_msg_src_removed *nsr = (nstat_msg_src_removed *)ns;
+		break; }
+	case NSTAT_MSG_TYPE_SRC_DESC: {
+		NSLog(@"NSTAT_MSG_TYPE_SRC_DESC, size:%d", len);
+		nstat_msg_src_description *nmsd = (nstat_msg_src_description *)ns;
+		if (nmsd->provider == NSTAT_PROVIDER_UDP) {
+			nstat_udp_descriptor *nud = (nstat_udp_descriptor *)nmsd->data;
+			nstatQuerySrc(fd, nmsd->srcref, nud->pid);
+		} else if (nmsd->provider == NSTAT_PROVIDER_TCP) if (g_OsVer == 7) {
+			nstat_tcp_descriptor_10_7 *ntd = (nstat_tcp_descriptor_10_7 *)nmsd->data;
+			nstatQuerySrc(fd, nmsd->srcref, ntd->pid);
+		} else if (g_OsVer == 8) {
+			nstat_tcp_descriptor_10_8 *ntd = (nstat_tcp_descriptor_10_8 *)nmsd->data;
+			nstatQuerySrc(fd, nmsd->srcref, ntd->pid);
+		} else if (g_OsVer == 10) {
+			nstat_tcp_descriptor *ntd = (nstat_tcp_descriptor *)nmsd->data;
+			nstatQuerySrc(fd, nmsd->srcref, ntd->pid);
+		}
+		break; }
+	case NSTAT_MSG_TYPE_SRC_COUNTS: {
+		nstat_msg_src_counts *cnt = (nstat_msg_src_counts *)ns;
+		pid_t pid = (pid_t)ns->context;
+		NSLog(@"NSTAT_MSG_TYPE_SRC_COUNTS, size:%d, proc:%d", len, pid);
+
+		PSProc *proc = [self procForPid:pid];
+//		NSLog(@"NSTAT_MSG_TYPE_SRC_COUNTS, size:%d, proc:%llx, pid:%d", len, (u_int64_t)info, proc.pid);
+		if (proc) {
+			proc->netstat.nstat_rxpackets += cnt->counts.nstat_rxpackets;
+			proc->netstat.nstat_rxbytes   += cnt->counts.nstat_rxbytes;
+			proc->netstat.nstat_txpackets += cnt->counts.nstat_txpackets;
+			proc->netstat.nstat_txbytes   += cnt->counts.nstat_txbytes;
+		}
+		break; }
+	case NSTAT_MSG_TYPE_SUCCESS:
+		NSLog(@"NSTAT_MSG_TYPE_SUCCESS, size:%d", len);
+		break;
+	case NSTAT_MSG_TYPE_ERROR:
+		NSLog(@"NSTAT_MSG_TYPE_ERROR, size:%d", len);
+		break;
+	default:
+		NSLog(@"NSTAT:%d, size:%d", ns->type, len);
 	}
 	// For each NSTAT_MSG_TYPE_SRC_ADDED:
 	// NSTAT_MSG_TYPE_GET_SRC_DESC, srcref...
@@ -88,18 +163,19 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 		self.netStat = 0;
 	} else {
 		struct sockaddr_ctl sc = {sizeof(sc), AF_SYSTEM, AF_SYS_CONTROL, ctlInfo.ctl_id, 0};
-		CFDataRef addr = CFDataCreate(0, (const UInt8 *)&sc, sizeof(sc));
+		self.netStatAddr = CFDataCreate(0, (const UInt8 *)&sc, sizeof(sc));
 		// Make a connect-callback, then do nstatAddSrc/nstatQuerySrc in the callback???
-		CFSocketError err = CFSocketConnectToAddress(self.netStat, addr, .1);
+		CFSocketError err = CFSocketConnectToAddress(self.netStat, self.netStatAddr, .1);
 		if (err != kCFSocketSuccess) {
 			NSLog(@"CFSocketConnectToAddress err=%ld", err);
 			CFSocketInvalidate(self.netStat);
 			CFRelease(self.netStat);
 			self.netStat = 0;
 		} else {
-			nstatAddSrc(fd, NSTAT_PROVIDER_TCP);
-			nstatAddSrc(fd, NSTAT_PROVIDER_UDP);
-			nstatQuerySrc(fd, NSTAT_SRC_REF_ALL);
+			NSLog(@"Got net sock: %d", fd);
+			nstatAddSrc(fd, NSTAT_PROVIDER_TCP, 3);
+			nstatAddSrc(fd, NSTAT_PROVIDER_UDP, 3);
+//			nstatQuerySrc(fd, NSTAT_SRC_REF_ALL, 4);
 		}
 	}
 	return self;
@@ -172,6 +248,35 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 	}
 	free(kp);
 	[self refreshMemStats];
+	// refresh all sources
+	if (self.netStat) {
+		// Connect to netstat kernel extension
+		CFSocketInvalidate(self.netStat);
+		CFRelease(self.netStat);
+		CFSocketContext ctx = {0, self};
+		self.netStat = CFSocketCreate(0, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL, kCFSocketDataCallBack, NetStatCallBack, &ctx);
+
+		CFRunLoopAddSource(
+			[[NSRunLoop currentRunLoop] getCFRunLoop],
+			CFSocketCreateRunLoopSource(0, self.netStat, 0/*order*/),
+			kCFRunLoopCommonModes);
+
+		int fd = CFSocketGetNative(self.netStat);
+		// Make a connect-callback, then do nstatAddSrc/nstatQuerySrc in the callback???
+		CFSocketError err = CFSocketConnectToAddress(self.netStat, self.netStatAddr, .1);
+		if (err != kCFSocketSuccess) {
+			NSLog(@"CFSocketConnectToAddress err=%ld", err);
+			CFSocketInvalidate(self.netStat);
+			CFRelease(self.netStat);
+			self.netStat = 0;
+		} else {
+			NSLog(@"Refreshing net sock: %d", fd);
+			nstatAddSrc(fd, NSTAT_PROVIDER_TCP, 3);
+			nstatAddSrc(fd, NSTAT_PROVIDER_UDP, 3);
+//			nstatQuerySrc(fd, NSTAT_SRC_REF_ALL, 4);
+		}
+	} else
+		NSLog(@"netStat = 0");
 	return err;
 }
 
