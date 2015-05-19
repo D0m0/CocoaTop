@@ -19,6 +19,8 @@
 @property (assign) CFSocketRef netStat;
 @property (assign) CFDataRef netStatAddr;
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size;
+- (void)openNetStat;
+- (void)closeNetStat;
 - (int)refresh;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
 - (void)setAllDisplayed:(display_t)display;
