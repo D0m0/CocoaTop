@@ -142,7 +142,7 @@
 	if (self.tableView.editing)
 		return;
 	[self.procs refresh];
-//	[self.procs sortUsingComparator:self.sorter.sort desc:self.sortdesc];
+	[self.procs sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
 	[self.footer updateSummaryWithColumns:self.columns procs:self.procs];
 	// Status bar
