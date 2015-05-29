@@ -31,6 +31,16 @@ typedef enum {
 
 #define PROC_STATE_CHARS "DZRUSITH?"
 
+typedef struct PSCounts {
+	pid_t				pid;
+	nstat_provider_id_t	provider;
+	nstat_src_ref_t		srcref;
+	u_int64_t			rxpackets;
+	u_int64_t			rxbytes;
+	u_int64_t			txpackets;
+	u_int64_t			txbytes;
+} PSCounts;
+
 @interface PSProc : NSObject
 {
 @public mach_task_basic_info_data_t basic;
@@ -38,8 +48,9 @@ typedef enum {
 @public struct task_events_info events_prev;
 @public struct rusage_info_v2 rusage;
 @public struct rusage_info_v2 rusage_prev;
-@public struct nstat_counts netstat;
-@public struct nstat_counts netstat_prev;
+@public struct PSCounts netstat;
+@public struct PSCounts netstat_prev;
+@public struct PSCounts netstat_cache;
 }
 @property (assign) display_t display;
 @property (assign) pid_t pid;

@@ -2,6 +2,7 @@
 
 @interface PSProcArray : NSObject
 @property (retain) NSMutableArray *procs;
+@property (retain) NSMutableDictionary *nstats;
 @property (assign) CGFloat iconSize;
 @property (assign) uint64_t memUsed;
 @property (assign) uint64_t memFree;
