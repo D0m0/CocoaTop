@@ -11,8 +11,11 @@
 	return [super initWithStyle:UITableViewStyleGrouped];
 }
 
-//     0    1   2   3  4   5   6    7     8    9    10   11  12   13    14  15  16   17   18   19   20   21    22    23   24   25    26     27     28    29
-// Command PID PPID % Time S Flags RMem VSize User Group TTY Thr Ports Mach BSD CSw Prio BPri Nice Role MSent MRecv RMax Phys DiskR DiskW SDiskR SDiskW STime
+//     0    1   2   3  4   5   6    7     8    9    10   11  12   13    14  15  16   17   18   19   20   21    22    23    24   25  26
+// Command PID PPID % Time S Flags RMem VSize User Group TTY Thr Ports Mach BSD CSw Prio BPri Nice Role MSent MRecv SMach SBSD SCSw FDs
+//  27   28   29    30     31     32    33    34  35     36    37   38     39     40      41     42    43    44     45     46     47
+// RMax Phys DiskR DiskW SDiskR SDiskW STime Bid Bname BDname Bver OSver SDKver PlatVer Compil NetRx NetTx SNetRx SNetTx SPktRx SPktTx
+
 static NSDictionary *presetList;
 static NSArray *presetNames;
 
@@ -29,7 +32,8 @@ static NSArray *presetNames;
 				@"4: Minimalistic":@[@0, @3, @7],
 				@"5: Mach-obsessed":@[@0, @3, @12, @13, @15, @14, @21, @22],
 				@"6: RAM usage":@[@0, @1, @7, @23, @24, @8],
-				@"7: Disk usage":@[@0, @1, @25, @26, @27, @28, @23],
+				@"7: Disk usage":@[@0, @1, @29, @30, @31, @32, @28],
+				@"8: Net usage":@[@0, @1, @26, @42, @43, @44, @45],
 			} retain];
 		else
 			presetList = [@{
@@ -39,7 +43,8 @@ static NSArray *presetNames;
 				@"4: Minimalistic":@[@0, @1, @3, @5, @7, @20],
 				@"5: Mach-obsessed":@[@0, @1, @5, @6, @7, @3, @12, @16, @13, @15, @14, @21, @22],
 				@"6: RAM usage":@[@0, @1, @3, @5, @7, @23, @24, @8],
-				@"7: Disk usage":@[@0, @1, @9, @25, @26, @27, @28, @24],
+				@"7: Disk usage":@[@0, @1, @9, @29, @30, @31, @32, @28],
+				@"8: Net usage":@[@0, @1, @3, @5, @26, @42, @43, @44, @45, @46, @47],
 			} retain];
 		presetNames = [[presetList.allKeys sortedArrayUsingSelector:@selector(compare:)] retain];
 	});
