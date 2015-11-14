@@ -281,26 +281,26 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"DTPlatformVersion"] : @"N/A"; } sort:nil summary:nil],
 		[PSColumn psColumnWithName:@"" descr:@"Compiler Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"DTCompiler"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"NetRx" descr:@"Network Bytes Received Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"NetRx" descr:@"Net Bytes Received Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,netstat,rxbytes) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,netstat,rxbytes) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, rxbytes); } summary:nil],
-		[PSColumn psColumnWithName:@"NetTx" descr:@"Network Bytes Transmitted Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"NetTx" descr:@"Net Bytes Sent Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,netstat,txbytes) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,netstat,txbytes) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, txbytes); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3NetRx" descr:@"Network Total Bytes Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3NetRx" descr:@"Net Total Bytes Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.rxbytes ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->netstat.rxbytes countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxbytes); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3NetTx" descr:@"Network Total Bytes Transmitted" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3NetTx" descr:@"Net Total Bytes Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.txbytes ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->netstat.txbytes countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txbytes); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3PktRx" descr:@"Network Total Packets Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3PktRx" descr:@"Net Total Packets Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.rxpackets ? @"-" : [NSString stringWithFormat:@"%llu", proc->netstat.rxpackets]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxpackets); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3PktTx" descr:@"Network Total Packets Transmitted" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3PktTx" descr:@"Net Total Packets Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.txpackets ? @"-" : [NSString stringWithFormat:@"%llu", proc->netstat.txpackets]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txpackets); } summary:nil],
 		] retain];
