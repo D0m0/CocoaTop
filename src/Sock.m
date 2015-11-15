@@ -36,7 +36,7 @@
 		self.display = ProcDisplayNormal;
 		self.proc = proc;
 		self.col = col;
-		self.name = col.descr;
+		self.name = col.fullname;
 	}
 	return self;
 }

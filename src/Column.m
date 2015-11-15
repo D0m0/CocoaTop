@@ -140,167 +140,167 @@ NSString *psProcessCpuTime(unsigned int ptime)
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		allColumns = [@[
-		[PSColumn psColumnWithName:@"Command line" descr:@"Command line" align:NSTextAlignmentLeft width:170 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis | ColumnStyleTooLong
+		[PSColumn psColumnWithName:@"Command line" fullname:@"Command line" align:NSTextAlignmentLeft width:170 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis | ColumnStyleTooLong
 			data:^NSString*(PSProc *proc) { return [proc.executable stringByAppendingString:proc.args]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"Total processes: %u", procs.count]; }],
-		[PSColumn psColumnWithName:@"PID" descr:@"Process ID" align:NSTextAlignmentRight width:50 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"PID" fullname:@"Process ID" align:NSTextAlignmentRight width:50 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.pid]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(pid); } summary:nil],
-		[PSColumn psColumnWithName:@"PPID" descr:@"Parent PID" align:NSTextAlignmentRight width:50 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"PPID" fullname:@"Parent PID" align:NSTextAlignmentRight width:50 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.ppid]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(ppid); } summary:nil],
-		[PSColumn psColumnWithName:@"%" descr:@"%CPU Usage" align:NSTextAlignmentRight width:50 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"%" fullname:@"%CPU Usage" align:NSTextAlignmentRight width:50 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc.pcpu ? @"-" : [NSString stringWithFormat:@"%.1f", (float)proc.pcpu / 10]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(pcpu); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%.1f%%", (float)procs.totalCpu / 10]; }],
-		[PSColumn psColumnWithName:@"Time" descr:@"Process Time" align:NSTextAlignmentRight width:75 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"Time" fullname:@"Process Time" align:NSTextAlignmentRight width:75 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return psProcessCpuTime(proc.ptime); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(ptime); }
 			summary:^NSString*(PSProcArray* procs) { return psSystemUptime(); }],
-		[PSColumn psColumnWithName:@"S" descr:@"Mach Task State" align:NSTextAlignmentLeft width:30 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"S" fullname:@"Mach Task State" align:NSTextAlignmentLeft width:30 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return psProcessStateString(proc); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.state == b.state ? b->basic.suspend_count - a->basic.suspend_count : a.state - b.state; }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%d/%d", procs.runningCount, procs.coresCount]; }],
-		[PSColumn psColumnWithName:@"Flags" descr:@"Raw Process Flags (Hex)" align:NSTextAlignmentLeft width:70 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"Flags" fullname:@"Raw Process Flags (Hex)" align:NSTextAlignmentLeft width:70 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%08X", proc.flags]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(flags); } summary:nil],
-		[PSColumn psColumnWithName:@"RMem" descr:@"Resident Memory Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"RMem" fullname:@"Resident Memory Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size); }
 			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memUsed countStyle:NSByteCountFormatterCountStyleMemory]; }],
-		[PSColumn psColumnWithName:@"VSize" descr:@"Virtual Address Space Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"VSize" fullname:@"Virtual Address Space Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->basic.virtual_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.virtual_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.virtual_size); }
 			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memTotal countStyle:NSByteCountFormatterCountStyleMemory]; }],
-		[PSColumn psColumnWithName:@"User" descr:@"User Id" align:NSTextAlignmentLeft width:80 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"User" fullname:@"User Id" align:NSTextAlignmentLeft width:80 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:user_from_uid(proc.uid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(uid); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@" mobile: %d", procs.mobileCount]; }],
-		[PSColumn psColumnWithName:@"Group" descr:@"Group Id" align:NSTextAlignmentLeft width:80 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"Group" fullname:@"Group Id" align:NSTextAlignmentLeft width:80 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(gid); } summary:nil],
-		[PSColumn psColumnWithName:@"TTY" descr:@"Terminal" align:NSTextAlignmentLeft width:65 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"TTY" fullname:@"Terminal" align:NSTextAlignmentLeft width:65 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return psProcessTty(proc); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(tdev); } summary:nil],
-		[PSColumn psColumnWithName:@"Thr" descr:@"Thread Count" align:NSTextAlignmentRight width:40 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"Thr" fullname:@"Thread Count" align:NSTextAlignmentRight width:40 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.threads]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(threads); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.threadCount]; }],
-		[PSColumn psColumnWithName:@"Ports" descr:@"Mach Ports" align:NSTextAlignmentRight width:50 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"Ports" fullname:@"Mach Ports" align:NSTextAlignmentRight width:50 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.ports]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(ports); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.portCount]; }],
-		[PSColumn psColumnWithName:@"Mach" descr:@"Mach System Calls (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"Mach" fullname:@"Mach System Calls (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,syscalls_mach)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, syscalls_mach); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.machCalls]; }],
-		[PSColumn psColumnWithName:@"BSD" descr:@"BSD System Calls (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"BSD" fullname:@"BSD System Calls (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,syscalls_unix)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, syscalls_unix); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.unixCalls]; }],
-		[PSColumn psColumnWithName:@"CSw" descr:@"Context Switches (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"CSw" fullname:@"Context Switches (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,csw)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, csw); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.switchCount]; }],
-		[PSColumn psColumnWithName:@"Prio" descr:@"Mach Actual Threads Priority" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"Prio" fullname:@"Mach Actual Threads Priority" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%@%u", 	proc->basic.policy == POLICY_RR ? @"R:" : proc->basic.policy == POLICY_FIFO ? @"F:" : @"", proc.prio]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(prio); } summary:nil],
-		[PSColumn psColumnWithName:@"BPri" descr:@"Base Process Priority" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"BPri" fullname:@"Base Process Priority" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.priobase]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(priobase); } summary:nil],
-		[PSColumn psColumnWithName:@"Nice" descr:@"Process Nice Value" align:NSTextAlignmentRight width:42 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"Nice" fullname:@"Process Nice Value" align:NSTextAlignmentRight width:42 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%d", proc.nice]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(nice); } summary:nil],
-		[PSColumn psColumnWithName:@"Role" descr:@"Mach Task Role" align:NSTextAlignmentLeft width:75 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"Role" fullname:@"Mach Task Role" align:NSTextAlignmentLeft width:75 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return psTaskRoleString(proc); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a.role + (a.role <= 0 ? 50 : 0)) - (b.role + (b.role <= 0 ? 50 : 0)); }
 			summary:^NSString*(PSProcArray* procs) { return procs.guiCount ? [NSString stringWithFormat:@" UIApps: %d", procs.guiCount] : @"   -"; }],
-		[PSColumn psColumnWithName:@"MSent" descr:@"Mach Messages Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"MSent" fullname:@"Mach Messages Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.messages_sent]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.messages_sent); } summary:nil],
-		[PSColumn psColumnWithName:@"MRecv" descr:@"Mach Messages Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"MRecv" fullname:@"Mach Messages Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.messages_received]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.messages_received); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3Mach" descr:@"Mach Total System Calls" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"\u03A3Mach" fullname:@"Mach Total System Calls" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_mach]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_mach); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3BSD" descr:@"BSD Total System Calls" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"\u03A3BSD" fullname:@"BSD Total System Calls" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_unix]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_unix); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3CSw" descr:@"Context Switches Total" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"\u03A3CSw" fullname:@"Context Switches Total" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.csw); } summary:nil],
-		[PSColumn psColumnWithName:@"FDs" descr:@"Open file/socket Descriptors" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"FDs" fullname:@"Open file/socket Descriptors" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc.files ? @"-" : [NSString stringWithFormat:@"%u", proc.files]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(files); } summary:nil],
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-		[PSColumn psColumnWithName:@"RMax" descr:@"Maximum Resident Memory Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"RMax" fullname:@"Maximum Resident Memory Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size_max ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size_max countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size_max); } summary:nil],
-		[PSColumn psColumnWithName:@"Phys" descr:@"Physical Memory Footprint" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"Phys" fullname:@"Physical Memory Footprint" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_phys_footprint ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_phys_footprint countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_phys_footprint); } summary:nil],
-		[PSColumn psColumnWithName:@"DiskR" descr:@"Disk I/O Bytes Read Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"DiskR" fullname:@"Disk I/O Bytes Read Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,rusage,ri_diskio_bytesread) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,rusage,ri_diskio_bytesread) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(rusage, ri_diskio_bytesread); } summary:nil],
-		[PSColumn psColumnWithName:@"DiskW" descr:@"Disk I/O Bytes Written Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"DiskW" fullname:@"Disk I/O Bytes Written Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,rusage,ri_diskio_byteswritten) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,rusage,ri_diskio_byteswritten) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(rusage, ri_diskio_byteswritten); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3DiskR" descr:@"Disk I/O Total Bytes Read" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3DiskR" fullname:@"Disk I/O Total Bytes Read" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_diskio_bytesread ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_diskio_bytesread countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_diskio_bytesread); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3DiskW" descr:@"Disk I/O Total Bytes Written" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3DiskW" fullname:@"Disk I/O Total Bytes Written" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_diskio_byteswritten ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_diskio_byteswritten countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_diskio_byteswritten); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3Time" descr:@"Total Process Running Time" align:NSTextAlignmentRight width:75 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"\u03A3Time" fullname:@"Total Process Running Time" align:NSTextAlignmentRight width:75 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return psProcessUptime(proc->rusage.ri_proc_start_abstime, proc->rusage.ri_proc_exit_abstime); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_proc_start_abstime); } summary:nil],
 #endif
-		[PSColumn psColumnWithName:@"" descr:@"Bundle Identifier" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"" fullname:@"Bundle Identifier" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"CFBundleIdentifier"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"" descr:@"Bundle Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"" fullname:@"Bundle Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"CFBundleName"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"" descr:@"Bundle Display Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"" fullname:@"Bundle Display Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"CFBundleDisplayName"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"" descr:@"Bundle Version" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"" fullname:@"Bundle Version" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"CFBundleVersion"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"" descr:@"Minimum OS Version" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"" fullname:@"Minimum OS Version" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"MinimumOSVersion"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"" descr:@"Development SDK Version" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"" fullname:@"Development SDK Version" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"DTSDKName"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"" descr:@"Development Platform Version" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"" fullname:@"Development Platform Version" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"DTPlatformVersion"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"" descr:@"Compiler Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
+		[PSColumn psColumnWithName:@"" fullname:@"Compiler Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"DTCompiler"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"NetRx" descr:@"Net Bytes Received Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"NetRx" fullname:@"Net Bytes Received Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,netstat,rxbytes) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,netstat,rxbytes) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, rxbytes); } summary:nil],
-		[PSColumn psColumnWithName:@"NetTx" descr:@"Net Bytes Sent Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"NetTx" fullname:@"Net Bytes Sent Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,netstat,txbytes) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,netstat,txbytes) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, txbytes); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3NetRx" descr:@"Net Total Bytes Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3NetRx" fullname:@"Net Total Bytes Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.rxbytes ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->netstat.rxbytes countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxbytes); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3NetTx" descr:@"Net Total Bytes Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3NetTx" fullname:@"Net Total Bytes Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.txbytes ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->netstat.txbytes countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txbytes); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3PktRx" descr:@"Net Total Packets Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3PktRx" fullname:@"Net Total Packets Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.rxpackets ? @"-" : [NSString stringWithFormat:@"%llu", proc->netstat.rxpackets]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxpackets); } summary:nil],
-		[PSColumn psColumnWithName:@"\u03A3PktTx" descr:@"Net Total Packets Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3PktTx" fullname:@"Net Total Packets Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.txpackets ? @"-" : [NSString stringWithFormat:@"%llu", proc->netstat.txpackets]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txpackets); } summary:nil],
 		] retain];
@@ -339,58 +339,58 @@ NSString *psProcessCpuTime(unsigned int ptime)
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		sockColumns[ColumnModeSummary] = [@[
-		[PSColumn psColumnWithName:@"Column" descr:@"Information Column" align:NSTextAlignmentLeft width:180 sortDesc:NO style:ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Column" fullname:@"Information Column" align:NSTextAlignmentLeft width:180 sortDesc:NO style:ColumnStyleEllipsis
 			data:^NSString*(PSSockSummary *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
-		[PSColumn psColumnWithName:@"Value" descr:@"Column Value" align:NSTextAlignmentLeft width:140 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Value" fullname:@"Column Value" align:NSTextAlignmentLeft width:140 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
 			data:^NSString*(PSSockSummary *sock) { return sock.col.getData(sock.proc); }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return 0; } summary:nil],
 		] retain];
 		sockColumns[ColumnModeThreads] = [@[
-		[PSColumn psColumnWithName:@"TID" descr:@"Thread ID" align:NSTextAlignmentRight width:53 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"TID" fullname:@"Thread ID" align:NSTextAlignmentRight width:53 sortDesc:NO style:0
 			data:^NSString*(PSSockThreads *sock) { return [NSString stringWithFormat:@"%llX", sock.tid]; }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { COMPARE(tid); } summary:nil],
-		[PSColumn psColumnWithName:@"%" descr:@"%CPU Usage" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"%" fullname:@"%CPU Usage" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
 			data:^NSString*(PSSockThreads *sock) { return !sock->tbi.cpu_usage ? @"-" : [NSString stringWithFormat:@"%.1f", (float)sock->tbi.cpu_usage / 10]; }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { COMPARE_VAR(tbi.cpu_usage); } summary:nil],
-		[PSColumn psColumnWithName:@"Time" descr:@"Thread Time" align:NSTextAlignmentRight width:60 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"Time" fullname:@"Thread Time" align:NSTextAlignmentRight width:60 sortDesc:YES style:0
 			data:^NSString*(PSSockThreads *sock) { return psProcessCpuTime(sock.ptime); }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { COMPARE(ptime); } summary:nil],
-		[PSColumn psColumnWithName:@"S" descr:@"Mach Thread State" align:NSTextAlignmentLeft width:33 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"S" fullname:@"Mach Thread State" align:NSTextAlignmentLeft width:33 sortDesc:NO style:0
 			data:^NSString*(PSSockThreads *sock) { return psThreadStateString(sock); }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { COMPARE_VAR(tbi.run_state); } summary:nil],
-		[PSColumn psColumnWithName:@"Pri" descr:@"Thread Priority" align:NSTextAlignmentRight width:37 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"Pri" fullname:@"Thread Priority" align:NSTextAlignmentRight width:37 sortDesc:YES style:0
 			data:^NSString*(PSSockThreads *sock) { return [NSString stringWithFormat:@"%@%u", sock->tbi.policy == POLICY_RR ? @"R:" : sock->tbi.policy == POLICY_FIFO ? @"F:" : @"", sock.prio]; }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { COMPARE(prio); } summary:nil],
-		[PSColumn psColumnWithName:@"Dispatch Queue" descr:@"Dispatch Queue Name" align:NSTextAlignmentLeft width:95 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Dispatch Queue" fullname:@"Dispatch Queue Name" align:NSTextAlignmentLeft width:95 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
 			data:^NSString*(PSSockThreads *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
 		] retain];
 		sockColumns[ColumnModeFiles] = [@[
-		[PSColumn psColumnWithName:@"FD" descr:@"File Descriptor" align:NSTextAlignmentRight width:40 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"FD" fullname:@"File Descriptor" align:NSTextAlignmentRight width:40 sortDesc:NO style:0
 			data:^NSString*(PSSockFiles *sock) { return [NSString stringWithFormat:@"%d", sock.fd]; }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(fd); } summary:nil],
-		[PSColumn psColumnWithName:@"Open file/socket" descr:@"Filename or Socket Address" align:NSTextAlignmentLeft width:220 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Open file/socket" fullname:@"Filename or Socket Address" align:NSTextAlignmentLeft width:220 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
 			data:^NSString*(PSSockFiles *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
-		[PSColumn psColumnWithName:@"Type" descr:@"Descriptor Type" align:NSTextAlignmentLeft width:50 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"Type" fullname:@"Descriptor Type" align:NSTextAlignmentLeft width:50 sortDesc:NO style:0
 			data:^NSString*(PSSockFiles *sock) { return [NSString stringWithUTF8String:sock.stype]; }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(type); } summary:nil],
-		[PSColumn psColumnWithName:@"F" descr:@"Open Flags" align:NSTextAlignmentLeft width:40 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"F" fullname:@"Open Flags" align:NSTextAlignmentLeft width:40 sortDesc:NO style:0
 			data:^NSString*(PSSockFiles *sock) { return psFdFlagsString(sock.flags); }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(flags); } summary:nil],
 		] retain];
 		sockColumns[ColumnModeModules] = [@[
-		[PSColumn psColumnWithName:@"Mapped module" descr:@"Module Filename" align:NSTextAlignmentLeft width:220 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis
 			data:^NSString*(PSSockModules *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
-		[PSColumn psColumnWithName:@"Addr" descr:@"Loaded Virtual Address" align:NSTextAlignmentRight width:90 sortDesc:NO style:ColumnStyleMonoFont
+		[PSColumn psColumnWithName:@"Addr" fullname:@"Loaded Virtual Address" align:NSTextAlignmentRight width:90 sortDesc:NO style:ColumnStyleMonoFont
 			data:^NSString*(PSSockModules *sock) { return [NSString stringWithFormat:@"%llX", sock.addr]; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(addr); } summary:nil],
-//		[PSColumn psColumnWithName:@"End" descr:@"End Virtual Address" align:NSTextAlignmentRight width:90 sortDesc:NO style:ColumnStyleMonoFont
+//		[PSColumn psColumnWithName:@"End" fullname:@"End Virtual Address" align:NSTextAlignmentRight width:90 sortDesc:NO style:ColumnStyleMonoFont
 //			data:^NSString*(PSSockModules *sock) { return sock.addrend == sock.addr ? @"-" : [NSString stringWithFormat:@"%llX", sock.addrend]; }
 //			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return a.addrend == b.addrend ? 0 : a.addrend > b.addrend ? 1 : -1; } summary:nil],
-		[PSColumn psColumnWithName:@"iNode" descr:@"Device and iNode of Module on Disk" align:NSTextAlignmentLeft width:80 sortDesc:NO style:0
+		[PSColumn psColumnWithName:@"iNode" fullname:@"Device and iNode of Module on Disk" align:NSTextAlignmentLeft width:80 sortDesc:NO style:0
 			data:^NSString*(PSSockModules *sock) { return sock.dev && sock.ino ? [NSString stringWithFormat:@"%u,%u %u", sock.dev >> 24, sock.dev & ((1<<24)-1), sock.ino] : @"  cache"; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return a.dev == b.dev ? a.ino - b.ino : a.dev - b.dev; } summary:nil],
 		] retain];
@@ -414,12 +414,12 @@ NSString *psProcessCpuTime(unsigned int ptime)
 	return cols;
 }
 
-- (instancetype)initWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width
+- (instancetype)initWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
 	sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary
 {
 	if (self = [super init]) {
 		self.name = name;
-		self.descr = descr;
+		self.fullname = fullname;
 		self.align = align;
 		self.minwidth = self.width = width;
 		self.getData = data;
@@ -431,16 +431,16 @@ NSString *psProcessCpuTime(unsigned int ptime)
 	return self;
 }
 
-+ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align width:(NSInteger)width
++ (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
 	sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary
 {
-	return [[[PSColumn alloc] initWithName:name descr:descr align:align width:width sortDesc:desc style:style data:data sort:sort summary:summary] autorelease];
+	return [[[PSColumn alloc] initWithName:name fullname:fullname align:align width:width sortDesc:desc style:style data:data sort:sort summary:summary] autorelease];
 }
 
 - (void)dealloc
 {
 	[_name release];
-	[_descr release];
+	[_fullname release];
 	[super dealloc];
 }
 

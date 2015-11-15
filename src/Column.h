@@ -23,7 +23,7 @@ typedef NSString *(^PSColumnData)(id proc);
 
 @interface PSColumn : NSObject
 // Full column name (in settings)
-@property (retain) NSString *descr;
+@property (retain) NSString *fullname;
 // Short name (in header)
 @property (retain) NSString *name;
 // NSTextAlignmentLeft or NSTextAlignmentRight
@@ -45,7 +45,7 @@ typedef NSString *(^PSColumnData)(id proc);
 // Label tag
 @property (assign) int tag;
 
-+ (instancetype)psColumnWithName:(NSString *)name descr:(NSString *)descr align:(NSTextAlignment)align
++ (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
 	width:(NSInteger)width sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
 + (NSArray *)psGetAllColumns;
 + (NSMutableArray *)psGetShownColumnsWithWidth:(NSUInteger)width;

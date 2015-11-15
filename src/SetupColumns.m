@@ -189,7 +189,7 @@ static NSArray *presetNames;
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuse];
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuse];
-	cell.textLabel.text = ((PSColumn *)ar[src.section][src.row]).descr;
+	cell.textLabel.text = ((PSColumn *)ar[src.section][src.row]).fullname;
 	return cell;
 }
 
