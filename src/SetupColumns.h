@@ -1,5 +1,5 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SetupColsViewController : UITableViewController
+@interface SetupColsViewController : UITableViewController<UIPopoverControllerDelegate>
 @end

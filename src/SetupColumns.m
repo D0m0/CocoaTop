@@ -104,8 +104,9 @@ static NSArray *presetNames;
 {
 	NSMutableArray *ar[2];
 }
-@property (retain)NSMutableArray *in;
-@property (retain)NSMutableArray *out;
+@property(retain) NSMutableArray *in;
+@property(retain) NSMutableArray *out;
+@property(retain) UIView *dimmer;
 @end
 
 @implementation SetupColsViewController
@@ -182,14 +183,99 @@ static NSArray *presetNames;
 	return ar[section].count;
 }
 
+- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
+{
+	if (self.dimmer) [self.dimmer removeFromSuperview];
+}
+
+- (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)src
+{
+	NSLog(@"accessoryButtonTappedForRowWithIndexPath %@", src);
+	NSString *title = ((PSColumn *)ar[src.section][src.row]).fullname;
+	NSString *message = ((PSColumn *)ar[src.section][src.row]).descr;
+
+	// In iOS 9 UIPopoverController is deprecated, the effect of this being that background isn't dimmed
+	if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_9_0) {
+		if (self.dimmer == nil) {
+			self.dimmer = [[UIView alloc] initWithFrame:self.navigationController.view.bounds];
+			self.dimmer.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
+		}
+		[self.navigationController.view addSubview:self.dimmer];
+	}
+
+	UIView *modal_view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 500, 500)];
+	UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 480, 480)];
+	titleLabel.font = [UIFont systemFontOfSize:16.0];
+	titleLabel.backgroundColor = [UIColor clearColor];
+	titleLabel.textColor = [UIColor blackColor];
+	titleLabel.text = message;
+	titleLabel.textAlignment = NSTextAlignmentLeft;
+	titleLabel.numberOfLines = 0;
+	titleLabel.lineBreakMode = NSLineBreakByWordWrapping;
+//	titleLabel.preferredMaxLayoutWidth
+	[titleLabel sizeToFit];
+	[modal_view addSubview:titleLabel];
+
+	UIViewController *contentController = [UIViewController new];
+	contentController.view = modal_view;
+	contentController.preferredContentSize = CGSizeMake(500, 500);
+//	contentController.contentSizeForViewInPopover = CGSizeMake(350, 350);
+
+	UIPopoverController *popover = [[UIPopoverController alloc] initWithContentViewController:contentController];
+	popover.delegate = self;
+
+	CGRect rectForWindow = CGRectMake(self.navigationController.view.bounds.size.width/2, self.navigationController.view.bounds.size.height/2, 1, 1);
+	UIPopoverArrowDirection arrows = 0;	// UIPopoverArrowDirectionDown | UIPopoverArrowDirectionUp
+//	CGSize contentSize = (CGSize){320, 460};
+//	[popover setPopoverContentSize:contentSize];
+	[popover presentPopoverFromRect:rectForWindow /*((UIButton *)button).bounds*/ inView: /*((UIButton *)button*/ self.navigationController.view permittedArrowDirections:arrows animated:YES];
+
+//	NSString *title = @"Title";
+//	NSString *message = @"Message";	// 0x2022
+/*
+	UIAlertView *alert = [[[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+	alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
+	UITextField *myTextField = [alert textFieldAtIndex:0];
+	[alert setTag:555];
+	myTextField.keyboardType = UIKeyboardTypeAlphabet;
+	[alert show];
+*/
+/*
+	UIAlertView *alert = [[[UIAlertView alloc] initWithTitle:title message:@"" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+//	UIImageView *view = [[UIImageView alloc] initWithFrame:CGRectMake(180, 10, 85, 50)];
+//	UIImage *wonImage = [UIImage imageNamed:@"Icon.png"];
+//	[view setImage:wonImage];
+	UILabel *view;
+	view = [[UILabel alloc] initWithFrame:CGRectMake(10, 50, 350, 200)];//[UILabel new];
+	view.font = [UIFont systemFontOfSize:16.0];
+//	view.backgroundColor = [UIColor clearColor];
+	view.numberOfLines = 0;
+	view.lineBreakMode = NSLineBreakByWordWrapping;
+	view.textAlignment = NSTextAlignmentLeft;
+	view.text = message;
+//	view.preferredMaxLayoutWidth
+
+	if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) {
+		[alert setValue:view forKey:@"accessoryView"];
+	} else {
+		[alert addSubview:view];
+	}
+	[alert show];
+*/
+//	UIAlertView *alert = [[[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+//	[alert show];
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)src
 {
-	// Stupid non-draggable cell should be created separately
-	NSString *reuse = (src.section == 0 && src.row == 0) ? @"SetupUnmovableColumn" : @"SetupColumns";
-	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuse];
+	BOOL isUnmoveable = src.section == 0 && src.row == 0;
+	BOOL hasDecription = ((PSColumn *)ar[src.section][src.row]).descr != nil;
+	NSString *reuseId = [NSString stringWithFormat:@"SetupColumn-%d-%d", isUnmoveable, hasDecription];
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuseId];
 	if (cell == nil)
-		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuse];
+		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseId];
 	cell.textLabel.text = ((PSColumn *)ar[src.section][src.row]).fullname;
+	cell.editingAccessoryType = hasDecription ? UITableViewCellAccessoryDetailButton : UITableViewCellAccessoryNone;
 	return cell;
 }
 
@@ -222,12 +308,14 @@ static NSArray *presetNames;
 {
 	self.in = nil;
 	self.out = nil;
+	self.dimmer = nil;
 }
 
 - (void)dealloc
 {
 	[_in release];
 	[_out release];
+	[_dimmer release];
 	[super dealloc];
 }
 
