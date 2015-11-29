@@ -109,12 +109,12 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 //		else {
 			if (nmsd->provider == NSTAT_PROVIDER_UDP)
 				cnt.pid = ((nstat_udp_descriptor *)nmsd->data)->pid;
-			else if (nmsd->provider == NSTAT_PROVIDER_TCP) if (g_OsVer == 7)
+			else if (nmsd->provider == NSTAT_PROVIDER_TCP) { if (g_OsVer == 7)
 				cnt.pid = ((nstat_tcp_descriptor_10_7 *)nmsd->data)->pid;
 			else if (g_OsVer == 8)
 				cnt.pid = ((nstat_tcp_descriptor_10_8 *)nmsd->data)->pid;
 			else if (g_OsVer == 10)
-				cnt.pid = ((nstat_tcp_descriptor *)nmsd->data)->pid;
+				cnt.pid = ((nstat_tcp_descriptor *)nmsd->data)->pid; }
 //		}
 		if (cnt.pid >= 0) {
 //			NSLog(@"NSTAT_MSG_TYPE_SRC_DESC, adding %d to nstats (%d, %d, %d)", nmsd->srcref, cnt.pid, cnt.provider, cnt.srcref);
