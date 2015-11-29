@@ -381,7 +381,7 @@
 	BOOL anim = NO;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	// Shitty bug in iOS 7
-	if (floor(NSFoundationVersionNumber) <= 1134.0) anim = YES; //NSFoundationVersionNumber_iOS_8_0
+	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_8_0) anim = YES;
 #endif
 	// Return from fullscreen, or there's no way back ;)
 	if (self.fullScreen)

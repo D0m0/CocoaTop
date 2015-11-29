@@ -10,6 +10,18 @@
 #define __MAC_10_9 1090
 #endif
 
+#ifndef NSFoundationVersionNumber_iOS_7_0
+#define NSFoundationVersionNumber_iOS_7_0 1047.00
+#endif
+
+#ifndef NSFoundationVersionNumber_iOS_8_0
+#define NSFoundationVersionNumber_iOS_8_0 1134.0
+#endif
+
+#ifndef NSFoundationVersionNumber_iOS_9_0
+#define NSFoundationVersionNumber_iOS_9_0 1221.0
+#endif
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_6_0
 
 #undef YES
