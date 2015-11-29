@@ -143,127 +143,215 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Command line" fullname:@"Command line" align:NSTextAlignmentLeft width:170 sortDesc:NO style:ColumnStyleExtend | ColumnStyleEllipsis | ColumnStyleTooLong
 			data:^NSString*(PSProc *proc) { return [proc.executable stringByAppendingString:proc.args]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"Total processes: %u", procs.count]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"Total processes: %u", procs.count]; }
+			descr:@"Full command line with path and arguments.\n\nIf the name is given in brackets, then the command line cannot be acquired - usually it's either the Kernel or a zombie process."],
 		[PSColumn psColumnWithName:@"PID" fullname:@"Process ID" align:NSTextAlignmentRight width:50 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.pid]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(pid); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(pid); } summary:nil
+			descr:@"Unique ID of a BSD process.\n\nThis always grows upwards. Kernel is always pid 0, launchd is pid 1."],
 		[PSColumn psColumnWithName:@"PPID" fullname:@"Parent PID" align:NSTextAlignmentRight width:50 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.ppid]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(ppid); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(ppid); } summary:nil
+			descr:@"Unique ID of process' parent - the one that called exec()/fork().\n\nOn iOS most processes are jobs, thus they are launched by launchd and have parent pid 1."],
 		[PSColumn psColumnWithName:@"%" fullname:@"%CPU Usage" align:NSTextAlignmentRight width:50 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc.pcpu ? @"-" : [NSString stringWithFormat:@"%.1f", (float)proc.pcpu / 10]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(pcpu); }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%.1f%%", (float)procs.totalCpu / 10]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%.1f%%", (float)procs.totalCpu / 10]; }
+			descr:@"The sum of CPU usage by all threads of a process. CPU usage is expressed in % per CPU core, thus it sums up to cores\u00D7100%. "
+				"Moreover, it can actually exceed this value, due to a scheduling policy of the Mach Kernel, which is called decay-usage scheduling. When a thread acquires CPU "
+				"time, its priority is continually being depressed: this ensures short response times of interactive jobs, which "
+				"do not always have a high initial priority, especially on weaker mobile platforms. The decayed CPU usage of a running "
+				"thread increases in a linearly proportional fashion with CPU time obtained, and is periodically divided by the decay "
+				"factor, which is a constant larger than one (I believe, it's 1.05). Thus, the Mach CPU utilization of the process is a decaying average over "
+				"up to a minute of previous (real) time. Since the time base over which this is computed varies (since processes may be "
+				"very young) it is possible for the sum of all %CPU fields to exceed 100%."],
 		[PSColumn psColumnWithName:@"Time" fullname:@"Process Time" align:NSTextAlignmentRight width:75 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return psProcessCpuTime(proc.ptime); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(ptime); }
-			summary:^NSString*(PSProcArray* procs) { return psSystemUptime(); }],
+			summary:^NSString*(PSProcArray* procs) { return psSystemUptime(); }
+			descr:@"Total CPU time taken by the process - summed for all CPU cores."],
 		[PSColumn psColumnWithName:@"S" fullname:@"Mach Task State" align:NSTextAlignmentLeft width:30 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return psProcessStateString(proc); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return a.state == b.state ? b->basic.suspend_count - a->basic.suspend_count : a.state - b.state; }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%d/%d", procs.runningCount, procs.coresCount]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%d/%d", procs.runningCount, procs.coresCount]; }
+			descr:@"Process state (similar to original top):\n"
+				"	R	Running (at least one thread within this process is running now)\n"
+				"	U	Uninterruptible/'Stuck' (a thread is waiting on I/O in a system call)\n"
+				"	S	Sleeping (all threads of a process are sleeping)\n"
+				"	I	Idle (all threads are sleeping for at least 20 seconds)\n"
+				"	T	Terminated (all threads stopped)\n"
+				"	H	Halted (all threads halted at a clean point)\n"
+				"	D	The process is stopped by a signal (can be used for debugging)\n"
+				"	Z	Zombie (awaiting termination or 'orphan')\n"
+				"	?	Running state is unknown (access to threads was denied)\n"
+				"	\u25BC	Nice (lower priority, also see 'Nice' column)\n"
+				"	\u25B2	Not nice (higher priority)\n"
+				"	t	Debugged process is being traced\n"
+				"	z	Process is being terminated at the moment\n"
+				"	w	Process' parent is waiting for this child after fork\n"
+				"	K	The system process (kernel)\n"
+				"	B	Application is suspended by SpringBoard (iOS specific)"],
 		[PSColumn psColumnWithName:@"Flags" fullname:@"Raw Process Flags (Hex)" align:NSTextAlignmentLeft width:70 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%08X", proc.flags]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(flags); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(flags); } summary:nil
+			descr:@"Process flags:\n"
+				"	0001	P_ADVLOCK		Process may hold POSIX adv. lock\n"
+				"	0002	P_CONTROLT		Has a controlling terminal\n"
+				"	0004	P_LP64 			64-bit process\n"
+				"	0008	P_NOCLDSTOP	Bad parent: no SIGCHLD when child stops\n"
+				"	0010	P_PPWAIT		\tParent is waiting for this child to exec/exit\n"
+				"	0020	P_PROFIL		\tHas started profiling\n"
+				"	0040	P_SELECT		\tSelecting; wakeup/waiting danger\n"
+				"	0080	P_CONTINUED 	Process was stopped and continued\n"
+				"	0100	P_SUGID			Has set privileges since last exec\n"
+				"	0200	P_SYSTEM		\tSystem process: no signals, stats or swap\n"
+				"	0400	P_TIMEOUT		Timing out during sleep\n"
+				"	0800	P_TRACED		\tDebugged process being traced\n"
+				"	1000	P_DISABLE_ASLR	Disable address space randomization\n"
+				"	2000	P_WEXIT			Process is working on exiting\n"
+				"	4000	P_EXEC			Process has called exec"],
 		[PSColumn psColumnWithName:@"RMem" fullname:@"Resident Memory Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size); }
-			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memUsed countStyle:NSByteCountFormatterCountStyleMemory]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memUsed countStyle:NSByteCountFormatterCountStyleMemory]; }
+			descr:@"Resident memory usage. Also see 'Physical Memory Footprint' column."],
 		[PSColumn psColumnWithName:@"VSize" fullname:@"Virtual Address Space Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->basic.virtual_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.virtual_size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.virtual_size); }
-			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memTotal countStyle:NSByteCountFormatterCountStyleMemory]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memTotal countStyle:NSByteCountFormatterCountStyleMemory]; }
+			descr:@"Virtual address space usage. This includes address space taken by dynamic libraries."],
 		[PSColumn psColumnWithName:@"User" fullname:@"User Id" align:NSTextAlignmentLeft width:80 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:user_from_uid(proc.uid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(uid); }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@" mobile: %d", procs.mobileCount]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@" mobile: %d", procs.mobileCount]; }
+			descr:@"Effective (current) user id. Summary of this column denotes the number of processes executing as user (aka 'mobile')."],
 		[PSColumn psColumnWithName:@"Group" fullname:@"Group Id" align:NSTextAlignmentLeft width:80 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(gid); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(gid); } summary:nil
+			descr:@"Process group id."],
 		[PSColumn psColumnWithName:@"TTY" fullname:@"Terminal" align:NSTextAlignmentLeft width:65 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return psProcessTty(proc); }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(tdev); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(tdev); } summary:nil
+			descr:@"For console processes this contains the name of the controlling terminal (TTY)"],
 		[PSColumn psColumnWithName:@"Thr" fullname:@"Thread Count" align:NSTextAlignmentRight width:40 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.threads]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(threads); }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.threadCount]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.threadCount]; }
+			descr:@"Number of threads in the process. Tap the process and go to 'Threads' pane for lots of details."],
 		[PSColumn psColumnWithName:@"Ports" fullname:@"Mach Ports" align:NSTextAlignmentRight width:50 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.ports]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(ports); }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.portCount]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.portCount]; }
+			descr:@"Number of Mach ports opened by the process. Mach ports are the primary means of low-level communication "
+				"with the kernel and between the processes in a microkernel environment."],
 		[PSColumn psColumnWithName:@"Mach" fullname:@"Mach System Calls (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,syscalls_mach)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, syscalls_mach); }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.machCalls]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.machCalls]; }
+			descr:@"Number of Mach system calls per update interval. Mach system calls are calls to the Mach microkernel within the XNU kernel. "
+				"There are 180 to 200 Mach services available on iOS depending on kernel version."],
 		[PSColumn psColumnWithName:@"BSD" fullname:@"BSD System Calls (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,syscalls_unix)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, syscalls_unix); }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.unixCalls]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.unixCalls]; }
+			descr:@"Number of BSD system calls per update interval. BSD system calls are calls to the BSD part of the XNU kernel. "
+				"There are almost 1000 BSD services available on iOS depending on kernel version."],
 		[PSColumn psColumnWithName:@"CSw" fullname:@"Context Switches (Delta)" align:NSTextAlignmentRight width:52 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,csw)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, csw); }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.switchCount]; }],
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.switchCount]; }
+			descr:@"Number of context switches by this process per update interval. This is the number of times the CPU has activated this process to execute its code."],
 		[PSColumn psColumnWithName:@"Prio" fullname:@"Mach Actual Threads Priority" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%@%u", 	proc->basic.policy == POLICY_RR ? @"R:" : proc->basic.policy == POLICY_FIFO ? @"F:" : @"", proc.prio]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(prio); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(prio); } summary:nil
+			descr:@"The highest priority of a thread within the process. Also, this number can be prefixed by the process' default scheduling scheme. "
+				"There are several scheduling schemes supported by Mach, 'Time Sharing' being the default. The other two, 'Round-Robin' "
+				"and 'FIFO', will be marked in this column using prefixes R: and F: respectively. Tap the process and go to 'Threads' pane to see "
+				"actual priorities and scheduling schemes of every thread."],
 		[PSColumn psColumnWithName:@"BPri" fullname:@"Base Process Priority" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.priobase]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(priobase); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(priobase); } summary:nil
+			descr:@"The base thread priority of a process. This is the default priority set for newly created threads. Tap the process and go to "
+				"'Threads' pane to see actual priorities and scheduling schemes of existing threads."],
 		[PSColumn psColumnWithName:@"Nice" fullname:@"Process Nice Value" align:NSTextAlignmentRight width:42 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%d", proc.nice]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(nice); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(nice); } summary:nil
+			descr:@"A positive 'nice' value lowers the priority of the process' threads. A negative value raises the priority. This is also indicated "
+				"in the 'Process State' column by symbols \u25BC and \u25B2 respectively."],
 		[PSColumn psColumnWithName:@"Role" fullname:@"Mach Task Role" align:NSTextAlignmentLeft width:75 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return psTaskRoleString(proc); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return (a.role + (a.role <= 0 ? 50 : 0)) - (b.role + (b.role <= 0 ? 50 : 0)); }
-			summary:^NSString*(PSProcArray* procs) { return procs.guiCount ? [NSString stringWithFormat:@" UIApps: %d", procs.guiCount] : @"   -"; }],
+			summary:^NSString*(PSProcArray* procs) { return procs.guiCount ? [NSString stringWithFormat:@" UIApps: %d", procs.guiCount] : @"   -"; }
+			descr:@"The assigned role for GUI apps (Mac-specific). This may not be shown on some iOS versions. Possible values are: "
+				"	None		\tNon-UI task\n"
+				"	Foreground	\tNormal UI application in the foreground\n"
+				"	Inactive 	\tNormal UI application in the background\n"
+				"	Background	OS X: Normal UI application in the background\n"
+				"	Controller	\tOS X: Controller service application\n"
+				"	GfxServer	\tOS X: Graphics management (window) server\n"
+				"	Throttle	\t\tOS X: Throttle application"],
 		[PSColumn psColumnWithName:@"MSent" fullname:@"Mach Messages Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.messages_sent]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.messages_sent); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.messages_sent); } summary:nil
+			descr:@"Total Mach messages sent by the process. Messages are sent using Mach ports. Also see 'Mach Ports' column."],
 		[PSColumn psColumnWithName:@"MRecv" fullname:@"Mach Messages Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.messages_received]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.messages_received); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.messages_received); } summary:nil
+			descr:@"Total Mach messages received by the process. Messages are received using Mach ports. Also see 'Mach Ports' column."],
 		[PSColumn psColumnWithName:@"\u03A3Mach" fullname:@"Mach Total System Calls" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_mach]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_mach); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_mach); } summary:nil
+			descr:@"Total number of Mach system calls by the process. Also see 'Mach System Calls (Delta)' column."],
 		[PSColumn psColumnWithName:@"\u03A3BSD" fullname:@"BSD Total System Calls" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_unix]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_unix); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_unix); } summary:nil
+			descr:@"Total number of BSD system calls by the process. Also see 'BSD System Calls (Delta)' column."],
 		[PSColumn psColumnWithName:@"\u03A3CSw" fullname:@"Context Switches Total" align:NSTextAlignmentRight width:52 sortDesc:YES style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.csw); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.csw); } summary:nil
+			descr:@"Total number of context switches by this process. Also see 'Context Switches (Delta)' column."],
 		[PSColumn psColumnWithName:@"FDs" fullname:@"Open file/socket Descriptors" align:NSTextAlignmentRight width:42 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc.files ? @"-" : [NSString stringWithFormat:@"%u", proc.files]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(files); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(files); } summary:nil
+			descr:@"Number of active file descriptors opened by process. This includes open files, pipes, network sockets, kernel sockets, "
+				"and kernel queues. Tap the process and go to 'Open Files' pane for lots of details."],
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 		[PSColumn psColumnWithName:@"RMax" fullname:@"Maximum Resident Memory Usage" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size_max ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size_max countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size_max); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size_max); } summary:nil
+			descr:@"Maximum resident memory usage since process launch."],
 		[PSColumn psColumnWithName:@"Phys" fullname:@"Physical Memory Footprint" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_phys_footprint ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_phys_footprint countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_phys_footprint); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_phys_footprint); } summary:nil
+			descr:@"Physical memory footprint. This is the most accurate RAM usage data by process."],
 		[PSColumn psColumnWithName:@"DiskR" fullname:@"Disk I/O Bytes Read Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,rusage,ri_diskio_bytesread) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,rusage,ri_diskio_bytesread) countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(rusage, ri_diskio_bytesread); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(rusage, ri_diskio_bytesread); } summary:nil
+			descr:@"Bytes read from disk per update interval."],
 		[PSColumn psColumnWithName:@"DiskW" fullname:@"Disk I/O Bytes Written Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,rusage,ri_diskio_byteswritten) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,rusage,ri_diskio_byteswritten) countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(rusage, ri_diskio_byteswritten); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(rusage, ri_diskio_byteswritten); } summary:nil
+			descr:@"Bytes written to disk per update interval."],
 		[PSColumn psColumnWithName:@"\u03A3DiskR" fullname:@"Disk I/O Total Bytes Read" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_diskio_bytesread ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_diskio_bytesread countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_diskio_bytesread); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_diskio_bytesread); } summary:nil
+			descr:@"Bytes read from disk since process launch."],
 		[PSColumn psColumnWithName:@"\u03A3DiskW" fullname:@"Disk I/O Total Bytes Written" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_diskio_byteswritten ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_diskio_byteswritten countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_diskio_byteswritten); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_diskio_byteswritten); } summary:nil
+			descr:@"Bytes written to disk since process launch."],
 		[PSColumn psColumnWithName:@"\u03A3Time" fullname:@"Total Process Running Time" align:NSTextAlignmentRight width:75 sortDesc:NO style:0
 			data:^NSString*(PSProc *proc) { return psProcessUptime(proc->rusage.ri_proc_start_abstime, proc->rusage.ri_proc_exit_abstime); }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_proc_start_abstime); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_proc_start_abstime); } summary:nil
+			descr:@"Time elapsed since process launch."],
 #endif
 		[PSColumn psColumnWithName:@"" fullname:@"Bundle Identifier" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"CFBundleIdentifier"] : @"N/A"; } sort:nil summary:nil],
@@ -284,25 +372,35 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"NetRx" fullname:@"Net Bytes Received Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,netstat,rxbytes) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,netstat,rxbytes) countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, rxbytes); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, rxbytes); } summary:nil
+			descr:@"Network bytes received by process per update period."],
 		[PSColumn psColumnWithName:@"NetTx" fullname:@"Net Bytes Sent Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,netstat,txbytes) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,netstat,txbytes) countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, txbytes); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, txbytes); } summary:nil
+			descr:@"Network bytes transmitted by process per update period."],
 		[PSColumn psColumnWithName:@"\u03A3NetRx" fullname:@"Net Total Bytes Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.rxbytes ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->netstat.rxbytes countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxbytes); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxbytes); } summary:nil
+			descr:@"Network bytes received by process since launch. This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
+				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
 		[PSColumn psColumnWithName:@"\u03A3NetTx" fullname:@"Net Total Bytes Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.txbytes ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->netstat.txbytes countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txbytes); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txbytes); } summary:nil
+			descr:@"Network bytes transmitted by process since launch. This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
+				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
 		[PSColumn psColumnWithName:@"\u03A3PktRx" fullname:@"Net Total Packets Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.rxpackets ? @"-" : [NSString stringWithFormat:@"%llu", proc->netstat.rxpackets]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxpackets); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxpackets); } summary:nil
+			descr:@"Network packets received by process since launch. This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
+				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
 		[PSColumn psColumnWithName:@"\u03A3PktTx" fullname:@"Net Total Packets Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->netstat.txpackets ? @"-" : [NSString stringWithFormat:@"%llu", proc->netstat.txpackets]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txpackets); } summary:nil],
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txpackets); } summary:nil
+			descr:@"Network packets transmitted by process since launch. This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
+				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
 		] retain];
 		int i = 1; for (PSColumn *col in allColumns) col.tag = i++;
 	});
@@ -415,11 +513,12 @@ NSString *psProcessCpuTime(unsigned int ptime)
 }
 
 - (instancetype)initWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
-	sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary
+	sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr
 {
 	if (self = [super init]) {
 		self.name = name;
 		self.fullname = fullname;
+		self.descr = descr;
 		self.align = align;
 		self.minwidth = self.width = width;
 		self.getData = data;
@@ -432,15 +531,22 @@ NSString *psProcessCpuTime(unsigned int ptime)
 }
 
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
+	sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr
+{
+	return [[[PSColumn alloc] initWithName:name fullname:fullname align:align width:width sortDesc:desc style:style data:data sort:sort summary:summary descr:descr] autorelease];
+}
+
++ (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
 	sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary
 {
-	return [[[PSColumn alloc] initWithName:name fullname:fullname align:align width:width sortDesc:desc style:style data:data sort:sort summary:summary] autorelease];
+	return [[[PSColumn alloc] initWithName:name fullname:fullname align:align width:width sortDesc:desc style:style data:data sort:sort summary:summary descr:nil] autorelease];
 }
 
 - (void)dealloc
 {
 	[_name release];
 	[_fullname release];
+	[_descr release];
 	[super dealloc];
 }
 

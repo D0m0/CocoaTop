@@ -26,6 +26,8 @@ typedef NSString *(^PSColumnData)(id proc);
 @property (retain) NSString *fullname;
 // Short name (in header)
 @property (retain) NSString *name;
+// Multiline description (in settings column info)
+@property (retain) NSString *descr;
 // NSTextAlignmentLeft or NSTextAlignmentRight
 @property (assign) NSTextAlignment align;
 // Minimal column width
@@ -45,6 +47,8 @@ typedef NSString *(^PSColumnData)(id proc);
 // Label tag
 @property (assign) int tag;
 
++ (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
+	width:(NSInteger)width sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr;
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
 	width:(NSInteger)width sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
 + (NSArray *)psGetAllColumns;
