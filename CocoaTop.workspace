@@ -1,0 +1,64 @@
+<NotepadPlus>
+    <Project name="CocoaTop">
+        <Folder name="kern">
+            <File name="src\kern\debug.h" />
+        </Folder>
+        <Folder name="net">
+            <File name="src\net\ntstat.h" />
+        </Folder>
+        <Folder name="netinet">
+            <File name="src\netinet\tcp_fsm.h" />
+        </Folder>
+        <Folder name="Resources">
+            <File name="src\Resources\CocoaTop_" />
+            <File name="src\Resources\Default-1024h.png" />
+            <File name="src\Resources\Default-1024h@2x.png" />
+            <File name="src\Resources\Default-568h@2x.png" />
+            <File name="src\Resources\Default-667h@2x.png" />
+            <File name="src\Resources\Default-736h@3x.png" />
+            <File name="src\Resources\Default.png" />
+            <File name="src\Resources\Default@2x.png" />
+            <File name="src\Resources\Icon.png" />
+            <File name="src\Resources\Info.plist" />
+        </Folder>
+        <Folder name="sys">
+            <File name="src\sys\dyld64.h" />
+            <File name="src\sys\kern_control.h" />
+            <File name="src\sys\libproc.h" />
+            <File name="src\sys\proc_info.h" />
+            <File name="src\sys\resource.h" />
+            <File name="src\sys\sys_domain.h" />
+        </Folder>
+        <File name="src\About.h" />
+        <File name="src\About.m" />
+        <File name="src\AppDelegate.h" />
+        <File name="src\AppDelegate.m" />
+        <File name="src\AppIcon.h" />
+        <File name="src\AppIcon.m" />
+        <File name="src\Column.h" />
+        <File name="src\Column.m" />
+        <File name="src\Compat.h" />
+        <File name="src\Compat.m" />
+        <File name="src\control" />
+        <File name="src\GridCell.h" />
+        <File name="src\GridCell.m" />
+        <File name="src\main.m" />
+        <File name="src\Makefile" />
+        <File name="src\postinst" />
+        <File name="src\Proc.h" />
+        <File name="src\Proc.m" />
+        <File name="src\ProcArray.h" />
+        <File name="src\ProcArray.m" />
+        <File name="src\RootViewController.h" />
+        <File name="src\RootViewController.m" />
+        <File name="src\Setup.h" />
+        <File name="src\Setup.m" />
+        <File name="src\SetupColumns.h" />
+        <File name="src\SetupColumns.m" />
+        <File name="src\Sock.h" />
+        <File name="src\Sock.m" />
+        <File name="src\SockViewController.h" />
+        <File name="src\SockViewController.m" />
+        <File name="src\task.xml" />
+    </Project>
+</NotepadPlus>
