@@ -1,6 +1,124 @@
 #import "SetupColumns.h"
 #import "Column.h"
 
+
+@interface TextViewController : UIViewController<UIGestureRecognizerDelegate>
++ (void)showText:(NSString *)text withTitle:(NSString *)title inViewController:(UIViewController *)parent;
+@end
+
+@implementation TextViewController
+
+- (void)loadView
+{
+	//self.navigationItem.title = @"Title";
+	self.title = @"Title";
+	UITextView* textView = [[UITextView alloc] initWithFrame:CGRectZero textContainer:nil];
+	textView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+	textView.editable = NO;
+	textView.font = [UIFont systemFontOfSize:16.0];
+	textView.text = @"Process state (similar to original top):\n"
+				"	R	Running (at least one thread within this process is running now)\n"
+				"	U	Uninterruptible/'Stuck' (a thread is waiting on I/O in a system call)\n"
+				"	S	Sleeping (all threads of a process are sleeping)\n"
+				"	I	Idle (all threads are sleeping for at least 20 seconds)\n"
+				"	T	Terminated (all threads stopped)\n"
+				"	H	Halted (all threads halted at a clean point)\n"
+				"	D	The process is stopped by a signal (can be used for debugging)\n"
+				"	Z	Zombie (awaiting termination or 'orphan')\n"
+				"	?	Running state is unknown (access to threads was denied)\n"
+				"	\u25BC	Nice (lower priority, also see 'Nice' column)\n"
+				"	\u25B2	Not nice (higher priority)\n"
+				"	t	Debugged process is being traced\n"
+				"	z	Process is being terminated at the moment\n"
+				"	w	Process' parent is waiting for this child after fork\n"
+				"	K	The system process (kernel)\n"
+				"	B	Application is suspended by SpringBoard (iOS specific)\n"
+				"Process state (similar to original top):\n"
+				"	R	Running (at least one thread within this process is running now)\n"
+				"	U	Uninterruptible/'Stuck' (a thread is waiting on I/O in a system call)\n"
+				"	S	Sleeping (all threads of a process are sleeping)\n"
+				"	I	Idle (all threads are sleeping for at least 20 seconds)\n"
+				"	T	Terminated (all threads stopped)\n"
+				"	H	Halted (all threads halted at a clean point)\n"
+				"	D	The process is stopped by a signal (can be used for debugging)\n"
+				"	Z	Zombie (awaiting termination or 'orphan')\n"
+				"	?	Running state is unknown (access to threads was denied)\n"
+				"	\u25BC	Nice (lower priority, also see 'Nice' column)\n"
+				"	\u25B2	Not nice (higher priority)\n"
+				"	t	Debugged process is being traced\n"
+				"	z	Process is being terminated at the moment\n"
+				"	w	Process' parent is waiting for this child after fork\n"
+				"	K	The system process (kernel)\n"
+				"	B	Application is suspended by SpringBoard (iOS specific)";
+	self.view = textView;
+	[textView release];
+
+	UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+		target:self action:@selector(dismissViewController)];
+//	UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Done"
+//		style:UIBarButtonItemStyleDone target:self action:@selector(dismissViewController)];
+	self.navigationItem.rightBarButtonItem = doneButton;
+	[doneButton release];
+}
+
+- (void)dismissViewController
+{
+	[self dismissViewControllerAnimated:NO completion:nil];
+}
+
+// - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+// { return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown; }
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{ return YES; }
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{ return YES; }
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{ return YES; }
+
+- (void)viewDidAppear:(BOOL)animated
+{
+	[super viewDidAppear:animated];
+	// Add gesture recognizer to window
+	UITapGestureRecognizer *recognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapBehind:)];
+	[recognizer setNumberOfTapsRequired:1];
+	recognizer.cancelsTouchesInView = NO; //So the user can still interact with controls in the modal view
+	[self.view.window addGestureRecognizer:recognizer];
+	recognizer.delegate = self;
+}
+
+- (void)handleTapBehind:(UITapGestureRecognizer *)sender
+{
+	if (sender.state == UIGestureRecognizerStateEnded) {
+		CGPoint location = [sender locationInView:self.view];
+		if (![self.view pointInside:location withEvent:nil]) {
+			[self.view.window removeGestureRecognizer:sender];
+			[self dismissViewControllerAnimated:NO completion:nil];
+		}
+	}
+}
+
++ (void)showText:(NSString *)text withTitle:(NSString *)title inViewController:(UIViewController *)parent
+{
+	TextViewController *controller = [[TextViewController alloc] init];//WithText:text withTitle:title];
+	UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
+	[controller release];
+	navController.modalPresentationStyle = UIModalPresentationFormSheet;
+//	navController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+	[parent presentViewController:navController animated:NO completion:nil];
+	if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPhone) {
+		navController.view.superview.layer.cornerRadius = 10.0;
+		navController.view.superview.layer.borderColor = [UIColor clearColor].CGColor;
+//		navController.view.superview.layer.borderWidth = 2;
+		navController.view.superview.clipsToBounds = YES;
+	}
+	[navController release];
+}
+
+@end
+
+
+
+
 @interface SelectPreset : UITableViewController
 @end
 
@@ -106,7 +224,6 @@ static NSArray *presetNames;
 }
 @property(retain) NSMutableArray *in;
 @property(retain) NSMutableArray *out;
-@property(retain) UIView *dimmer;
 @end
 
 @implementation SetupColsViewController
@@ -183,26 +300,34 @@ static NSArray *presetNames;
 	return ar[section].count;
 }
 
-- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
-{
-	if (self.dimmer) [self.dimmer removeFromSuperview];
-}
-
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)src
 {
+	[TextViewController showText:nil withTitle:nil inViewController:self];
+/*
 	NSLog(@"accessoryButtonTappedForRowWithIndexPath %@", src);
 	NSString *title = ((PSColumn *)ar[src.section][src.row]).fullname;
 	NSString *message = ((PSColumn *)ar[src.section][src.row]).descr;
 
-	// In iOS 9 UIPopoverController is deprecated, the effect of this being that background isn't dimmed
-	if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_9_0) {
-		if (self.dimmer == nil) {
-			self.dimmer = [[UIView alloc] initWithFrame:self.navigationController.view.bounds];
-			self.dimmer.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
-		}
-		[self.navigationController.view addSubview:self.dimmer];
-	}
-
+//	NSURL *url = [[NSBundle mainBundle] URLForResource:name withExtension:@"html" subdirectory:@"Documentation"];
+//	if (url != nil) {
+//		TSHTMLViewController *controller = [[TSHTMLViewController alloc] initWithURL:url];
+	TSHTMLViewController *controller = [[TSHTMLViewController alloc] initWithHTMLContent:message];
+	controller.title = title;
+	UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
+	[controller release];
+	navController.modalPresentationStyle = UIModalPresentationFormSheet;//UIModalPresentationPopover;
+	//navController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+//	navController.modalInPopover = NO;
+	[self presentViewController:navController animated:NO completion:nil];
+	// Following removes the white round edges from the corner
+	navController.view.superview.layer.cornerRadius = 10.0;
+	navController.view.superview.layer.borderColor = [UIColor clearColor].CGColor;
+//	navController.view.superview.layer.borderWidth = 2;
+//	navController.view.superview.layer.masksToBounds = YES;
+	navController.view.superview.clipsToBounds = YES;
+	[navController release];
+*/
+/*
 	UIView *modal_view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 500, 500)];
 	UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 480, 480)];
 	titleLabel.font = [UIFont systemFontOfSize:16.0];
@@ -215,52 +340,7 @@ static NSArray *presetNames;
 //	titleLabel.preferredMaxLayoutWidth
 	[titleLabel sizeToFit];
 	[modal_view addSubview:titleLabel];
-
-	UIViewController *contentController = [UIViewController new];
-	contentController.view = modal_view;
-	contentController.preferredContentSize = CGSizeMake(500, 500);
-//	contentController.contentSizeForViewInPopover = CGSizeMake(350, 350);
-
-	UIPopoverController *popover = [[UIPopoverController alloc] initWithContentViewController:contentController];
-	popover.delegate = self;
-
-	CGRect rectForWindow = CGRectMake(self.navigationController.view.bounds.size.width/2, self.navigationController.view.bounds.size.height/2, 1, 1);
-	UIPopoverArrowDirection arrows = 0;	// UIPopoverArrowDirectionDown | UIPopoverArrowDirectionUp
-//	CGSize contentSize = (CGSize){320, 460};
-//	[popover setPopoverContentSize:contentSize];
-	[popover presentPopoverFromRect:rectForWindow /*((UIButton *)button).bounds*/ inView: /*((UIButton *)button*/ self.navigationController.view permittedArrowDirections:arrows animated:YES];
-
-//	NSString *title = @"Title";
-//	NSString *message = @"Message";	// 0x2022
-/*
-	UIAlertView *alert = [[[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-	alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
-	UITextField *myTextField = [alert textFieldAtIndex:0];
-	[alert setTag:555];
-	myTextField.keyboardType = UIKeyboardTypeAlphabet;
-	[alert show];
-*/
-/*
-	UIAlertView *alert = [[[UIAlertView alloc] initWithTitle:title message:@"" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-//	UIImageView *view = [[UIImageView alloc] initWithFrame:CGRectMake(180, 10, 85, 50)];
-//	UIImage *wonImage = [UIImage imageNamed:@"Icon.png"];
-//	[view setImage:wonImage];
-	UILabel *view;
-	view = [[UILabel alloc] initWithFrame:CGRectMake(10, 50, 350, 200)];//[UILabel new];
-	view.font = [UIFont systemFontOfSize:16.0];
-//	view.backgroundColor = [UIColor clearColor];
-	view.numberOfLines = 0;
-	view.lineBreakMode = NSLineBreakByWordWrapping;
-	view.textAlignment = NSTextAlignmentLeft;
-	view.text = message;
-//	view.preferredMaxLayoutWidth
-
-	if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) {
-		[alert setValue:view forKey:@"accessoryView"];
-	} else {
-		[alert addSubview:view];
-	}
-	[alert show];
+	modal_view.backgroundColor = [UIColor clearColor];
 */
 //	UIAlertView *alert = [[[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
 //	[alert show];
@@ -308,14 +388,12 @@ static NSArray *presetNames;
 {
 	self.in = nil;
 	self.out = nil;
-	self.dimmer = nil;
 }
 
 - (void)dealloc
 {
 	[_in release];
 	[_out release];
-	[_dimmer release];
 	[super dealloc];
 }
 
