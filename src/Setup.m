@@ -85,10 +85,6 @@
 @end
 
 
-@interface SetupViewController()
-@property (retain) UILabel *helpLabel;
-@end
-
 @implementation SetupViewController
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
@@ -135,54 +131,6 @@ struct optionsList_t {
 		optionsList[0].choose = [@[@"0.5",@"1",@"2",@"3",@"5",@"10",@"Never"] retain];
 	if (!optionsList[1].choose)
 		optionsList[1].choose = [@[@"Bundle Identifier",@"Bundle Name",@"Bundle Display Name",@"Executable Name",@"Executable With Args"] retain];
-
-	self.helpLabel = [UILabel new];
-	self.helpLabel.font = [UIFont systemFontOfSize:16.0];
-	self.helpLabel.backgroundColor = [UIColor clearColor];
-	self.helpLabel.numberOfLines = 0;
-	self.helpLabel.lineBreakMode = NSLineBreakByWordWrapping;
-	self.helpLabel.text = @"Process states (similar to original top):\n"
-		"	R	Running (at least one thread within this process is running now)\n"
-		"	U	Uninterruptible/'Stuck' (a thread is waiting on I/O in a system call)\n"
-		"	S	Sleeping (all threads of a process are sleeping)\n"
-		"	I	Idle (all threads are sleeping for at least 20 seconds)\n"
-		"	T	Terminated (all threads stopped)\n"
-		"	H	Halted (all threads halted at a clean point)\n"
-		"	D	The process is stopped by a signal (can be used for debugging)\n"
-		"	Z	Zombie (awaiting termination or 'orphan')\n"
-		"	?	Running state is unknown (access to threads was denied)\n"
-		"	\u25BC	Nice (lower priority, also see 'Nice' column)\n"
-		"	\u25B2	Not nice (higher priority)\n"
-		"	t	Process being traced, see P_TRACED below\n"
-		"	z	Process being terminated at the moment, see P_WEXIT below\n"
-		"	w	Process' parent is waiting for this child after fork, see P_PPWAIT\n"
-		"	K	The system process (kernel), see P_SYSTEM below\n"
-		"	B	Application is suspended by SpringBoard (iOS specific)\n"
-		"\nProcess flags (will surely be deciphered in future versions):\n"
-		"	0001	P_ADVLOCK		Process may hold POSIX adv. lock\n"
-		"	0002	P_CONTROLT		Has a controlling terminal\n"
-		"	0004	P_LP64 			64-bit process\n"
-		"	0008	P_NOCLDSTOP	Bad parent: no SIGCHLD when child stops\n"
-		"	0010	P_PPWAIT		\tParent is waiting for this child to exec/exit\n"
-		"	0020	P_PROFIL		\tHas started profiling\n"
-		"	0040	P_SELECT		\tSelecting; wakeup/waiting danger\n"
-		"	0080	P_CONTINUED 	Process was stopped and continued\n"
-		"	0100	P_SUGID			Has set privileges since last exec\n"
-		"	0200	P_SYSTEM		\tSystem process: no signals, stats or swap\n"
-		"	0400	P_TIMEOUT		Timing out during sleep\n"
-		"	0800	P_TRACED		\tDebugged process being traced\n"
-		"	1000	P_DISABLE_ASLR	Disable address space randomization\n"
-		"	2000	P_WEXIT			Process is working on exiting\n"
-		"	4000	P_EXEC			Process has called exec\n"
-		"\nTask role (Mac specific):\n"
-		"	None		\tNon-UI task\n"
-		"	Foreground	\tNormal UI application in the foreground\n"
-		"	Inactive 	\tNormal UI application in the background\n"
-		"	Background	OS X: Normal UI application in the background\n"
-		"	Controller	\tOS X: Controller service application\n"
-		"	GfxServer	\tOS X: Graphics management (window) server\n"
-		"	Throttle	\t\tOS X: Throttle application"
-	;
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
@@ -199,29 +147,17 @@ struct optionsList_t {
 #pragma mark - UITableViewDataSource, UITableViewDelegate
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-	return 2;
+	return 1;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-	return section ? @"Quick guide" : @"General";
-}
-
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
-{
-	return section == 0 ? @"More options will be available in future versions" : nil;
+	return @"General";
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return section ? 1 : sizeof(optionsList) / sizeof(struct optionsList_t);
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-	if (indexPath.section == 1)
-		return [self.helpLabel sizeThatFits:CGSizeMake(cellWidth(tableView), MAXFLOAT)].height + 25;
-	return UITableViewAutomaticDimension;
+	return sizeof(optionsList) / sizeof(struct optionsList_t);
 }
 
 - (void)flipSwitch:(id)sender
@@ -236,42 +172,39 @@ struct optionsList_t {
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:rid];
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:rid];
+	struct optionsList_t *option = &optionsList[indexPath.row];
 	cell.selectionStyle = UITableViewCellSelectionStyleNone;
-	if (indexPath.section == 0) {
-		struct optionsList_t *option = &optionsList[indexPath.row];
-		cell.textLabel.text = option->label;
-		if ([option->accessory isEqualToString:@"UISwitch"]) {
-			UISwitch *onOff = [[UISwitch alloc] initWithFrame:CGRectZero];
-			[onOff addTarget:self action:@selector(flipSwitch:) forControlEvents:UIControlEventValueChanged];
-			onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:option->optionKey];
-//			onOff.onTintColor = [UIColor redColor];
-			onOff.tag = indexPath.row + 1;
-			cell.accessoryView = onOff;
-			[onOff release];
-		} else {
-			cell.accessoryType = option->accType;
-			cell.accessoryView = nil;
-			if ([option->accessory isEqualToString:@"UILabel"]) {
-				cell.selectionStyle = UITableViewCellSelectionStyleBlue;
-				cell.contentView.autoresizesSubviews = YES;
-				UILabel *label = (UILabel *)[cell viewWithTag:indexPath.row + 1];
-				if (!label) {
-					label = [[UILabel alloc] initWithFrame:CGRectZero];
-					label.textAlignment = NSTextAlignmentRight;
-					label.font = [UIFont systemFontOfSize:16.0];
-					label.textColor = [UIColor grayColor];
-					label.backgroundColor = [UIColor clearColor];
-					label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
-					label.tag = indexPath.row + 1;
-					label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleWidth;
-					[cell.contentView addSubview:label];
-					[label release];
-				} else
-					label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
-			}
+	cell.textLabel.text = option->label;
+	if ([option->accessory isEqualToString:@"UISwitch"]) {
+		UISwitch *onOff = [[UISwitch alloc] initWithFrame:CGRectZero];
+		[onOff addTarget:self action:@selector(flipSwitch:) forControlEvents:UIControlEventValueChanged];
+		onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:option->optionKey];
+//		onOff.onTintColor = [UIColor redColor];
+		onOff.tag = indexPath.row + 1;
+		cell.accessoryView = onOff;
+		[onOff release];
+	} else {
+		cell.accessoryType = option->accType;
+		cell.accessoryView = nil;
+		if ([option->accessory isEqualToString:@"UILabel"]) {
+			cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+			cell.contentView.autoresizesSubviews = YES;
+			UILabel *label = (UILabel *)[cell viewWithTag:indexPath.row + 1];
+			if (!label) {
+				label = [[UILabel alloc] initWithFrame:CGRectZero];
+				label.textAlignment = NSTextAlignmentRight;
+				label.font = [UIFont systemFontOfSize:16.0];
+				label.textColor = [UIColor grayColor];
+				label.backgroundColor = [UIColor clearColor];
+				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
+				label.tag = indexPath.row + 1;
+				label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleWidth;
+				[cell.contentView addSubview:label];
+				[label release];
+			} else
+				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
 		}
-	} else
-		[cell.contentView addSubview:self.helpLabel];
+	}
 	return cell;
 	// Special process colors: Root / User / 32 bit / Zombie & Stuck
 	// Manual Refresh button with arrows
