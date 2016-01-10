@@ -213,34 +213,22 @@ struct optionsList_t {
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if (indexPath.section == 0 && [optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
+	if ([optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
 		UIView *label = [cell viewWithTag:indexPath.row + 1];
 		[cell.textLabel sizeToFit];
 		CGFloat labelstart = cell.textLabel.frame.size.width + 20;
 		CGSize size = cell.contentView.frame.size;
 		label.frame = CGRectMake(labelstart, 0, size.width - labelstart, size.height);
 	}
-	if (indexPath.section == 1) {
-		CGFloat width = cellWidth(tableView);
-		self.helpLabel.frame = CGRectMake(cellOrigin(tableView), 12, width, MAXFLOAT);
-		[self.helpLabel sizeToFit];
-		self.helpLabel.frame = CGRectMake(cellOrigin(tableView), 12, width, self.helpLabel.frame.size.height);
-	}
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if (indexPath.section == 0 && [optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
+	if ([optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
 		struct optionsList_t *option = &optionsList[indexPath.row];
 		SelectFromList* selectView = [SelectFromList selectFromList:option->choose option:option->optionKey footer:option->footer];
 		[self.navigationController pushViewController:selectView animated:YES];
 	}
-}
-
-- (void)dealloc
-{
-	[_helpLabel release];
-	[super dealloc];
 }
 
 @end
