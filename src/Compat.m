@@ -15,6 +15,10 @@
 - (id)objectForKeyedSubscript:(id)key { return [self objectForKey:key]; }
 @end
 
+@implementation NSMutableDictionary(Subscripts)
+- (void)setObject:(id)obj forKeyedSubscript:(id<NSCopying>)key { [self setObject:obj forKey:key]; }
+@end
+
 @implementation NSByteCountFormatter
 + (NSString *)stringFromByteCount:(long long)byteCount countStyle:(int)countStyle { return [NSString stringWithFormat:@"%.1f MB", (float)byteCount / 1024 / 1024]; }
 @end

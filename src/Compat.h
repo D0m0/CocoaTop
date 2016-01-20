@@ -10,6 +10,10 @@
 #define __IPHONE_8_0 80000
 #endif
 
+#ifndef __IPHONE_9_0
+#define __IPHONE_9_0 90000
+#endif
+
 #ifndef __MAC_10_9
 #define __MAC_10_9 1090
 #endif
@@ -39,6 +43,7 @@
 #define NSTextAlignmentRight					UITextAlignmentRight
 #define NSTextAlignmentCenter					UITextAlignmentCenter
 #define NSFontAttributeName						UITextAttributeFont
+#define UITableViewCellAccessoryDetailButton	UITableViewCellAccessoryDetailDisclosureButton
 
 @interface NSArray(Subscripts)
 - (id)objectAtIndexedSubscript:(NSUInteger)idx;
@@ -50,6 +55,10 @@
 
 @interface NSDictionary(Subscripts)
 - (id)objectForKeyedSubscript:(id)key;
+@end
+
+@interface NSMutableDictionary(Subscripts)
+- (void)setObject:(id)obj forKeyedSubscript:(id<NSCopying>)key;
 @end
 
 #define NSByteCountFormatterCountStyleMemory	1
