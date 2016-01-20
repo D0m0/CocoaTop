@@ -114,6 +114,7 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	self.state = ProcStateMax;
 	if (ki->kp_proc.p_stat == SSTOP) self.state = ProcStateDebugging;
 	if (ki->kp_proc.p_stat == SZOMB) self.state = ProcStateZombie;
+//	self.moredata = [NSString stringWithFormat:@"%x %x %x", ki->kp_proc.p_xstat, ki->kp_proc.p_acflag, ki->kp_proc.sigwait];
 	[self update];
 }
 

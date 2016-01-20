@@ -3,6 +3,12 @@
 #import "sys/resource.h"
 #import <sys/sysctl.h>
 #define PRIVATE
+typedef struct tcp_conn_status {
+	u_int32_t probe_activated : 1;
+	u_int32_t write_probe_failed : 1;
+	u_int32_t read_probe_failed : 1;
+	u_int32_t conn_probe_failed : 1;
+} tcp_conn_status;
 #import "net/ntstat.h"
 #import "Compat.h"
 
@@ -76,6 +82,7 @@ typedef struct PSCounts {
 @property (retain) NSDictionary *app;
 @property (retain) NSMutableDictionary *dispQueue;
 //@property (retain) NSMutableArray *cpuhistory;
+@property (retain) NSString *moredata;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
 - (void)update;
 - (void)updateWithKinfo:(struct kinfo_proc *)ki;
