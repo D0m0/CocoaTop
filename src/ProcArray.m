@@ -16,7 +16,7 @@
 + (instancetype)valueWithCounts:(PSCounts)value;
 @property (readonly) PSCounts countsValue;
 @end
- 
+
 @implementation NSValue(PSCounts)
 + (instancetype)valueWithCounts:(PSCounts)value
 {
@@ -30,27 +30,9 @@
 }
 @end
 
-// int g_OsVer = 10;//7;
-
-// void getOsVer()
-// { 
-	// struct utsname name;
-	// uname(&name);
-	// if (strstr(name.version, "xnu-24"))			// iOS7
-		// g_OsVer = 9;
-	// else if (strstr(name.version, "xnu-20"))	// ?
-		// g_OsVer = 8;
-	// else if (strstr(name.version, "xnu-27"))	// iOS8
-		// g_OsVer = 10;
-// }
-
 int nstatAddSrc(int fd, int provider, u_int64_t ctx)
 {
-	nstat_msg_add_all_srcs aasreq = {{ctx, NSTAT_MSG_TYPE_ADD_ALL_SRCS, 0}, provider
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0
-	, NSTAT_FILTER_ACCEPT_ALL
-#endif
-	};
+	nstat_msg_add_all_srcs aasreq = {{ctx, NSTAT_MSG_TYPE_ADD_ALL_SRCS, 0}, provider, NSTAT_FILTER_ACCEPT_ALL | NSTAT_FILTER_PROVIDER_NOZEROBYTES | NSTAT_FILTER_REQUIRE_SRC_ADDED};
 	return write(fd, &aasreq, sizeof(aasreq));
 }
 
@@ -74,56 +56,53 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 	int len = CFDataGetLength((CFDataRef)data);
 
 	if (!len || callbackType != kCFSocketDataCallBack) {
-		NSLog(@"NSTAT callback:%lu, datasize:0, RECONNECTING...", callbackType);
+		// 100% working hack: if an empty packet comes in, we should just reconnect
+		NSLog(@"NSTAT: callbackType=%lu len=%d, reconnecting...", callbackType, len);
 		[self openNetStat];
 		return;
 	}
 	switch (ns->type) {
 	case NSTAT_MSG_TYPE_SRC_ADDED: {
 		nstat_msg_src_added *nsa = (nstat_msg_src_added *)ns;
-//		NSLog(@"NSTAT_MSG_TYPE_SRC_ADDED, size:%d, srcref:%d", len, (int)nsa->srcref);
 		nstatGetSrcDesc(fd, nsa->provider, nsa->srcref);
 		break; }
 	case NSTAT_MSG_TYPE_SRC_REMOVED: {
 		nstat_msg_src_removed *nsr = (nstat_msg_src_removed *)ns;
-//		NSLog(@"NSTAT_MSG_TYPE_SRC_REMOVED, size:%d, srcref:%d", len, (int)nsr->srcref);
 		NSValue *srcval = self.nstats[@(nsr->srcref)];
 		if (srcval) {
-//			NSLog(@"NSTAT_MSG_TYPE_SRC_REMOVED, %d counts:%@", nsr->srcref, srcval);
 			PSCounts cnt = srcval.countsValue;
 			PSProc *proc = [self procForPid:cnt.pid];
 			if (proc) {
 				proc->netstat_cache.rxpackets += cnt.rxpackets; proc->netstat_cache.rxbytes += cnt.rxbytes;
 				proc->netstat_cache.txpackets += cnt.txpackets; proc->netstat_cache.txbytes += cnt.txbytes;
-//				NSLog(@"NSTAT_MSG_TYPE_SRC_REMOVED, rx/tx: %d/%d", proc->netstat_cache.rxbytes, proc->netstat_cache.txbytes);
-			} else
-				NSLog(@"NSTAT_MSG_TYPE_SRC_REMOVED, pid not found");
+			}
 			[self.nstats removeObjectForKey:@(nsr->srcref)];
 		}
-//		cnt.srcref = 0;
-//		self.nstats[@(nsr->srcref)] = [NSValue valueWithCounts:cnt];
 		break; }
 	case NSTAT_MSG_TYPE_SRC_DESC: {
 		nstat_msg_src_description *nmsd = (nstat_msg_src_description *)ns;
-//		NSLog(@"NSTAT_MSG_TYPE_SRC_DESC, size:%d, srcref:%d, prov:%d", len, nmsd->srcref, nmsd->provider);
 		PSCounts cnt = {-1, nmsd->provider, nmsd->srcref, 0, 0, 0, 0};
 		NSValue *srcval = self.nstats[@(nmsd->srcref)];
 		if (srcval)
 			cnt = srcval.countsValue;
-//		else {
-			if (nmsd->provider == NSTAT_PROVIDER_UDP)
-				cnt.pid = ((nstat_udp_descriptor *)nmsd->data)->pid;
-			else if (nmsd->provider == NSTAT_PROVIDER_TCP)
-//			{ if (g_OsVer == 7)
-//				cnt.pid = ((nstat_tcp_descriptor_10_7 *)nmsd->data)->pid;
-//			else if (g_OsVer == 8)
-//				cnt.pid = ((nstat_tcp_descriptor_10_8 *)nmsd->data)->pid;
-//			else if (g_OsVer == 10)
-				cnt.pid = ((nstat_tcp_descriptor *)nmsd->data)->pid;
-//			}
-//		}
-		if (cnt.pid >= 0) {
-//			NSLog(@"NSTAT_MSG_TYPE_SRC_DESC, adding %d to nstats (%d, %d, %d)", nmsd->srcref, cnt.pid, cnt.provider, cnt.srcref);
+		if (nmsd->provider == NSTAT_PROVIDER_UDP) {
+			if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_7_0)
+				cnt.pid = ((nstat_udp_descriptor_ios6_9 *)nmsd->data)->epid;
+			else if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_6_0)
+				cnt.pid = ((nstat_udp_descriptor_ios6_9 *)nmsd->data)->pid;
+			else
+				cnt.pid = ((nstat_udp_descriptor_ios5 *)nmsd->data)->pid;
+		} else if (nmsd->provider == NSTAT_PROVIDER_TCP) {
+			if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_8_0)
+				cnt.pid = ((nstat_tcp_descriptor_ios8_9 *)nmsd->data)->epid;
+			else if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_7_0)
+				cnt.pid = ((nstat_tcp_descriptor_ios6_7 *)nmsd->data)->epid;
+			else if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_6_0)
+				cnt.pid = ((nstat_tcp_descriptor_ios6_7 *)nmsd->data)->pid;
+			else
+				cnt.pid = ((nstat_tcp_descriptor_ios5 *)nmsd->data)->pid;
+		}
+		if (cnt.pid > 0) {
 			self.nstats[@(nmsd->srcref)] = [NSValue valueWithCounts:cnt];
 			nstatQuerySrc(fd, nmsd->srcref, nmsd->srcref);
 		}
@@ -133,25 +112,15 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 		NSValue *srcval = self.nstats[@(cnts->srcref)];
 		if (srcval) {
 			PSCounts cnt = srcval.countsValue;
-//			NSLog(@"NSTAT_MSG_TYPE_SRC_COUNTS, size:%d, srcref:%d/%d proc:%d", len, cnts->srcref, cnt.srcref, cnt.pid);
-//			NSLog(@"NSTAT_MSG_TYPE_SRC_COUNTS,  %d counts:%@", cnts->srcref, srcval);
 			cnt.rxpackets = cnts->counts.nstat_rxpackets; cnt.rxbytes = cnts->counts.nstat_rxbytes;
 			cnt.txpackets = cnts->counts.nstat_txpackets; cnt.txbytes = cnts->counts.nstat_txbytes;
 			self.nstats[@(cnts->srcref)] = [NSValue valueWithCounts:cnt];
-		} else
-			NSLog(@"NSTAT_MSG_TYPE_SRC_COUNTS, size:%d, no value! srcref:%d context:%d", len, cnts->srcref, (int)ns->context);
+		}
 		break; }
-	case NSTAT_MSG_TYPE_SUCCESS:
-//		NSLog(@"NSTAT_MSG_TYPE_SUCCESS, size:%d, ctx:%llu", len, ns->context);
-		break;
-	case NSTAT_MSG_TYPE_ERROR:
-//		NSLog(@"NSTAT_MSG_TYPE_ERROR, size:%d, ctx:%llu", len, ns->context);
-		break;
-	default:
-		NSLog(@"NSTAT:%d, size:%d, ctx:%llu", ns->type, len, ns->context);
+//	case NSTAT_MSG_TYPE_SUCCESS:	NSLog(@"NSTAT_MSG_TYPE_SUCCESS, size:%d, ctx:%llu", len, ns->context); break;
+//	case NSTAT_MSG_TYPE_ERROR:		NSLog(@"NSTAT_MSG_TYPE_ERROR, size:%d, ctx:%llu", len, ns->context); break;
+//	default:						NSLog(@"NSTAT:%d, size:%d, ctx:%llu", ns->type, len, ns->context);
 	}
-	// For each NSTAT_MSG_TYPE_SRC_ADDED:
-	// NSTAT_MSG_TYPE_GET_SRC_DESC, srcref...
 }
 
 @implementation PSProcArray
@@ -183,10 +152,9 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 		[self closeNetStat];
 		return;
 	}
-//	NSLog(@"Got net sock: %d", fd);
 	nstatAddSrc(fd, NSTAT_PROVIDER_TCP, (u_int64_t)self);
 	nstatAddSrc(fd, NSTAT_PROVIDER_UDP, (u_int64_t)self);
-//	nstatQuerySrc(fd, NSTAT_SRC_REF_ALL, 4);
+//	nstatQuerySrc(fd, NSTAT_SRC_REF_ALL, ctx);
 }
 
 - (void)closeNetStat
@@ -278,6 +246,8 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 			self.machCalls += proc->events.syscalls_mach - proc->events_prev.syscalls_mach;
 			self.unixCalls += proc->events.syscalls_unix - proc->events_prev.syscalls_unix;
 			self.switchCount += proc->events.csw - proc->events_prev.csw;
+			proc.tcp = 0;
+			proc.udp = 0;
 		}
 	}
 	free(kp);
@@ -292,10 +262,15 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 			proc->netstat.rxbytes   += cnt.rxbytes;
 			proc->netstat.txpackets += cnt.txpackets;
 			proc->netstat.txbytes   += cnt.txbytes;
+			if (cnt.provider == NSTAT_PROVIDER_TCP)
+				proc.tcp++;
+			if (cnt.provider == NSTAT_PROVIDER_UDP)
+				proc.udp++;
+			proc.moredata = [NSString stringWithFormat:@"%d/%d", proc.tcp, proc.udp];
 			if (fd != -1) {
-				if (cnt.pid == 1)
-					nstatGetSrcDesc(fd, cnt.provider, cnt.srcref);
-				else
+//				if (cnt.pid == 1)
+//					nstatGetSrcDesc(fd, cnt.provider, cnt.srcref);
+//				else
 					nstatQuerySrc(fd, cnt.srcref, cnt.srcref);
 			}
 		}

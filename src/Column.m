@@ -437,9 +437,9 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			descr:@"Network packets transmitted by process since launch.\n\n"
 				"This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
 				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
-//		[PSColumn psColumnWithName:@"More" fullname:@"More Data" align:NSTextAlignmentLeft width:170 sortDesc:NO style:0
-//			data:^NSString*(PSProc *proc) { return proc.moredata; }
-//			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.moredata caseInsensitiveCompare:b.moredata]; } summary:nil],
+		[PSColumn psColumnWithName:@"More" fullname:@"More Data" align:NSTextAlignmentLeft width:170 sortDesc:NO style:0
+			data:^NSString*(PSProc *proc) { return proc.moredata; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.moredata caseInsensitiveCompare:b.moredata]; } summary:nil],
 		] retain];
 		int i = 1; for (PSColumn *col in allColumns) col.tag = i++;
 	});

@@ -38,29 +38,6 @@
 
 #define __NSTAT_REVISION__	7
 
-#ifndef __IPHONE_6_0
-#define __IPHONE_6_0 60000
-#endif
-
-#ifndef __IPHONE_7_0
-#define __IPHONE_7_0 70000
-#endif
-
-#ifndef __IPHONE_8_0
-#define __IPHONE_8_0 80000
-#endif
-
-#ifndef __IPHONE_9_0
-#define __IPHONE_9_0 90000
-#endif
-
-typedef struct tcp_conn_status {
-	u_int32_t probe_activated : 1;
-	u_int32_t write_probe_failed : 1;
-	u_int32_t read_probe_failed : 1;
-	u_int32_t conn_probe_failed : 1;
-} tcp_conn_status;
-
 typedef	u_int32_t	nstat_provider_id_t;
 typedef	u_int32_t	nstat_src_ref_t;
 
@@ -123,8 +100,8 @@ enum
 	,NSTAT_SYSINFO_KEY_SOCK_ATMBLIMIT	= 5
 	,NSTAT_SYSINFO_KEY_IPV4_AVGRTT		= 6
 	,NSTAT_SYSINFO_KEY_IPV6_AVGRTT		= 7
-	,NSTAT_SYSINFO_KEY_SEND_PLR			= 8
-	,NSTAT_SYSINFO_KEY_RECV_PLR			= 9
+	,NSTAT_SYSINFO_KEY_SEND_PLR		= 8
+	,NSTAT_SYSINFO_KEY_RECV_PLR		= 9
 	,NSTAT_SYSINFO_KEY_SEND_TLRTO		= 10
 	,NSTAT_SYSINFO_KEY_SEND_REORDERRATE	= 11
 	,NSTAT_SYSINFO_CONNECTION_ATTEMPTS	= 12
@@ -134,11 +111,11 @@ enum
 	,NSTAT_SYSINFO_ECN_CLIENT_SUCCESS	= 16
 	,NSTAT_SYSINFO_ECN_SERVER_SUCCESS	= 17
 	,NSTAT_SYSINFO_ECN_NOT_SUPPORTED	= 18
-	,NSTAT_SYSINFO_ECN_LOST_SYN			= 19
+	,NSTAT_SYSINFO_ECN_LOST_SYN		= 19
 	,NSTAT_SYSINFO_ECN_LOST_SYNACK		= 20
-	,NSTAT_SYSINFO_ECN_RECV_CE			= 21
-	,NSTAT_SYSINFO_ECN_RECV_ECE			= 22
-	,NSTAT_SYSINFO_ECN_SENT_ECE			= 23
+	,NSTAT_SYSINFO_ECN_RECV_CE		= 21
+	,NSTAT_SYSINFO_ECN_RECV_ECE		= 22
+	,NSTAT_SYSINFO_ECN_SENT_ECE		= 23
 	,NSTAT_SYSINFO_ECN_CONN_RECV_CE		= 24
 	,NSTAT_SYSINFO_ECN_CONN_PLNOCE		= 25
 	,NSTAT_SYSINFO_ECN_CONN_PL_CE		= 26
@@ -157,7 +134,7 @@ enum
 	,NSTAT_SYSINFO_TFO_COOKIE_RCV		= 39
 	,NSTAT_SYSINFO_TFO_SYN_DATA_SENT	= 40
 	,NSTAT_SYSINFO_TFO_SYN_DATA_ACKED	= 41
-	,NSTAT_SYSINFO_TFO_SYN_LOSS			= 42
+	,NSTAT_SYSINFO_TFO_SYN_LOSS		= 42
 	,NSTAT_SYSINFO_TFO_BLACKHOLE		= 43
 	,NSTAT_SYSINFO_ECN_FALLBACK_SYNLOSS	= 44
 	,NSTAT_SYSINFO_ECN_FALLBACK_REORDER	= 45
@@ -169,21 +146,21 @@ enum
 	,NSTAT_SYSINFO_ECN_IFNET_CLIENT_SUCCESS	= 51
 	,NSTAT_SYSINFO_ECN_IFNET_SERVER_SUCCESS	= 52
 	,NSTAT_SYSINFO_ECN_IFNET_PEER_NOSUPPORT	= 53
-	,NSTAT_SYSINFO_ECN_IFNET_SYN_LOST		= 54
+	,NSTAT_SYSINFO_ECN_IFNET_SYN_LOST	= 54
 	,NSTAT_SYSINFO_ECN_IFNET_SYNACK_LOST	= 55
-	,NSTAT_SYSINFO_ECN_IFNET_RECV_CE		= 56
-	,NSTAT_SYSINFO_ECN_IFNET_RECV_ECE		= 57
-	,NSTAT_SYSINFO_ECN_IFNET_SENT_ECE		= 58
+	,NSTAT_SYSINFO_ECN_IFNET_RECV_CE	= 56
+	,NSTAT_SYSINFO_ECN_IFNET_RECV_ECE	= 57
+	,NSTAT_SYSINFO_ECN_IFNET_SENT_ECE	= 58
 	,NSTAT_SYSINFO_ECN_IFNET_CONN_RECV_CE	= 59
 	,NSTAT_SYSINFO_ECN_IFNET_CONN_RECV_ECE	= 60
 	,NSTAT_SYSINFO_ECN_IFNET_CONN_PLNOCE	= 61
-	,NSTAT_SYSINFO_ECN_IFNET_CONN_PLCE		= 62
+	,NSTAT_SYSINFO_ECN_IFNET_CONN_PLCE	= 62
 	,NSTAT_SYSINFO_ECN_IFNET_CONN_NOPLCE	= 63
 	,NSTAT_SYSINFO_ECN_IFNET_FALLBACK_SYNLOSS = 64
 	,NSTAT_SYSINFO_ECN_IFNET_FALLBACK_REORDER = 65
 	,NSTAT_SYSINFO_ECN_IFNET_FALLBACK_CE	= 66
-	,NSTAT_SYSINFO_ECN_IFNET_ON_RTT_AVG		= 67
-	,NSTAT_SYSINFO_ECN_IFNET_ON_RTT_VAR		= 68
+	,NSTAT_SYSINFO_ECN_IFNET_ON_RTT_AVG	= 67
+	,NSTAT_SYSINFO_ECN_IFNET_ON_RTT_VAR	= 68
 	,NSTAT_SYSINFO_ECN_IFNET_ON_OOPERCENT	= 69
 	,NSTAT_SYSINFO_ECN_IFNET_ON_SACK_EPISODE = 70
 	,NSTAT_SYSINFO_ECN_IFNET_ON_REORDER_PERCENT = 71
@@ -215,10 +192,10 @@ enum
 
 enum
 {
-	NSTAT_PROVIDER_NONE		= 0
+	NSTAT_PROVIDER_NONE	= 0
 	,NSTAT_PROVIDER_ROUTE	= 1
-	,NSTAT_PROVIDER_TCP		= 2
-	,NSTAT_PROVIDER_UDP		= 3
+	,NSTAT_PROVIDER_TCP	= 2
+	,NSTAT_PROVIDER_UDP	= 3
 	,NSTAT_PROVIDER_IFNET	= 4
 	,NSTAT_PROVIDER_SYSINFO = 5
 };
@@ -254,77 +231,7 @@ typedef struct nstat_tcp_add_param
 	} remote;
 } nstat_tcp_add_param;
 
-typedef struct nstat_tcp_descriptor_ios5
-{
-	union
-	{
-		struct sockaddr_in	v4;
-		struct sockaddr_in6	v6;
-	} local;
-	
-	union
-	{
-		struct sockaddr_in	v4;
-		struct sockaddr_in6	v6;
-	} remote;
-	
-	u_int32_t	ifindex;
-	
-	u_int32_t	state;
-	
-	u_int32_t	sndbufsize;
-	u_int32_t	sndbufused;
-	u_int32_t	rcvbufsize;
-	u_int32_t	rcvbufused;
-	u_int32_t	txunacked;
-	u_int32_t	txwindow;
-	u_int32_t	txcwindow;
-	
-	u_int64_t	upid;
-	u_int32_t	pid;
-	char		pname[64];
-} __attribute__((packed)) nstat_tcp_descriptor_ios5;
-
-typedef struct nstat_tcp_descriptor_ios6_7
-{
-	union
-	{
-		struct sockaddr_in	v4;
-		struct sockaddr_in6	v6;
-	} local;
-	
-	union
-	{
-		struct sockaddr_in	v4;
-		struct sockaddr_in6	v6;
-	} remote;
-	
-	u_int32_t	ifindex;
-	
-	u_int32_t	state;
-	
-	u_int32_t	sndbufsize;
-	u_int32_t	sndbufused;
-	u_int32_t	rcvbufsize;
-	u_int32_t	rcvbufused;
-	u_int32_t	txunacked;
-	u_int32_t	txwindow;
-	u_int32_t	txcwindow;
-	u_int32_t	traffic_class;
-	
-	u_int64_t	upid;
-	u_int32_t	pid;
-	char		pname[64];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-	u_int64_t	eupid;
-	u_int32_t	epid;
-
-	uint8_t		uuid[16];
-	uint8_t		euuid[16];
-#endif
-} __attribute__((packed)) nstat_tcp_descriptor_ios6_7;
-
-typedef struct nstat_tcp_descriptor_ios8_9
+typedef struct nstat_tcp_descriptor
 {
 	union
 	{
@@ -361,40 +268,14 @@ typedef struct nstat_tcp_descriptor_ios8_9
 
 	uint8_t		uuid[16];
 	uint8_t		euuid[16];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0
 	uint8_t		vuuid[16];
 	struct tcp_conn_status connstatus;
 	uint16_t	ifnet_properties	__attribute__((aligned(4)));
-#endif
-} __attribute__((packed)) nstat_tcp_descriptor_ios8_9;
+} nstat_tcp_descriptor;
 
 typedef struct nstat_tcp_add_param	nstat_udp_add_param;
 
-typedef struct nstat_udp_descriptor_ios5
-{
-	union
-	{
-		struct sockaddr_in	v4;
-		struct sockaddr_in6	v6;
-	} local;
-	
-	union
-	{
-		struct sockaddr_in	v4;
-		struct sockaddr_in6	v6;
-	} remote;
-	
-	u_int32_t	ifindex;
-	
-	u_int32_t	rcvbufsize;
-	u_int32_t	rcvbufused;
-	
-	u_int64_t	upid;
-	u_int32_t	pid;
-	char		pname[64];
-} __attribute__((packed)) nstat_udp_descriptor_ios5;
-
-typedef struct nstat_udp_descriptor_ios6_9
+typedef struct nstat_udp_descriptor
 {
 	union
 	{
@@ -417,20 +298,14 @@ typedef struct nstat_udp_descriptor_ios6_9
 	u_int64_t	upid;
 	u_int32_t	pid;
 	char		pname[64];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	u_int64_t	eupid;
 	u_int32_t	epid;
 
 	uint8_t		uuid[16];
 	uint8_t		euuid[16];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
 	uint8_t		vuuid[16];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0
 	uint16_t	ifnet_properties;
-#endif
-#endif
-#endif
-} __attribute__((packed)) nstat_udp_descriptor_ios6_9;
+} nstat_udp_descriptor;
 
 typedef struct nstat_route_descriptor
 {
@@ -476,11 +351,11 @@ typedef struct nstat_ifnet_desc_cellular_status
 #define NSTAT_IFNET_DESC_CELL_LINK_QUALITY_METRIC_VALID		0x1
 #define NSTAT_IFNET_DESC_CELL_UL_EFFECTIVE_BANDWIDTH_VALID	0x2
 #define NSTAT_IFNET_DESC_CELL_UL_MAX_BANDWIDTH_VALID		0x4
-#define NSTAT_IFNET_DESC_CELL_UL_MIN_LATENCY_VALID			0x8
+#define NSTAT_IFNET_DESC_CELL_UL_MIN_LATENCY_VALID		0x8
 #define NSTAT_IFNET_DESC_CELL_UL_EFFECTIVE_LATENCY_VALID	0x10
-#define NSTAT_IFNET_DESC_CELL_UL_MAX_LATENCY_VALID			0x20
-#define NSTAT_IFNET_DESC_CELL_UL_RETXT_LEVEL_VALID			0x40
-#define NSTAT_IFNET_DESC_CELL_UL_BYTES_LOST_VALID			0x80
+#define NSTAT_IFNET_DESC_CELL_UL_MAX_LATENCY_VALID		0x20
+#define NSTAT_IFNET_DESC_CELL_UL_RETXT_LEVEL_VALID		0x40
+#define NSTAT_IFNET_DESC_CELL_UL_BYTES_LOST_VALID		0x80
 #define NSTAT_IFNET_DESC_CELL_UL_MIN_QUEUE_SIZE_VALID		0x100
 #define NSTAT_IFNET_DESC_CELL_UL_AVG_QUEUE_SIZE_VALID		0x200
 #define NSTAT_IFNET_DESC_CELL_UL_MAX_QUEUE_SIZE_VALID		0x400
@@ -489,23 +364,31 @@ typedef struct nstat_ifnet_desc_cellular_status
 #define NSTAT_IFNET_DESC_CELL_CONFIG_INACTIVITY_TIME_VALID	0x2000
 #define NSTAT_IFNET_DESC_CELL_CONFIG_BACKOFF_TIME_VALID		0x4000
 	u_int32_t link_quality_metric;
-	u_int32_t ul_effective_bandwidth; /* Measured uplink bandwidth based on current activity (bps) */
-	u_int32_t ul_max_bandwidth; /* Maximum supported uplink bandwidth (bps) */
-	u_int32_t ul_min_latency; /* min expected uplink latency for first hop (ms) */
-	u_int32_t ul_effective_latency; /* current expected uplink latency for first hop (ms) */
-	u_int32_t ul_max_latency; /* max expected uplink latency first hop (ms) */
+	u_int32_t ul_effective_bandwidth; /* Measured uplink bandwidth based on
+					     current activity (bps) */
+	u_int32_t ul_max_bandwidth; /* Maximum supported uplink bandwidth
+				       (bps) */
+	u_int32_t ul_min_latency; /* min expected uplink latency for first hop
+				     (ms) */
+	u_int32_t ul_effective_latency; /* current expected uplink latency for
+					   first hop (ms) */
+	u_int32_t ul_max_latency; /* max expected uplink latency first hop
+				    (ms) */
 	u_int32_t ul_retxt_level; /* Retransmission metric */
 #define NSTAT_IFNET_DESC_CELL_UL_RETXT_LEVEL_NONE	1
 #define NSTAT_IFNET_DESC_CELL_UL_RETXT_LEVEL_LOW	2
 #define NSTAT_IFNET_DESC_CELL_UL_RETXT_LEVEL_MEDIUM	3
 #define NSTAT_IFNET_DESC_CELL_UL_RETXT_LEVEL_HIGH	4
 
-	u_int32_t ul_bytes_lost; /* % of total bytes lost on uplink in Q10 format */
+	u_int32_t ul_bytes_lost; /* % of total bytes lost on uplink in Q10
+				    format */
 	u_int32_t ul_min_queue_size; /* minimum bytes in queue */
 	u_int32_t ul_avg_queue_size; /* average bytes in queue */
 	u_int32_t ul_max_queue_size; /* maximum bytes in queue */
-	u_int32_t dl_effective_bandwidth; /* Measured downlink bandwidth based on current activity (bps) */
-	u_int32_t dl_max_bandwidth; /* Maximum supported downlink bandwidth (bps) */
+	u_int32_t dl_effective_bandwidth; /* Measured downlink bandwidth based
+					     on current activity (bps) */
+	u_int32_t dl_max_bandwidth; /* Maximum supported downlink bandwidth
+				       (bps) */
 	u_int32_t config_inactivity_time; /* ms */
 	u_int32_t config_backoff_time; /* new connections backoff time in ms */
 } nstat_ifnet_desc_cellular_status;
@@ -532,21 +415,30 @@ typedef struct nstat_ifnet_desc_wifi_status {
 #define	NSTAT_IFNET_DESC_WIFI_CONFIG_SCAN_COUNT_VALID		0x20000
 #define	NSTAT_IFNET_DESC_WIFI_CONFIG_SCAN_DURATION_VALID	0x40000
 	u_int32_t link_quality_metric; /* link quality metric */
-	u_int32_t ul_effective_bandwidth; /* Measured uplink bandwidth based on current activity (bps) */
-	u_int32_t ul_max_bandwidth; /* Maximum supported uplink bandwidth (bps) */
-	u_int32_t ul_min_latency; /* min expected uplink latency for first hop (ms) */
-	u_int32_t ul_effective_latency; /* current expected uplink latency for first hop (ms) */
-	u_int32_t ul_max_latency; /* max expected uplink latency for first hop (ms) */
+	u_int32_t ul_effective_bandwidth; /* Measured uplink bandwidth based on
+					     current activity (bps) */
+	u_int32_t ul_max_bandwidth; /* Maximum supported uplink bandwidth
+				       (bps) */
+	u_int32_t ul_min_latency; /* min expected uplink latency for first hop
+				     (ms) */
+	u_int32_t ul_effective_latency; /* current expected uplink latency for
+					   first hop (ms) */
+	u_int32_t ul_max_latency; /* max expected uplink latency for first hop
+				     (ms) */
 	u_int32_t ul_retxt_level; /* Retransmission metric */
 #define NSTAT_IFNET_DESC_WIFI_UL_RETXT_LEVEL_NONE	1
 #define NSTAT_IFNET_DESC_WIFI_UL_RETXT_LEVEL_LOW	2
 #define NSTAT_IFNET_DESC_WIFI_UL_RETXT_LEVEL_MEDIUM	3
 #define NSTAT_IFNET_DESC_WIFI_UL_RETXT_LEVEL_HIGH	4
 
-	u_int32_t ul_bytes_lost; /* % of total bytes lost on uplink in Q10 format */
-	u_int32_t ul_error_rate; /* % of bytes dropped on uplink after many retransmissions in Q10 format */
-	u_int32_t dl_effective_bandwidth; /* Measured downlink bandwidth based on current activity (bps) */
-	u_int32_t dl_max_bandwidth; /* Maximum supported downlink bandwidth (bps) */
+	u_int32_t ul_bytes_lost; /* % of total bytes lost on uplink in Q10
+				    format */
+	u_int32_t ul_error_rate; /* % of bytes dropped on uplink after many
+				    retransmissions in Q10 format */
+	u_int32_t dl_effective_bandwidth; /* Measured downlink bandwidth based
+					     on current activity (bps) */
+	u_int32_t dl_max_bandwidth; /* Maximum supported downlink bandwidth
+				       (bps) */
 	/*
 	 * The download latency values indicate the time AP may have to wait
 	 * for the  driver to receive the packet. These values give the range
@@ -554,7 +446,8 @@ typedef struct nstat_ifnet_desc_wifi_status {
 	 * hopping where the interface becomes unavailable.
 	 */
 	u_int32_t dl_min_latency; /* min expected latency for first hop in ms */
-	u_int32_t dl_effective_latency; /* current expected latency for first hop in ms */
+	u_int32_t dl_effective_latency; /* current expected latency for first
+					   hop in ms */
 	u_int32_t dl_max_latency; /* max expected latency for first hop in ms */
 	u_int32_t dl_error_rate; /* % of CRC or other errors in Q10 format */
 	u_int32_t config_frequency; /* 2.4 or 5 GHz */
@@ -589,11 +482,9 @@ typedef struct nstat_ifnet_descriptor
 	char				name[IFNAMSIZ+1];
 	u_int32_t			ifindex;
 	u_int64_t			threshold;
-	unsigned int		type;
+	unsigned int			type;
 	char				description[IF_DESCSIZE];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0
 	nstat_ifnet_desc_link_status	link_status;
-#endif
 } nstat_ifnet_descriptor;
 
 typedef struct nstat_sysinfo_descriptor
@@ -607,8 +498,8 @@ typedef struct nstat_sysinfo_add_param
 	u_int32_t	flags;
 } nstat_sysinfo_add_param;
 
-#define	NSTAT_SYSINFO_MBUF_STATS		0x0001
-#define	NSTAT_SYSINFO_TCP_STATS			0x0002	
+#define	NSTAT_SYSINFO_MBUF_STATS	0x0001
+#define	NSTAT_SYSINFO_TCP_STATS		0x0002	
 #define NSTAT_SYSINFO_IFNET_ECN_STATS	0x0003
 
 #pragma mark -- Network Statistics User Client --
@@ -618,8 +509,8 @@ typedef struct nstat_sysinfo_add_param
 enum
 {
 	// generic response messages
-	NSTAT_MSG_TYPE_SUCCESS				= 0
-	,NSTAT_MSG_TYPE_ERROR				= 1
+	NSTAT_MSG_TYPE_SUCCESS			= 0
+	,NSTAT_MSG_TYPE_ERROR			= 1
 	
 	// Requests
 	,NSTAT_MSG_TYPE_ADD_SRC				= 1001
@@ -632,12 +523,12 @@ enum
 	,NSTAT_MSG_TYPE_SUBSCRIBE_SYSINFO	= 1008
 	
 	// Responses/Notfications
-	,NSTAT_MSG_TYPE_SRC_ADDED			= 10001
-	,NSTAT_MSG_TYPE_SRC_REMOVED			= 10002
-	,NSTAT_MSG_TYPE_SRC_DESC			= 10003
-	,NSTAT_MSG_TYPE_SRC_COUNTS			= 10004
-	,NSTAT_MSG_TYPE_SYSINFO_COUNTS		= 10005
-	,NSTAT_MSG_TYPE_SRC_UPDATE			= 10006
+	,NSTAT_MSG_TYPE_SRC_ADDED				= 10001
+	,NSTAT_MSG_TYPE_SRC_REMOVED				= 10002
+	,NSTAT_MSG_TYPE_SRC_DESC				= 10003
+	,NSTAT_MSG_TYPE_SRC_COUNTS				= 10004
+	,NSTAT_MSG_TYPE_SYSINFO_COUNTS			= 10005
+	,NSTAT_MSG_TYPE_SRC_UPDATE				= 10006
 };
 
 enum
@@ -680,8 +571,8 @@ enum
 enum
 {
 	NSTAT_MSG_HDR_FLAG_SUPPORTS_AGGREGATE	= 1 << 0,
-	NSTAT_MSG_HDR_FLAG_CONTINUATION			= 1 << 1,
-	NSTAT_MSG_HDR_FLAG_CLOSING				= 1 << 2,
+	NSTAT_MSG_HDR_FLAG_CONTINUATION		= 1 << 1,
+	NSTAT_MSG_HDR_FLAG_CLOSING		= 1 << 2,
 };
 
 typedef struct nstat_msg_hdr
@@ -709,7 +600,7 @@ typedef struct nstat_msg_add_all_srcs
 {
 	nstat_msg_hdr		hdr;
 	nstat_provider_id_t	provider;
-	u_int64_t			filter;
+	u_int64_t		filter;
 } nstat_msg_add_all_srcs;
 
 typedef struct nstat_msg_src_added
@@ -735,7 +626,7 @@ typedef struct nstat_msg_set_filter
 {
 	nstat_msg_hdr		hdr;
 	nstat_src_ref_t		srcref;
-	u_int32_t			filter;
+	u_int32_t		filter;
 } nstat_msg_set_filter;
 
 typedef struct nstat_msg_src_description
