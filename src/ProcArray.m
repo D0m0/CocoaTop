@@ -246,8 +246,6 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 			self.machCalls += proc->events.syscalls_mach - proc->events_prev.syscalls_mach;
 			self.unixCalls += proc->events.syscalls_unix - proc->events_prev.syscalls_unix;
 			self.switchCount += proc->events.csw - proc->events_prev.csw;
-			proc.tcp = 0;
-			proc.udp = 0;
 		}
 	}
 	free(kp);
@@ -262,11 +260,6 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 			proc->netstat.rxbytes   += cnt.rxbytes;
 			proc->netstat.txpackets += cnt.txpackets;
 			proc->netstat.txbytes   += cnt.txbytes;
-			if (cnt.provider == NSTAT_PROVIDER_TCP)
-				proc.tcp++;
-			if (cnt.provider == NSTAT_PROVIDER_UDP)
-				proc.udp++;
-			proc.moredata = [NSString stringWithFormat:@"%d/%d", proc.tcp, proc.udp];
 			if (fd != -1) {
 //				if (cnt.pid == 1)
 //					nstatGetSrcDesc(fd, cnt.provider, cnt.srcref);

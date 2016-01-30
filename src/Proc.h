@@ -76,9 +76,7 @@ typedef struct PSCounts {
 @property (retain) NSDictionary *app;
 @property (retain) NSMutableDictionary *dispQueue;
 //@property (retain) NSMutableArray *cpuhistory;
-@property (assign) int tcp;
-@property (assign) int udp;
-@property (retain) NSString *moredata;
+//@property (retain) NSString *moredata;
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
 - (void)update;
 - (void)updateWithKinfo:(struct kinfo_proc *)ki;

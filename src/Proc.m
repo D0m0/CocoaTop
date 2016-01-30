@@ -146,7 +146,6 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	// NetStat info
 	memcpy(&netstat_prev, &netstat, sizeof(netstat));
 	memcpy(&netstat, &netstat_cache, sizeof(netstat));
-//	memset(&netstat, 0, sizeof(netstat));
 	// Rusage info (iOS7+)
 	memcpy(&rusage_prev, &rusage, sizeof(rusage));
 	memset(&rusage, 0, sizeof(rusage));

@@ -38,22 +38,6 @@
 
 #define __NSTAT_REVISION__	7
 
-#ifndef __IPHONE_6_0
-#define __IPHONE_6_0 60000
-#endif
-
-#ifndef __IPHONE_7_0
-#define __IPHONE_7_0 70000
-#endif
-
-#ifndef __IPHONE_8_0
-#define __IPHONE_8_0 80000
-#endif
-
-#ifndef __IPHONE_9_0
-#define __IPHONE_9_0 90000
-#endif
-
 typedef struct tcp_conn_status {
 	u_int32_t probe_activated : 1;
 	u_int32_t write_probe_failed : 1;
@@ -315,13 +299,12 @@ typedef struct nstat_tcp_descriptor_ios6_7
 	u_int64_t	upid;
 	u_int32_t	pid;
 	char		pname[64];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+// iOS 7+
 	u_int64_t	eupid;
 	u_int32_t	epid;
 
 	uint8_t		uuid[16];
 	uint8_t		euuid[16];
-#endif
 } __attribute__((packed)) nstat_tcp_descriptor_ios6_7;
 
 typedef struct nstat_tcp_descriptor_ios8_9
@@ -361,11 +344,10 @@ typedef struct nstat_tcp_descriptor_ios8_9
 
 	uint8_t		uuid[16];
 	uint8_t		euuid[16];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0
+// iOS 9+
 	uint8_t		vuuid[16];
 	struct tcp_conn_status connstatus;
 	uint16_t	ifnet_properties	__attribute__((aligned(4)));
-#endif
 } __attribute__((packed)) nstat_tcp_descriptor_ios8_9;
 
 typedef struct nstat_tcp_add_param	nstat_udp_add_param;
@@ -417,19 +399,16 @@ typedef struct nstat_udp_descriptor_ios6_9
 	u_int64_t	upid;
 	u_int32_t	pid;
 	char		pname[64];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+// iOS 7+
 	u_int64_t	eupid;
 	u_int32_t	epid;
 
 	uint8_t		uuid[16];
 	uint8_t		euuid[16];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
+// iOS 8+
 	uint8_t		vuuid[16];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0
+// iOS 9+
 	uint16_t	ifnet_properties;
-#endif
-#endif
-#endif
 } __attribute__((packed)) nstat_udp_descriptor_ios6_9;
 
 typedef struct nstat_route_descriptor
@@ -591,9 +570,8 @@ typedef struct nstat_ifnet_descriptor
 	u_int64_t			threshold;
 	unsigned int		type;
 	char				description[IF_DESCSIZE];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0
+// iOS 9+
 	nstat_ifnet_desc_link_status	link_status;
-#endif
 } nstat_ifnet_descriptor;
 
 typedef struct nstat_sysinfo_descriptor
