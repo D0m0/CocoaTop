@@ -8,8 +8,6 @@
 	<string>CocoaTop</string>
 	<key>CFBundleExecutable</key>
 	<string>CocoaTop_</string>
-	<key>CFBundleIconFile</key>
-	<string>Icon.png</string>
 	<key>CFBundleIdentifier</key>
 	<string>ru.domo.CocoaTop</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -26,6 +24,20 @@
 	<array>
 		<integer>1</integer>
 		<integer>2</integer>
+	</array>
+	<key>CFBundleIconFiles</key>
+	<array>
+		<!-- iOS 6 iPhone (home) [57x57] -->
+		<string>Icon.png</string>
+		<string>Icon@2x.png</string>
+		<!-- iOS 6 iPad (home) [72x72] -->
+		<string>Icon-72.png</string>
+		<!-- iOS 7 iPhone (home) [60x60] -->
+		<string>Icon-60</string>
+		<!-- iOS 6 iPhone (spotlight) [29x29] -->
+		<!-- iOS 7 All Devices (settings) [29x29] -->
+		<string>Icon-Small.png</string>
+		<string>Icon-Small@2x.png</string>
 	</array>
 	<key>UILaunchImages</key>
 	<array>
