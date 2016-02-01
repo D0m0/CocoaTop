@@ -170,10 +170,11 @@
 			(float)self.procs.memUsed / 1024 / 1024,
 			(float)self.procs.memTotal / 1024 / 1024,
 			(float)self.procs.totalCpu / 10];
+	// Query network statistics, cause no one did it before.
+	if (![timer isKindOfClass:[NSTimer class]])
+		[self.procs.nstats query];
 	// First time refresh? Or returned from a sub-page.
 	if (timer == nil) {
-		// Query network statistics, cause no one did it before.
-		[self.procs.nstats query];
 		// We don't need info about new processes, they are all new :)
 		[self.procs setAllDisplayed:ProcDisplayNormal];
 		NSUInteger idx = NSNotFound;

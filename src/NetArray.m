@@ -32,6 +32,9 @@
 int nstatAddSrc(int fd, int provider, u_int64_t ctx)
 {
 	nstat_msg_add_all_srcs aasreq = {{ctx, NSTAT_MSG_TYPE_ADD_ALL_SRCS, 0}, provider, NSTAT_FILTER_ACCEPT_ALL | NSTAT_FILTER_PROVIDER_NOZEROBYTES | NSTAT_FILTER_REQUIRE_SRC_ADDED};
+//	CFDataRef data = CFDataCreate(NULL, &aasreq, sizeof(aasreq));
+//	CFSocketError err = CFSocketSendData(s, NULL, data, 0);
+//	CFRelease(data);
 	return write(fd, &aasreq, sizeof(aasreq));
 }
 

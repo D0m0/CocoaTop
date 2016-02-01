@@ -18,6 +18,10 @@
 #define __MAC_10_9 1090
 #endif
 
+#ifndef NSFoundationVersionNumber_iOS_6_0
+#define NSFoundationVersionNumber_iOS_6_0 992.00
+#endif
+
 #ifndef NSFoundationVersionNumber_iOS_7_0
 #define NSFoundationVersionNumber_iOS_7_0 1047.00
 #endif
