@@ -49,7 +49,7 @@
 + (int)refreshArray:(PSSockArray *)socks
 {
 	[socks.socks removeAllObjects];
-	for (PSColumn *col in [PSColumn psGetAllColumns]) {
+	for (PSColumn *col in [PSColumn psGetAllColumns]) if (!(col.style & ColumnStyleNoSummary)) {
 		id sock = [PSSockSummary psSockWithProc:socks.proc column:col];
 		if (sock) [socks.socks addObject:sock];
 	}

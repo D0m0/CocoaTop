@@ -401,37 +401,37 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"DTPlatformVersion"] : @"N/A"; } sort:nil summary:nil],
 		[PSColumn psColumnWithName:@"" fullname:@"Compiler Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"DTCompiler"] : @"N/A"; } sort:nil summary:nil],
-		[PSColumn psColumnWithName:@"NetRx" fullname:@"Net Bytes Received Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"NetRx" fullname:@"Net Bytes Received Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:ColumnStyleNoSummary
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,netstat,rxbytes) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,netstat,rxbytes) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, rxbytes); } summary:nil
 			descr:@"Network bytes received by process per update period."],
-		[PSColumn psColumnWithName:@"NetTx" fullname:@"Net Bytes Sent Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"NetTx" fullname:@"Net Bytes Sent Delta" align:NSTextAlignmentRight width:70 sortDesc:YES style:ColumnStyleNoSummary
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,netstat,txbytes) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,netstat,txbytes) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(netstat, txbytes); } summary:nil
 			descr:@"Network bytes transmitted by process per update period."],
-		[PSColumn psColumnWithName:@"\u03A3NetRx" fullname:@"Net Total Bytes Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3NetRx" fullname:@"Net Total Bytes Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:ColumnStyleNoSummary
 			data:^NSString*(PSProc *proc) { return !proc->netstat.rxbytes ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->netstat.rxbytes countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxbytes); } summary:nil
 			descr:@"Network bytes received by process since launch.\n\n"
 				"This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
 				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
-		[PSColumn psColumnWithName:@"\u03A3NetTx" fullname:@"Net Total Bytes Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3NetTx" fullname:@"Net Total Bytes Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:ColumnStyleNoSummary
 			data:^NSString*(PSProc *proc) { return !proc->netstat.txbytes ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->netstat.txbytes countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txbytes); } summary:nil
 			descr:@"Network bytes transmitted by process since launch.\n\n"
 				"This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
 				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
-		[PSColumn psColumnWithName:@"\u03A3PktRx" fullname:@"Net Total Packets Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3PktRx" fullname:@"Net Total Packets Received" align:NSTextAlignmentRight width:70 sortDesc:YES style:ColumnStyleNoSummary
 			data:^NSString*(PSProc *proc) { return !proc->netstat.rxpackets ? @"-" : [NSString stringWithFormat:@"%llu", proc->netstat.rxpackets]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.rxpackets); } summary:nil
 			descr:@"Network packets received by process since launch.\n\n"
 				"This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
 				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
-		[PSColumn psColumnWithName:@"\u03A3PktTx" fullname:@"Net Total Packets Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
+		[PSColumn psColumnWithName:@"\u03A3PktTx" fullname:@"Net Total Packets Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:ColumnStyleNoSummary
 			data:^NSString*(PSProc *proc) { return !proc->netstat.txpackets ? @"-" : [NSString stringWithFormat:@"%llu", proc->netstat.txpackets]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(netstat.txpackets); } summary:nil
 			descr:@"Network packets transmitted by process since launch.\n\n"

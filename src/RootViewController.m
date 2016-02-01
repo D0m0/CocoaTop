@@ -7,6 +7,8 @@
 #import "Proc.h"
 #import "ProcArray.h"
 
+#define NTSTAT_PREQUERY_INTERVAL	0.1
+
 @interface RootViewController()
 @property (retain) GridHeaderView *header;
 @property (retain) GridHeaderView *footer;
@@ -130,13 +132,23 @@
 	self.fullScreen = NO;
 }
 
+- (void)preRefreshProcs:(NSTimer *)timer
+{
+	// Time to query network statistics
+	[self.procs.nstats query];
+	// And update the view when statistics arrive
+	if (self.timer.isValid)
+		[self.timer invalidate];
+	self.timer = [NSTimer scheduledTimerWithTimeInterval:NTSTAT_PREQUERY_INTERVAL target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
+}
+
 - (void)refreshProcs:(NSTimer *)timer
 {
 	// Rearm the timer: this way the timer will wait for a full interval after each 'fire'
-	if (self.interval >= 0.1) {
+	if (self.interval >= 0.1 + NTSTAT_PREQUERY_INTERVAL) {
 		if (self.timer.isValid)
 			[self.timer invalidate];
-		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshProcs:) userInfo:nil repeats:NO];
+		self.timer = [NSTimer scheduledTimerWithTimeInterval:(self.interval - NTSTAT_PREQUERY_INTERVAL) target:self selector:@selector(preRefreshProcs:) userInfo:nil repeats:NO];
 	}
 	// Do not refresh while the user is killing a process
 	if (self.tableView.editing)
@@ -158,19 +170,22 @@
 			(float)self.procs.memUsed / 1024 / 1024,
 			(float)self.procs.memTotal / 1024 / 1024,
 			(float)self.procs.totalCpu / 10];
-	// First time refresh?
+	// First time refresh? Or returned from a sub-page.
 	if (timer == nil) {
+		// Query network statistics, cause no one did it before.
+		[self.procs.nstats query];
 		// We don't need info about new processes, they are all new :)
 		[self.procs setAllDisplayed:ProcDisplayNormal];
 		NSUInteger idx = NSNotFound;
-		if (self.selectedPid != -1)
+		if (self.selectedPid != -1) {
 			idx = [self.procs indexForPid:self.selectedPid];
+			self.selectedPid = -1;
+		}
 		if (idx != NSNotFound && self.procs[idx].display != ProcDisplayTerminated) {
 			[self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
 #if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
 			[self.tableView deselectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:YES];
 #endif
-			self.selectedPid = -1;
 		}
 	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
 		// If there's a new/terminated process, scroll to it

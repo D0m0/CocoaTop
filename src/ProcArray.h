@@ -1,8 +1,9 @@
 #import "Proc.h"
+#import "NetArray.h"
 
 @interface PSProcArray : NSObject
 @property (retain) NSMutableArray *procs;
-@property (retain) NSMutableDictionary *nstats;
+@property (retain) PSNetArray *nstats;
 @property (assign) CGFloat iconSize;
 @property (assign) uint64_t memUsed;
 @property (assign) uint64_t memFree;
@@ -17,11 +18,7 @@
 @property (assign) unsigned int mobileCount;
 @property (assign) unsigned int runningCount;
 @property (assign) unsigned int coresCount;
-@property (assign) CFSocketRef netStat;
-@property (assign) CFDataRef netStatAddr;
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size;
-- (void)openNetStat;
-- (void)closeNetStat;
 - (int)refresh;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
 - (void)setAllDisplayed:(display_t)display;
