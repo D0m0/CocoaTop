@@ -5,6 +5,11 @@
         </Folder>
         <Folder name="net">
             <File name="src\net\ntstat.h" />
+            <File name="src\net\ntstat_16xx_ios5.h" />
+            <File name="src\net\ntstat_20xx_ios6.h" />
+            <File name="src\net\ntstat_24xx_ios7.h" />
+            <File name="src\net\ntstat_27xx_ios8.h" />
+            <File name="src\net\ntstat_32xx_ios9.h" />
         </Folder>
         <Folder name="netinet">
             <File name="src\netinet\tcp_fsm.h" />
@@ -19,6 +24,11 @@
             <File name="src\Resources\Default.png" />
             <File name="src\Resources\Default@2x.png" />
             <File name="src\Resources\Icon.png" />
+            <File name="src\Resources\Icon@2x.png" />
+            <File name="src\Resources\Icon-60.png" />
+            <File name="src\Resources\Icon-72.png" />
+            <File name="src\Resources\Icon-Small.png" />
+            <File name="src\Resources\Icon-Small@2x.png" />
             <File name="src\Resources\Info.plist" />
         </Folder>
         <Folder name="sys">
@@ -39,12 +49,11 @@
         <File name="src\Column.m" />
         <File name="src\Compat.h" />
         <File name="src\Compat.m" />
-        <File name="src\control" />
         <File name="src\GridCell.h" />
         <File name="src\GridCell.m" />
         <File name="src\main.m" />
-        <File name="src\Makefile" />
-        <File name="src\postinst" />
+        <File name="src\NetArray.h" />
+        <File name="src\NetArray.m" />
         <File name="src\Proc.h" />
         <File name="src\Proc.m" />
         <File name="src\ProcArray.h" />
@@ -59,6 +68,13 @@
         <File name="src\Sock.m" />
         <File name="src\SockViewController.h" />
         <File name="src\SockViewController.m" />
+        <File name="src\TextViewController.h" />
+        <File name="src\TextViewController.m" />
+        <File name="src\control" />
+        <File name="src\postinst" />
         <File name="src\task.xml" />
+        <File name="src\Makefile" />
+        <File name="Makefile5" />
+        <File name="Makefile6" />
     </Project>
 </NotepadPlus>
