@@ -1,5 +1,5 @@
 #import <UIKit/UIKit.h>
 #import "GridCell.h"
 
-@interface RootViewController : UITableViewController
+@interface RootViewController : UITableViewController<UIActionSheetDelegate>
 @end

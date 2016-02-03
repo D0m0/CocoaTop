@@ -2,6 +2,7 @@
 #import "SockViewController.h"
 #import "Setup.h"
 #import "SetupColumns.h"
+#import "About.h"
 #import "GridCell.h"
 #import "Column.h"
 #import "Proc.h"
@@ -23,26 +24,13 @@
 @property (assign) NSUInteger configId;
 @property (retain) NSString *configChange;
 @property (assign) pid_t selectedPid;
+@property (retain) UIView *dimmer;
 @end
 
 @implementation RootViewController
 
 #pragma mark -
 #pragma mark View lifecycle
-
-- (IBAction)openSettings
-{
-	SetupViewController* setupViewController = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped];
-	[self.navigationController pushViewController:setupViewController animated:YES];
-	[setupViewController release];
-}
-
-- (IBAction)openColSettings
-{
-	SetupColsViewController* setupColsViewController = [[SetupColsViewController alloc] initWithStyle:UITableViewStyleGrouped];
-	[self.navigationController pushViewController:setupColsViewController animated:YES];
-	[setupColsViewController release];
-}
 
 - (IBAction)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
 {
@@ -68,37 +56,58 @@
 	}
 }
 
+- (IBAction)openActionSheet
+{
+	UIActionSheet *menu = [[UIActionSheet alloc] initWithTitle:nil delegate:self
+		cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Settings", @"Columns", @"Quick Guide", @"About", nil];
+
+	// In iOS 9 UIActionSheet is deprecated, the effect of this being that background isn't dimmed
+	if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_9_0) {
+		if (self.dimmer == nil) {
+			self.dimmer = [[UIView alloc] initWithFrame:self.navigationController.view.bounds];
+			self.dimmer.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
+		}
+		[self.navigationController.view addSubview:self.dimmer];
+	}
+
+	menu.actionSheetStyle = UIActionSheetStyleBlackTranslucent;
+	[menu showFromBarButtonItem:self.navigationItem.leftBarButtonItem animated:NO];
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+	if (self.dimmer) [self.dimmer removeFromSuperview];
+
+	UITableViewController* view = nil;
+	switch (buttonIndex) {
+	case 0: view = [SetupViewController alloc]; break;
+	case 1: view = [SetupColsViewController alloc]; break;
+	case 3: view = [AboutViewController alloc]; break;
+	}
+	if (view) {
+		view = [view initWithStyle:UITableViewStyleGrouped];
+		[self.navigationController pushViewController:view animated:YES];
+		[view release];
+	}
+}
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
 	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleDefault;
 	bool isPhone = UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone;
 
-	UIBarButtonItem *setupButton = [[UIBarButtonItem alloc] initWithTitle: isPhone ? @"\u2699" : @"Settings"
-		style:UIBarButtonItemStylePlain target:self action:@selector(openSettings)];
-	UIBarButtonItem *setupColsButton;
-	if (isPhone)
-		setupColsButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
-			target:self action:@selector(openColSettings)];
-	else
-		setupColsButton = [[UIBarButtonItem alloc] initWithTitle: /*isPhone ? @"\u25EB" :*/ @"Columns"
-			style:UIBarButtonItemStylePlain target:self action:@selector(openColSettings)];
-	if (isPhone) {
-		NSDictionary *font = [NSDictionary dictionaryWithObject:[UIFont systemFontOfSize:25.0] forKey:NSFontAttributeName];
-		[setupButton setTitleTextAttributes:font forState:UIControlStateNormal];
-		[setupColsButton setTitleTextAttributes:font forState:UIControlStateNormal];
-	}
-	self.navigationItem.rightBarButtonItems = @[setupButton, setupColsButton];
-	[setupButton release];
-	[setupColsButton release];
+	self.wantsFullScreenLayout = YES;
 
+	self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarHamburger"]
+		style:UIBarButtonItemStylePlain target:self action:@selector(openActionSheet)];
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarRefresh"]
+		style:UIBarButtonItemStylePlain target:self action:@selector(refreshProcs:)];
+//	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
+//		target:self action:@selector(openColSettings)];
 	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - (isPhone ? 80 : 150), 40)];
 	self.status.backgroundColor = [UIColor clearColor];
-	self.status.userInteractionEnabled = YES;
-	[self.status addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(refreshProcs:)]];
-	UIBarButtonItem *cpuLoad = [[UIBarButtonItem alloc] initWithCustomView:self.status];
-	self.navigationItem.leftBarButtonItem = cpuLoad;
-	[cpuLoad release];
+	self.navigationItem.leftBarButtonItems = @[self.navigationItem.leftBarButtonItem, [[UIBarButtonItem alloc] initWithCustomView:self.status]];
 
 	UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideShowNavBar:)];
 	twoTap.numberOfTouchesRequired = 2;
@@ -164,7 +173,7 @@
 			(float)self.procs.memUsed / 1024 / 1024,
 			(float)self.procs.totalCpu / 10];
 	else
-		self.status.text = [NSString stringWithFormat:@"\u2699 Processes: %u   Threads: %u   RAM: %.1f/%.1f MB   CPU: %.1f%%",
+		self.status.text = [NSString stringWithFormat:@"Processes: %u   Threads: %u   RAM: %.1f/%.1f MB   CPU: %.1f%%",
 			self.procs.count,
 			self.procs.threadCount,
 			(float)self.procs.memUsed / 1024 / 1024,
@@ -431,6 +440,7 @@
 	self.sorter = nil;
 	self.procs = nil;
 	self.columns = nil;
+	self.dimmer = nil;
 }
 
 - (void)dealloc
@@ -444,6 +454,7 @@
 	[_sorter release];
 	[_procs release];
 	[_columns release];
+	[_dimmer release];
 	[super dealloc];
 }
 
