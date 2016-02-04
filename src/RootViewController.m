@@ -97,14 +97,14 @@
 	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleDefault;
 	bool isPhone = UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone;
 
-	self.wantsFullScreenLayout = YES;
+//	self.wantsFullScreenLayout = YES;
 
 	self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarHamburger"]
 		style:UIBarButtonItemStylePlain target:self action:@selector(openActionSheet)];
-	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarRefresh"]
-		style:UIBarButtonItemStylePlain target:self action:@selector(refreshProcs:)];
-//	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
-//		target:self action:@selector(openColSettings)];
+//	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarRefresh"]
+//		style:UIBarButtonItemStylePlain target:self action:@selector(refreshProcs:)];
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
+		target:self action:@selector(refreshProcs:)];
 	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - (isPhone ? 80 : 150), 40)];
 	self.status.backgroundColor = [UIColor clearColor];
 	self.navigationItem.leftBarButtonItems = @[self.navigationItem.leftBarButtonItem, [[UIBarButtonItem alloc] initWithCustomView:self.status]];
