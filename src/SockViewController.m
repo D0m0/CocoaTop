@@ -17,11 +17,138 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 @property (assign) BOOL fullScreen;
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
-@property (retain) UISegmentedControl *modeSelector;
+//@property (retain) UISegmentedControl *modeSelector;
 @property (assign) column_mode_t mode;
+
+@property (nonatomic, readonly) UIView *menuContainerView;
+@property (nonatomic, readonly) UIView *menuTintView;
+@property (nonatomic, readonly) UIView *menuView;
 @end
 
 @implementation SockViewController
+
+@synthesize menuContainerView = _menuContainerView;
+@synthesize menuTintView = _menuTintView;
+@synthesize menuView = _menuView;
+
+- (void)tapped:(UIButton *)sender
+{
+	[self openActionSheet];
+	// Mode changed - need to reset all information
+	self.socks = [PSSockArray psSockArrayWithProc:self.proc];
+	if (self.mode != sender.tag) {
+		self.mode = sender.tag;
+//		[modeSelector setTitle:ColumnModeName[ColumnNextMode(self.mode)] forSegmentAtIndex:0];
+		[self configureMode];
+		[[NSUserDefaults standardUserDefaults] setInteger:self.mode forKey:@"ProcInfoMode"];
+		[self refreshSocks:nil];
+	}
+}
+
+- (UIButton *)menuButtonWithPosition:(NSUInteger)position title:(NSString *)title
+{
+	const CGFloat buttonHeight = 54.0;
+	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+	button.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+	button.frame = CGRectMake(0.0, position * (1.0 + buttonHeight), 0.0, buttonHeight);
+	button.tag = position;
+	button.contentEdgeInsets = UIEdgeInsetsMake(0, 0, 0, buttonHeight * 1.5);
+	button.backgroundColor = self.mode == position ?
+		[UIColor colorWithRed:(101.0 / 255.0) green:(170.0 / 255.0) blue:(239.0 / 255.0) alpha:1.0]:
+		[UIColor colorWithRed:( 36.0 / 255.0) green:(132.0 / 255.0) blue:(232.0 / 255.0) alpha:1.0];
+	button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+	[button addTarget:self action:@selector(tapped:) forControlEvents:UIControlEventTouchUpInside];
+	[button setTitle:title forState:UIControlStateNormal];
+	return button;
+}
+
+- (UIView *)menuView
+{
+	if (_menuView == nil) {
+		const CGFloat buttonHeight = 54.0;
+		const CGFloat menuHeight = 4.0 * (1.0 + buttonHeight);
+		UIView *menuView = [[UIView alloc] initWithFrame:CGRectMake(0.0, -menuHeight, 0.0, menuHeight)];
+		menuView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+		menuView.backgroundColor = [UIColor colorWithWhite:0.85 alpha:1.0];
+		for (int i = 0; i < ColumnModes; i++)
+			[menuView addSubview:[self menuButtonWithPosition:i title:ColumnModeName[i]]];
+		_menuView = menuView;
+	}
+	return _menuView;
+}
+
+- (UIView *)menuTintView
+{
+	if (_menuTintView == nil) {
+		UIView *menuTintView = [[UIView alloc] initWithFrame:CGRectZero];
+		menuTintView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+		menuTintView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
+		// Add tap recognizer to dismiss menu when tapping outside its bounds.
+		UITapGestureRecognizer *recognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openActionSheet)];
+		[menuTintView addGestureRecognizer:recognizer];
+		[recognizer release];
+		_menuTintView = menuTintView;
+	}
+	return _menuTintView;
+}
+
+- (UIView *)menuContainerView {
+	if (_menuContainerView == nil) {
+		UIView *menuContainerView = [[UIView alloc] initWithFrame:CGRectZero];
+		menuContainerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+		menuContainerView.clipsToBounds = YES;
+		[menuContainerView addSubview:self.menuTintView];
+		[menuContainerView addSubview:self.menuView];
+		_menuContainerView = menuContainerView;
+	}
+	return _menuContainerView;
+}
+
+- (void)layoutMenuContainerView
+{
+	// NOTE: Access menu container directly (instead of via property) to prevent creation if it does not exist.
+	if ([_menuContainerView superview] != nil) {
+		CGRect frame = [self.navigationController.view convertRect:self.view.frame fromView:self.view.superview];
+		frame.origin.y += self.tableView.contentInset.top;
+		frame.size.height -= self.tableView.contentInset.top;
+		[_menuContainerView setFrame:frame];
+	}
+}
+
+- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
+{
+	[self layoutMenuContainerView];
+}
+
+- (IBAction)openActionSheet
+{
+	UIView *menuContainerView = self.menuContainerView;
+	const BOOL willAppear = (menuContainerView.superview == nil);
+	if (willAppear) {
+		[self.navigationController.view addSubview:menuContainerView];
+		[self layoutMenuContainerView];
+	}
+	// Show/hide animation
+	CGRect menuFrame = self.menuView.frame;
+	menuFrame.origin.y = willAppear ? 0.0 : -menuFrame.size.height;
+	CGFloat menuTintAlpha = willAppear ? 0.7 : 0.0;
+	void (^animations)(void) = ^ {
+		self.menuView.frame = menuFrame;
+		self.menuTintView.alpha = menuTintAlpha;
+	};
+	void (^completion)(BOOL) = ^(BOOL finished) {
+		if (!willAppear) [self.menuContainerView removeFromSuperview];
+	};
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+	if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_7_0)
+		[UIView animateWithDuration:0.4 delay:0.0 usingSpringWithDamping:1.0
+			initialSpringVelocity:4.0 options:UIViewAnimationOptionCurveEaseInOut
+			animations:animations completion:completion];
+	else
+#endif
+		[UIView animateWithDuration:0.4 delay:0.0 options:UIViewAnimationOptionCurveEaseInOut
+			animations:animations completion:completion];
+}
 
 #pragma mark -
 #pragma mark View lifecycle
@@ -66,7 +193,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 		[self.timer fire];
 	}
 }
-
+/*
 - (IBAction)modeChange:(UISegmentedControl *)modeSelector
 {
 	// Mode changed - need to reset all information
@@ -80,7 +207,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[[NSUserDefaults standardUserDefaults] setInteger:self.mode forKey:@"ProcInfoMode"];
 	[self refreshSocks:nil];
 }
-
+*/
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
@@ -90,13 +217,17 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[item release];
 
 	self.mode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+/*	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
 		self.modeSelector = [[UISegmentedControl alloc] initWithItems:@[ColumnModeName[ColumnNextMode(self.mode)]]];
 		self.modeSelector.momentary = YES;
 	} else {
 		self.modeSelector = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:ColumnModeName count:ColumnModes]];
 		self.modeSelector.selectedSegmentIndex = self.mode;
 	}
+*/
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarHamburger"] style:UIBarButtonItemStylePlain
+		target:self action:@selector(openActionSheet)];
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
 #endif
@@ -105,8 +236,8 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 		frame.size.height = self.navigationController.navigationBar.frame.size.height * 2 / 3;
 		self.modeSelector.frame = frame;
 #endif
-	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.modeSelector];
-	[self.modeSelector addTarget:self action:@selector(modeChange:) forControlEvents:UIControlEventValueChanged];
+//	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.modeSelector];
+//	[self.modeSelector addTarget:self action:@selector(modeChange:) forControlEvents:UIControlEventValueChanged];
 
 	UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideShowNavBar:)];
 	twoTap.numberOfTouchesRequired = 2;
@@ -207,6 +338,16 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	self.header = nil;
 	self.columns = nil;
 	self.proc = nil;
+
+	if (_menuContainerView != nil) {
+		[_menuContainerView removeFromSuperview];
+		[_menuContainerView release];
+		_menuContainerView = nil;
+		[_menuTintView release];
+		_menuTintView = nil;
+		[_menuView release];
+		_menuView = nil;
+	}
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
@@ -314,6 +455,9 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[_sorter release];
 	[_socks release];
 	[_columns release];
+	[_menuContainerView release];
+	[_menuTintView release];
+	[_menuView release];
 	[super dealloc];
 }
 
