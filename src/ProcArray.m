@@ -109,11 +109,11 @@
 
 - (NSUInteger)indexOfDisplayed:(display_t)display
 {
-	return [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-		return ((PSProc *)obj).display == display;
+	return [self.procs indexOfObjectPassingTest:^BOOL(PSProc *obj, NSUInteger idx, BOOL *stop) {
+		return obj.display == display;
 	}];
-//	return [self.procs enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^void(id obj, NSUInteger idx, BOOL *stop) {
-//		if (((PSProc *)obj).display == display) *stop = YES;
+//	return [self.procs enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^void(PSProc *obj, NSUInteger idx, BOOL *stop) {
+//		if (obj.display == display) *stop = YES;
 //	}];
 //	for (PSProc *proc in [self.procs reverseObjectEnumerator]) {
 //		if (proc.display == display) return idx;

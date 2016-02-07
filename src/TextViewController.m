@@ -1,10 +1,11 @@
+#import "Compat.h"
 #import "TextViewController.h"
 
 @implementation TextViewController
 
 - (void)loadView
 {
-    [super loadView];
+	[super loadView];
 	// Text and title
 	self.title = self.titleString;
 	UITextView* textView = [[UITextView alloc] initWithFrame:CGRectZero /*textContainer:nil*/];
@@ -65,7 +66,7 @@
 //	navController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
 	[parent presentViewController:navController animated:NO completion:nil];
 	if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPhone) {
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_6_0
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
 		navController.view.superview.layer.cornerRadius = 10.0;
 		navController.view.superview.layer.borderColor = [UIColor clearColor].CGColor;
 #endif
