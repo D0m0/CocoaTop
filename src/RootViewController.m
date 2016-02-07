@@ -25,9 +25,9 @@
 @property (retain) NSString *configChange;
 @property (assign) pid_t selectedPid;
 
-@property(nonatomic, readonly) UIView *menuContainerView;
-@property(nonatomic, readonly) UIView *menuTintView;
-@property(nonatomic, readonly) UIView *menuView;
+@property (nonatomic, readonly) UIView *menuContainerView;
+@property (nonatomic, readonly) UIView *menuTintView;
+@property (nonatomic, readonly) UIView *menuView;
 @end
 
 @implementation RootViewController
@@ -180,7 +180,8 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 			[self.navigationController setNavigationBarHidden:YES animated:NO];
 			[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
 		}
-		[self.timer fire];
+		[self.tableView reloadData];
+//		[self.timer fire];
 	}
 }
 
@@ -435,20 +436,21 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+	PSProc *proc = nil;
 	if (indexPath.row >= self.procs.count) {
 		NSLog(@"*** cellForRowAtIndexPath requested row %d of %d", indexPath.row, self.procs.count);
-		return [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
-	}
-	if (!self.columns || !self.columns.count) {
+//		return [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
+	} else if (!self.columns || !self.columns.count) {
 		NSLog(@"*** cellForRowAtIndexPath requested row %d with empty columns", indexPath.row);
-		return [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
-	}
-	PSProc *proc = self.procs[indexPath.row];
+//		return [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
+	} else
+		proc = self.procs[indexPath.row];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:proc.icon != nil]];
 	if (cell == nil)
 		cell = [GridTableCell cellWithIcon:proc.icon != nil];
 	[cell configureWithId:self.configId columns:self.columns size:CGSizeMake(0, tableView.rowHeight)];
-	[cell updateWithProc:proc columns:self.columns];
+	if (proc != nil)
+		[cell updateWithProc:proc columns:self.columns];
 	return cell;
 }
 
