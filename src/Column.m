@@ -163,13 +163,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%.1f%%", (float)procs.totalCpu / 10]; }
 			descr:@"The sum of CPU usage by all threads of a process.\n\n"
 				"CPU usage is expressed in % per CPU core, thus it sums up to cores\u00D7100%. "
-				"Moreover, it can actually exceed this value, due to a scheduling policy of the Mach Kernel, which is called decay-usage scheduling. When a thread acquires CPU "
-				"time, its priority is continually being depressed: this ensures short response times of interactive jobs, which "
-				"do not always have a high initial priority, especially on weaker mobile platforms.\nThe decayed CPU usage of a running "
-				"thread increases in a linearly proportional fashion with CPU time obtained, and is periodically divided by the decay "
-				"factor, which is a constant larger than one (I believe, it's 1.05). Thus, the Mach CPU utilization of the process is a decaying average over "
-				"up to a minute of previous (real) time. Since the time base over which this is computed varies (since processes may be "
-				"very young) it is possible for the sum of all %CPU fields to exceed 100%.\n\n"
+				"Moreover, it can actually exceed this value, due to reasons explained in this app's 'About' section. This is hilarious!\n\n"
 				"Summary of this column indicates total CPU usage."],
 		[PSColumn psColumnWithName:@"Time" fullname:@"Process Time" align:NSTextAlignmentRight width:75 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return psProcessCpuTime(proc.ptime); }
