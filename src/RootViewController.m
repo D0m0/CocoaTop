@@ -52,6 +52,23 @@
 	}
 }
 
+/*
+- (void)presentHelpForName:(NSString *)name
+{
+	NSURL *url = [[NSBundle mainBundle] URLForResource:name withExtension:@"html" subdirectory:@"Documentation"];
+	if (url != nil) {
+		TSHTMLViewController *controller = [[TSHTMLViewController alloc] initWithURL:url];
+		controller.title = NSLocalizedString(name, nil);
+		[self.navigationController pushViewController:controller animated:YES];
+		[controller release];
+	}
+}
+
+- (void)helpButtonTapped
+{
+	[self presentHelpForName:@"REPORT_OVERVIEW"];
+}
+*/
 static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL action)
 {
 	const CGFloat buttonHeight = 54.0;
@@ -59,7 +76,7 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	button.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	button.frame = CGRectMake(0.0, position * (1.0 + buttonHeight), 0.0, buttonHeight);
 	button.tag = position;
-	button.contentEdgeInsets = UIEdgeInsetsMake(0, buttonHeight * 1.5, 0, 0);
+	button.contentEdgeInsets = UIEdgeInsetsMake(0, buttonHeight / 2, 0, 0);
 	button.backgroundColor = [UIColor colorWithRed:(36.0 / 255.0) green:(132.0 / 255.0) blue:(232.0 / 255.0) alpha:1.0];
 	button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
 	[button addTarget:target action:action forControlEvents:UIControlEventTouchUpInside];
@@ -99,7 +116,8 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	return _menuTintView;
 }
 
-- (UIView *)menuContainerView {
+- (UIView *)menuContainerView
+{
 	if (_menuContainerView == nil) {
 		UIView *menuContainerView = [[UIView alloc] initWithFrame:CGRectZero];
 		menuContainerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;

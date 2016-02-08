@@ -52,7 +52,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	button.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	button.frame = CGRectMake(0.0, position * (1.0 + buttonHeight), 0.0, buttonHeight);
 	button.tag = position;
-	button.contentEdgeInsets = UIEdgeInsetsMake(0, 0, 0, buttonHeight * 1.5);
+	button.contentEdgeInsets = UIEdgeInsetsMake(0, 0, 0, buttonHeight / 2);
 	button.backgroundColor = self.mode == position ?
 		[UIColor colorWithRed:(101.0 / 255.0) green:(170.0 / 255.0) blue:(239.0 / 255.0) alpha:1.0]:
 		[UIColor colorWithRed:( 36.0 / 255.0) green:(132.0 / 255.0) blue:(232.0 / 255.0) alpha:1.0];
@@ -92,7 +92,8 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	return _menuTintView;
 }
 
-- (UIView *)menuContainerView {
+- (UIView *)menuContainerView
+{
 	if (_menuContainerView == nil) {
 		UIView *menuContainerView = [[UIView alloc] initWithFrame:CGRectZero];
 		menuContainerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -112,6 +113,10 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 		frame.origin.y += self.tableView.contentInset.top;
 		frame.size.height -= self.tableView.contentInset.top;
 		[_menuContainerView setFrame:frame];
+		for (UIButton *button in _menuView.subviews)
+			button.backgroundColor = self.mode == button.tag ?
+				[UIColor colorWithRed:(101.0 / 255.0) green:(170.0 / 255.0) blue:(239.0 / 255.0) alpha:1.0]:
+				[UIColor colorWithRed:( 36.0 / 255.0) green:(132.0 / 255.0) blue:(232.0 / 255.0) alpha:1.0];
 	}
 }
 
