@@ -71,7 +71,7 @@
 */
 static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL action)
 {
-	const CGFloat buttonHeight = 54.0;
+	const CGFloat buttonHeight = 45.0;
 	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
 	button.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	button.frame = CGRectMake(0.0, position * (1.0 + buttonHeight), 0.0, buttonHeight);
@@ -87,7 +87,7 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 - (UIView *)menuView
 {
 	if (_menuView == nil) {
-		const CGFloat buttonHeight = 54.0;
+		const CGFloat buttonHeight = 45.0;
 		const CGFloat menuHeight = 4.0 * (1.0 + buttonHeight);
 		UIView *menuView = [[UIView alloc] initWithFrame:CGRectMake(0.0, -menuHeight, 0.0, menuHeight)];
 		menuView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -233,8 +233,6 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 		@"UpdateInterval" : @"1",
 		@"FullWidthCommandLine" : @NO,
 		@"AutoJumpNewProcess" : @NO,
-		@"UseAppleIconApi" : @NO,
-		@"CpuGraph" : @NO,
 		@"FirstColumnStyle" : @"Bundle Identifier",
 		@"ShowHeader" : @YES,
 		@"ShowFooter" : @YES,
@@ -356,7 +354,7 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	[super viewWillAppear:animated];
 	// When major options change, process list is rebuilt from scratch
 	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
-	NSString *configCheck = [NSString stringWithFormat:@"%d-%d-%@", [def boolForKey:@"UseAppleIconApi"], [def boolForKey:@"ShortenPaths"], [def stringForKey:@"FirstColumnStyle"]];
+	NSString *configCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"ShortenPaths"], [def stringForKey:@"FirstColumnStyle"]];
 	if (![self.configChange isEqualToString:configCheck]) {
 		self.procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
 		self.configChange = configCheck;

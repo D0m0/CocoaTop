@@ -17,7 +17,6 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 @property (assign) BOOL fullScreen;
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
-//@property (retain) UISegmentedControl *modeSelector;
 @property (assign) column_mode_t mode;
 
 @property (nonatomic, readonly) UIView *menuContainerView;
@@ -38,7 +37,6 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	self.socks = [PSSockArray psSockArrayWithProc:self.proc];
 	if (self.mode != sender.tag) {
 		self.mode = sender.tag;
-//		[modeSelector setTitle:ColumnModeName[ColumnNextMode(self.mode)] forSegmentAtIndex:0];
 		[self configureMode];
 		[[NSUserDefaults standardUserDefaults] setInteger:self.mode forKey:@"ProcInfoMode"];
 		[self refreshSocks:nil];
@@ -47,7 +45,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 - (UIButton *)menuButtonWithPosition:(NSUInteger)position title:(NSString *)title
 {
-	const CGFloat buttonHeight = 54.0;
+	const CGFloat buttonHeight = 45.0;
 	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
 	button.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	button.frame = CGRectMake(0.0, position * (1.0 + buttonHeight), 0.0, buttonHeight);
@@ -65,7 +63,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 - (UIView *)menuView
 {
 	if (_menuView == nil) {
-		const CGFloat buttonHeight = 54.0;
+		const CGFloat buttonHeight = 45.0;
 		const CGFloat menuHeight = 4.0 * (1.0 + buttonHeight);
 		UIView *menuView = [[UIView alloc] initWithFrame:CGRectMake(0.0, -menuHeight, 0.0, menuHeight)];
 		menuView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -198,21 +196,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 		[self.timer fire];
 	}
 }
-/*
-- (IBAction)modeChange:(UISegmentedControl *)modeSelector
-{
-	// Mode changed - need to reset all information
-	self.socks = [PSSockArray psSockArrayWithProc:self.proc];
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-		self.mode = ColumnNextMode(self.mode);
-		[modeSelector setTitle:ColumnModeName[ColumnNextMode(self.mode)] forSegmentAtIndex:0];
-	} else
-		self.mode = modeSelector.selectedSegmentIndex;
-	[self configureMode];
-	[[NSUserDefaults standardUserDefaults] setInteger:self.mode forKey:@"ProcInfoMode"];
-	[self refreshSocks:nil];
-}
-*/
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
@@ -222,28 +206,11 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[item release];
 
 	self.mode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
-/*	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-		self.modeSelector = [[UISegmentedControl alloc] initWithItems:@[ColumnModeName[ColumnNextMode(self.mode)]]];
-		self.modeSelector.momentary = YES;
-	} else {
-		self.modeSelector = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:ColumnModeName count:ColumnModes]];
-		self.modeSelector.selectedSegmentIndex = self.mode;
-	}
-*/
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarHamburger"] style:UIBarButtonItemStylePlain
 		target:self action:@selector(openActionSheet)];
-
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
 #endif
-#if __IPHONE_OS_VERSION_MAX_ALLOWED <= __IPHONE_6_0
-	CGRect frame = self.modeSelector.frame;
-		frame.size.height = self.navigationController.navigationBar.frame.size.height * 2 / 3;
-		self.modeSelector.frame = frame;
-#endif
-//	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.modeSelector];
-//	[self.modeSelector addTarget:self action:@selector(modeChange:) forControlEvents:UIControlEventValueChanged];
-
 	UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideShowNavBar:)];
 	twoTap.numberOfTouchesRequired = 2;
 	[self.tableView addGestureRecognizer:twoTap]; [twoTap release];

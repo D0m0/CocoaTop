@@ -74,12 +74,6 @@
 
 + (UIImage *)getIconForApp:(NSDictionary *)app bundle:(NSString *)bundle path:(NSString *)path size:(NSInteger)dim
 {
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"UseAppleIconApi"]) {
-		if ([UIImage respondsToSelector:@selector(_applicationIconImageForBundleIdentifier:roleIdentifier:format:scale:)])
-			return [UIImage _applicationIconImageForBundleIdentifier:bundle roleIdentifier:nil format:1 scale:[UIScreen mainScreen].scale];
-		else if ([UIImage respondsToSelector:@selector(_applicationIconImageForBundleIdentifier:format:scale:)])
-			return [UIImage _applicationIconImageForBundleIdentifier:bundle format:1 scale:[UIScreen mainScreen].scale];
-	}
 	NSString *iconFile = [PSAppIcon getIconFileForApp:app];
 	if (!iconFile)
 		return nil;

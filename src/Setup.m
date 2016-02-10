@@ -5,7 +5,6 @@
 @property (retain) NSArray *list;
 @property (retain) NSString *option;
 @property (retain) NSString *value;
-@property (retain) NSString *footer;
 @end
 
 @implementation SelectFromList
@@ -15,19 +14,18 @@
 	return YES;
 }
 
-- (instancetype)initWithList:(NSArray *)list option:(NSString *)option footer:(NSString *)footer
+- (instancetype)initWithList:(NSArray *)list option:(NSString *)option
 {
 	self = [super initWithStyle:UITableViewStyleGrouped];
 	self.list = list;
 	self.option = option;
-	self.footer = footer;
 	self.value = [[NSUserDefaults standardUserDefaults] stringForKey:option];
 	return self;
 }
 
-+ (instancetype)selectFromList:(NSArray *)list option:(NSString *)option footer:(NSString *)footer
++ (instancetype)selectFromList:(NSArray *)list option:(NSString *)option
 {
-	return [[[SelectFromList alloc] initWithList:list option:option  footer:footer] autorelease];
+	return [[[SelectFromList alloc] initWithList:list option:option] autorelease];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -44,11 +42,6 @@
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
 	return @"Choose";
-}
-
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
-{
-	return self.footer;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -78,7 +71,6 @@
 	[_list release];
 	[_option release];
 	[_value release];
-	[_footer release];
 	[super dealloc];
 }
 
@@ -105,17 +97,14 @@ struct optionsList_t {
 	NSString*	optionKey;
 	NSString*	label;
 	NSArray*	choose;
-	NSString*	footer;
 } optionsList[] = {
-	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"UpdateInterval", @"Update interval (seconds)", nil, @"Note: tap the status header to refresh manually"},
-	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"FirstColumnStyle", @"First column style", nil, nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"FullWidthCommandLine", @"Full width command line", nil, nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"ShortenPaths", @"Show short (symlinked) paths", nil, nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"AutoJumpNewProcess", @"Auto scroll to new/terminated processes", nil, nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowHeader", @"Show column sort header", nil, nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowFooter", @"Show column totals (footer)", nil, nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"UseAppleIconApi", @"Use Apple API to get App icons", nil, nil},
-//	{@"UISwitch", UITableViewCellAccessoryNone, @"CpuGraph", @"Show CPU Graph", nil, nil},
+	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"UpdateInterval", @"Update interval (seconds)", nil},
+	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"FirstColumnStyle", @"First column style", nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"FullWidthCommandLine", @"Full width command line", nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"ShortenPaths", @"Show short (symlinked) paths", nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"AutoJumpNewProcess", @"Auto scroll to new/terminated processes", nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowHeader", @"Show column sort header", nil},
+	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowFooter", @"Show column totals (footer)", nil},
 };
 
 - (void)viewDidLoad
@@ -226,7 +215,7 @@ struct optionsList_t {
 {
 	if ([optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
 		struct optionsList_t *option = &optionsList[indexPath.row];
-		SelectFromList* selectView = [SelectFromList selectFromList:option->choose option:option->optionKey footer:option->footer];
+		SelectFromList* selectView = [SelectFromList selectFromList:option->choose option:option->optionKey];
 		[self.navigationController pushViewController:selectView animated:YES];
 	}
 }
