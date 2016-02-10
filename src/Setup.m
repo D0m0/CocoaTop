@@ -1,5 +1,4 @@
 #import "Setup.h"
-#import "About.h"
 
 @interface SelectFromList : UITableViewController
 @property (retain) NSArray *list;
@@ -9,9 +8,9 @@
 
 @implementation SelectFromList
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	return YES;
+	return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown;
 }
 
 - (instancetype)initWithList:(NSArray *)list option:(NSString *)option
@@ -51,9 +50,9 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"About"];
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Setup"];
 	if (cell == nil)
-		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"About"];
+		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Setup"];
 	cell.textLabel.text = self.list[indexPath.row];
 	cell.accessoryType = [self.value isEqualToString:cell.textLabel.text] ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
 	return cell;
@@ -79,16 +78,13 @@
 
 @implementation SetupViewController
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	return YES;
+	return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown;
 }
 
-- (IBAction)openAbout
+- (IBAction)factoryReset
 {
-	AboutViewController* about = [[AboutViewController alloc] initWithStyle:UITableViewStyleGrouped];
-	[self.navigationController pushViewController:about animated:YES];
-	[about release];
 }
 
 struct optionsList_t {
@@ -110,11 +106,11 @@ struct optionsList_t {
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-	UIBarButtonItem *aboutButton = [[UIBarButtonItem alloc] initWithTitle:@"The Story" style:UIBarButtonItemStylePlain
-		target:self action:@selector(openAbout)];
-	self.navigationItem.rightBarButtonItem = aboutButton;
+	UIBarButtonItem *resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain
+		target:self action:@selector(factoryReset)];
+	self.navigationItem.rightBarButtonItem = resetButton;
 	self.navigationItem.title = @"Settings";
-	[aboutButton release];
+	[resetButton release];
 
 	if (!optionsList[0].choose)
 		optionsList[0].choose = [@[@"0.5",@"1",@"2",@"3",@"5",@"10",@"Never"] retain];

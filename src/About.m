@@ -57,9 +57,9 @@ CGFloat cellWidth(UITableView *tableView)
 
 @implementation AboutViewController
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	return YES;
+	return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown;
 }
 
 - (void)viewDidLoad

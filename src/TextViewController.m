@@ -8,7 +8,7 @@
 	[super loadView];
 	// Text and title
 	self.title = self.titleString;
-	UITextView* textView = [[UITextView alloc] initWithFrame:CGRectZero /*textContainer:nil*/];
+	UITextView* textView = [[UITextView alloc] initWithFrame:CGRectZero];
 	textView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	textView.editable = NO;
 	textView.font = [UIFont systemFontOfSize:16.0];
@@ -38,8 +38,8 @@
 	}
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
-{ return YES; }
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{ return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown; }
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
 { return YES; }
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer

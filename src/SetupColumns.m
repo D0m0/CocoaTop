@@ -51,9 +51,9 @@ static NSArray *presetNames;
 	});
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	return YES;
+	return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown;
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -118,9 +118,9 @@ static NSArray *presetNames;
 	[preset release];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	return YES;
+	return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown;
 }
 
 - (void)viewDidLoad

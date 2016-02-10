@@ -398,9 +398,9 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	self.columns = nil;
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	return YES;
+	return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown;
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
