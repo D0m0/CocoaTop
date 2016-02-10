@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name='viewport' content='initial-scale=1.0,maximum-scale=3.0'/>
+		<link rel="stylesheet" href="style.css" type="text/css" />
+		<title></title>
+	</head>
+	<body>
+		<h1>Quick Guide</h1>
+        <ul>
+            <li>Tap on a process to view its details, including threads, open files &amp; sockets, loaded modules, and summary.</li>
+            <li>Tap on a column header to sort by that column. Tap again to sort backwards.</li>
+            <li>Switch to fullscreen view and back by touching the display with two fingers.</li>
+            <li>Processes on a green background were recently created.</li>
+            <li>Processes on a red background have recently terminated.</li>
+            <li>To terminate (SIGTERM) or kill a process (SIGKILL) swipe to the left. A SIGTERM signal gives the process an option 
+			to terminate voluntarily. A SIGKILL kills the process immediately.</li>
+            <li>Descriptions for all columns and their totals (the values at the bottom) are available in the column configuration 
+			pane &ndash; just tap the (i) icon.</li>
+        </ul>
+		<h1>Process Details: Threads</h1>
+		<p>Threads are displayed with the following color coding:<br>
+		<font color=red>&#x26AB;</font> - a thread is currently running.<br>
+		<font color=orange>&#x26AB;</font> - a thread is waiting on I/O in a system call (uninterruptible).<br>
+		<font color=brown>&#x26AB;</font> - a thread is halted or stopped.<br>
+		<font color=blue>&#x26AB;</font> - a thread is suspended.<br>
+		<font color=black>&#x26AB;</font> - a thread is idle (sleeping).<br>
+		<font color=darkgray>&#x26AB;</font> - thread state is unknown.
+		</p>
+		<p>A small 'i' in thread state column indicates that the thread is running an idle loop (used for putting a CPU core into 
+		sleep mode). Such threads can be seen in the kernel task.</p>
+		<h1>Process Details: Open Files &amp; Sockets</h1>
+		<p>Open file descriptors are displayed with the following color coding:<br>
+		<font color=black>&#x26AB;</font> - this is a regular file.<br>
+		<font color=green>&#x26AB;</font> - this is a network socket (TCP or UDP).<br>
+		<font color=blue>&#x26AB;</font> - this is a UNIX pipe.<br>
+		<font color=brown>&#x26AB;</font> - this is a UNIX socket or a kernel queue.<br>
+		<font color=orange>&#x26AB;</font> - this is a kernel control descriptor.<br>
+		<font color=red>&#x26AB;</font> - this is a kernel event descriptor.
+		</p>
+		<h1>Process Details: Loaded Modules</h1>
+		<p>Loaded modules are displayed with the following color coding:<br>
+		<font color=black>&#x26AB;</font> - this module is loaded from a .dylib file. A disk partition &amp; inode value 
+		are provided.<br>
+		<font color=darkgray>&#x26AB;</font> - this module is loaded from the dynamic library cache &ndash; a large file 
+		where all system (private and public) libraries are combined to improve performance.
+		</p>
+	</body>
+</html>
