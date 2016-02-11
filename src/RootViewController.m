@@ -7,6 +7,7 @@
 #import "Column.h"
 #import "Proc.h"
 #import "ProcArray.h"
+#import "THtmlViewController.h"
 
 #define NTSTAT_PREQUERY_INTERVAL	0.1
 
@@ -39,14 +40,14 @@
 - (void)tapped:(UIButton *)sender
 {
 	[self openActionSheet];
-	UITableViewController* view = nil;
+	UIViewController* view = nil;
 	switch (sender.tag) {
-	case 0: view = [SetupViewController alloc]; break;
-	case 1: view = [SetupColsViewController alloc]; break;
-	case 3: view = [AboutViewController alloc]; break;
+	case 0: view = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
+	case 1: view = [[SetupColsViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
+	case 2: view = [[HtmlViewController alloc] initWithURL:@"guide" title:@"Quick Guide"]; break;
+	case 3: view = [[AboutViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
 	}
 	if (view) {
-		view = [view initWithStyle:UITableViewStyleGrouped];
 		[self.navigationController pushViewController:view animated:YES];
 		[view release];
 	}
