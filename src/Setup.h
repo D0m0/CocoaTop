@@ -1,5 +1,5 @@
 #import <UIKit/UIKit.h>
 #import "Compat.h"
 
-@interface SetupViewController : UITableViewController
+@interface SetupViewController : UITableViewController<UIAlertViewDelegate>
 @end

@@ -39,8 +39,6 @@ NSString *psThreadStateString(PSSockThreads *sock)
 	unichar st[8], *pst = st;
 
 	*pst++ = states[mach_state_order(&sock->tbi)];
-	if (sock->tbi.flags & TH_FLAGS_SWAPPED)
-		*pst++ = L's';
 	if (sock->tbi.flags & TH_FLAGS_IDLE)
 		*pst++ = L'i';
 	if (sock->tbi.suspend_count)
@@ -199,20 +197,20 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(flags); } summary:nil
 			descr:@"This is a bitmask composed of the following:\n\n"
 				"0001	P_ADVLOCK		Process may hold POSIX adv. lock\n"
-				"0002	P_CONTROLT		Has a controlling terminal\n"
+				"0002	P_CONTROLT  	Has a controlling terminal\n"
 				"0004	P_LP64 			64-bit process\n"
-				"0008	P_NOCLDSTOP		Bad parent: no SIGCHLD when child stops\n"
-				"0010	P_PPWAIT		\tParent is waiting for this child to exec/exit\n"
-				"0020	P_PROFIL		\tHas started profiling\n"
-				"0040	P_SELECT		\tSelecting; wakeup/waiting danger\n"
-				"0080	P_CONTINUED		Process was stopped and continued\n"
+				"0008	P_NOCLDSTOP 	Bad parent: no SIGCHLD when child stops\n"
+				"0010	P_PPWAIT    	\tParent is waiting for this child to exec/exit\n"
+				"0020	P_PROFIL    	\tHas started profiling\n"
+				"0040	P_SELECT    	\tSelecting; wakeup/waiting danger\n"
+				"0080	P_CONTINUED 	Process was stopped and continued\n"
 				"0100	P_SUGID			Has set privileges since last exec\n"
-				"0200	P_SYSTEM		\tSystem process: no signals, stats or swap\n"
+				"0200	P_SYSTEM    	\tSystem process: no signals, stats or swap\n"
 				"0400	P_TIMEOUT		Timing out during sleep\n"
-				"0800	P_TRACED		\tDebugged process being traced\n"
+				"0800	P_TRACED    	\tDebugged process being traced\n"
 				"1000	P_DISABLE_ASLR	Disable address space randomization\n"
 				"2000	P_WEXIT			Process is working on exiting\n"
-				"4000	P_EXEC			\tProcess has called exec()"],
+				"4000	P_EXEC  		Process has called exec()"],
 				// "00040000 P_DELAYIDLESLEEP		Process is marked to delay idle sleep on disk IO\n"
 				// "00080000 P_CHECKOPENEVT			Check if a vnode has the OPENEVT flag set on open\n"
 				// "00100000 P_DEPENDENCY_CAPABLE	Process is ok to call vfs_markdependency()\n"
@@ -310,13 +308,13 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			summary:^NSString*(PSProcArray* procs) { return procs.guiCount ? [NSString stringWithFormat:@" UIApps: %d", procs.guiCount] : @"   -"; }
 			descr:@"The assigned role for GUI apps (Mac-specific). This may not be shown on older iOS versions.\n\n"
 				"Possible values are:\n"
-				"None		\tNon-UI task\n"
+				"None   	\tNon-UI task\n"
 				"Foreground	Normal UI application in the foreground\n"
 				"Inactive 	\tNormal UI application in the background\n"
 				"Background	OS X: Normal UI application in the background\n"
 				"Controller	\tOS X: Controller service application\n"
-				"GfxServer	\tOS X: Graphics management (window) server\n"
-				"Throttle	\tOS X: Throttle application\n\n"
+				"GfxServer 	OS X: Graphics management (window) server\n"
+				"Throttle 	\tOS X: Throttle application\n\n"
 				"Summary of this column denotes the number of GUI processes (user applications)."],
 		[PSColumn psColumnWithName:@"MSent" fullname:@"Mach Messages Sent" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.messages_sent]; }
@@ -349,6 +347,10 @@ NSString *psProcessCpuTime(unsigned int ptime)
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size_max countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size_max); } summary:nil
 			descr:@"Maximum resident memory usage since process launch."],
+#else
+		[PSColumn psColumnWithName:@"RMax" fullname:@"" align:0 width:0 sortDesc:YES style:ColumnStyleForSummary | ColumnStyleNoSummary
+			data:^NSString*(PSProc *proc) { return @""; } sort:nil summary:nil],
+#endif
 		[PSColumn psColumnWithName:@"Phys" fullname:@"Physical Memory Footprint" align:NSTextAlignmentRight width:70 sortDesc:YES style:0
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_phys_footprint ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_phys_footprint countStyle:NSByteCountFormatterCountStyleMemory]; }
@@ -378,7 +380,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			data:^NSString*(PSProc *proc) { return psProcessUptime(proc->rusage.ri_proc_start_abstime, proc->rusage.ri_proc_exit_abstime); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_proc_start_abstime); } summary:nil
 			descr:@"Time elapsed since process launch."],
-#endif
+//#endif
 		[PSColumn psColumnWithName:@"" fullname:@"Bundle Identifier" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"CFBundleIdentifier"] : @"N/A"; } sort:nil summary:nil],
 		[PSColumn psColumnWithName:@"" fullname:@"Bundle Name" align:NSTextAlignmentLeft width:0 sortDesc:NO style:ColumnStyleForSummary

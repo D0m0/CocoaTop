@@ -392,7 +392,8 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	if (!sock)
 		return;
 	NSString *title = (self.mode == ColumnModeSummary) ? sock.name : @"Property",
-		   *message = (self.mode == ColumnModeSummary) ? sock.col.getData(sock.proc) : sock.name;
+		   *message = (self.mode == ColumnModeSummary) ? [NSString stringWithFormat:@"%@\n\n%@", sock.col.getData(sock.proc),
+		   [sock.col.descr substringWithRange:[sock.col.descr lineRangeForRange:NSMakeRange(0,1)]]] : sock.name;
 	UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
 	[alertView show];
 }

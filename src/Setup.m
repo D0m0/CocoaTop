@@ -83,8 +83,18 @@
 	return interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown;
 }
 
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+	if (buttonIndex == 1) {
+		[[NSUserDefaults standardUserDefaults] removePersistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+		[self.tableView reloadData];
+	}
+}
+
 - (IBAction)factoryReset
 {
+	UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:@"Reset" message:@"Reset settings to default values?" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil] autorelease];
+	[alertView show];
 }
 
 struct optionsList_t {
@@ -191,9 +201,6 @@ struct optionsList_t {
 		}
 	}
 	return cell;
-	// Special process colors: Root / User / 32 bit / Zombie & Stuck
-	// Manual Refresh button with arrows
-	// Filter procs by string
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath

@@ -45,7 +45,8 @@
 	case 0: view = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
 	case 1: view = [[SetupColsViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
 	case 2: view = [[HtmlViewController alloc] initWithURL:@"guide" title:@"Quick Guide"]; break;
-	case 3: view = [[AboutViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
+	case 3: view = [[HtmlViewController alloc] initWithURL:@"story" title:@"The Story"]; break;
+//	case 3: view = [[AboutViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
 	}
 	if (view) {
 		[self.navigationController pushViewController:view animated:YES];
