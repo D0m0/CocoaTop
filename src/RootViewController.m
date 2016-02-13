@@ -502,23 +502,23 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 
 - (NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	return @"TERM";
+	return @"KILL";
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForSwipeAccessoryButtonForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	return @"KILL";
+	return @"TERM";
 }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (editingStyle == UITableViewCellEditingStyleDelete)
-		[self tableView:tableView sendSignal:SIGTERM toProcessAtIndexPath:indexPath];
+		[self tableView:tableView sendSignal:SIGKILL toProcessAtIndexPath:indexPath];
 }
 
 - (void)tableView:(UITableView *)tableView swipeAccessoryButtonPushedForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	[self tableView:tableView sendSignal:SIGKILL toProcessAtIndexPath:indexPath];
+	[self tableView:tableView sendSignal:SIGTERM toProcessAtIndexPath:indexPath];
 }
 
 #pragma mark -
