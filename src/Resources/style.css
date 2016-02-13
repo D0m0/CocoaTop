@@ -1,12 +1,81 @@
-body {
-    background: #efefef;
-    font-family: sans-serif;
-}
-
 h1 {
+	margin-left:15px;
     font-size: 1.5em;
 }
 
 .note {
 	color: blue;
+}
+
+body {
+	margin: 9px auto;
+	width: device-width;
+	font-family: sans-serif;
+	background-color: #efeff4;
+}
+
+body > panel {
+	display: block;
+	width: 100%;
+	margin: 0;
+	border:0;
+	border-top: 1px solid #c8c7cc;
+	border-bottom: 1px solid #c8c7cc;
+	margin-top:9px;
+	margin-bottom:9px;
+	background-color: white;
+	text-align:left;
+}
+
+body > panel > fieldset {
+	display: block;
+	padding: 0 15px;
+	background-color: white;
+	color: #666;
+	line-height: 18px;
+	border:0;
+}
+
+body > panel > fieldset > ul {
+	padding-left:15px;
+}
+
+body > panel > fieldset+fieldset {
+	margin-left:15px;
+	padding-left: 0;
+	border-top: 1px solid #c8c7cc;
+}
+
+body > panel > fieldset:last-child {
+	padding-bottom:1px;
+}
+
+body > panel > fieldset > a.button:link, body > panel > fieldset > a.button:visited {
+	text-decoration:none;
+	color: #0076ff;
+}
+
+body > panel > fieldset > a.button {
+	display: block;
+	width: 100%;
+	font-size: 17px;
+	display: block;
+	color:black;
+	position:relative;
+	padding-left: 0;
+	padding-right: 0;
+	padding-top: 11.5px;
+	padding-bottom: 12px;
+	margin-top:2px;
+	margin-bottom:2px;
+	background-repeat: no-repeat;
+	background-image: url(ios7-chevron.png);
+	background-position: right;
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+	body > panel > fieldset > a.button {
+		background-image: url(ios7-chevron@2x.png);
+		background-size:8px 13px;
+	}
 }
