@@ -9,15 +9,14 @@ typedef enum {
 	ColumnModes
 } column_mode_t;
 
-#define ColumnNextMode(m) (((m) + 1) % ColumnModes)
-
 typedef enum {
-	ColumnStyleExtend = 1,
-	ColumnStyleEllipsis = 2,
-	ColumnStyleForSummary = 4,
-	ColumnStyleMonoFont = 8,
-	ColumnStyleTooLong = 16,
-	ColumnStyleNoSummary = 32,
+	ColumnStyleExtend = 1,		// This column will take up all remaining unused space
+	ColumnStyleEllipsis = 2,	// Trim data with ellipsis instead of shrinking font
+	ColumnStyleForSummary = 4,	// Column is shown only in process summary
+	ColumnStyleMonoFont = 8,	// Use mono font (used to display memory addresses)
+	ColumnStyleTooLong = 16,	// Use a shorter text for cell (but not summary)
+	ColumnStyleNoSummary = 32,	// Column is not shown in process summary
+	ColumnStyleSortDesc = 64,	// Default sorting is "high to low"
 } column_style_t;
 
 typedef NSString *(^PSColumnData)(id proc);
@@ -41,20 +40,20 @@ typedef NSString *(^PSColumnData)(id proc);
 @property (assign) PSColumnData getSummary;
 // Sort comparator
 @property (assign) NSComparator sort;
-// Default sort direction
-@property (assign) BOOL sortDesc;
 // Column styles bitmask
 @property (assign) column_style_t style;
 // Label tag
 @property (assign) int tag;
 
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
-	width:(NSInteger)width sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr;
+	width:(NSInteger)width tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr;
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
-	width:(NSInteger)width sortDesc:(BOOL)desc style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
+	width:(NSInteger)width tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
 + (NSArray *)psGetAllColumns;
 + (NSMutableArray *)psGetShownColumnsWithWidth:(NSUInteger)width;
 + (NSArray *)psGetTaskColumns:(column_mode_t)mode;
 + (NSArray *)psGetTaskColumnsWithWidth:(NSUInteger)width mode:(column_mode_t)mode;
++ (PSColumn *)psColumnWithTag:(NSInteger)tag;
++ (PSColumn *)psTaskColumnWithTag:(NSInteger)tag forMode:(column_mode_t)mode;
 
 @end

@@ -1,13 +1,12 @@
 #import "RootViewController.h"
 #import "SockViewController.h"
+#import "THtmlViewController.h"
 #import "Setup.h"
 #import "SetupColumns.h"
-#import "About.h"
 #import "GridCell.h"
 #import "Column.h"
 #import "Proc.h"
 #import "ProcArray.h"
-#import "THtmlViewController.h"
 
 #define NTSTAT_PREQUERY_INTERVAL	0.1
 
@@ -335,10 +334,10 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 			loc.x -= col.width;
 			continue;
 		}
-		self.sortdesc = self.sorter == col ? !self.sortdesc : col.sortDesc;
+		self.sortdesc = self.sorter == col ? !self.sortdesc : col.style & ColumnStyleSortDesc;
 		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
 		self.sorter = col;
-		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:@"SortColumn"];
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag forKey:@"SortColumn"];
 		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:@"SortDescending"];
 		[self.timer fire];
 		break;
@@ -365,10 +364,8 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	self.configId++;
 	self.columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
 	// Find sort column and create table header
-	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"];
-	NSArray *allColumns = [PSColumn psGetAllColumns];
-	if (sortCol >= allColumns.count) sortCol = 1;
-	self.sorter = allColumns[sortCol];
+	self.sorter = [PSColumn psColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"]];
+	if (!self.sorter) self.sorter = self.columns[0];
 	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionHeaderHeight)];
 	self.footer = [GridHeaderView footerWithColumns:self.columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionFooterHeight)];

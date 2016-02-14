@@ -104,7 +104,7 @@
 		size.height /= 2;
 	NSUInteger totalCol;
 	for (PSColumn *col in columns)
-		if (col.tag == 1) {
+		if (col == columns[0]) {
 			self.firstColWidth = totalCol = col.width - 5;
 			self.textLabel.adjustsFontSizeToFitWidth = !(col.style & ColumnStyleEllipsis);
 		} else {
@@ -126,7 +126,7 @@
 			label.font = col.style & ColumnStyleMonoFont ? [UIFont fontWithName:@"Courier" size:13.0] : [UIFont systemFontOfSize:12.0];
 			label.adjustsFontSizeToFitWidth = !(col.style & ColumnStyleEllipsis);
 			label.backgroundColor = [UIColor clearColor];
-			label.tag = col.tag;
+			label.tag = col.tag + 1;
 			[self.labels addObject:label];
 			[self.contentView addSubview:label];
 			[label release];
@@ -150,12 +150,12 @@
 	if (proc.icon)
 		[self.imageView initWithImage:proc.icon];
 	for (PSColumn *col in columns)
-		if (col.tag > 1) {
+		if (col != columns[0]) {
 			//if (col.tag == 4) {
 			//	SmallGraph *graph = (SmallGraph *)[self viewWithTag:1000];//col.tag];
 			//	if (graph) { graph.dots = [proc.cpuhistory copy]; [graph setNeedsDisplay]; }
 			//} //else {
-			UILabel *label = (UILabel *)[self viewWithTag:col.tag];
+			UILabel *label = (UILabel *)[self viewWithTag:col.tag + 1];
 			if (label) label.text = col.getData(proc);
 		}
 }
@@ -163,7 +163,7 @@
 - (void)updateWithSock:(PSSock *)sock columns:(NSArray *)columns
 {
 	for (PSColumn *col in columns) {
-		UILabel *label = col.tag > 1 ? (UILabel *)[self viewWithTag:col.tag] : self.textLabel;
+		UILabel *label = (col != columns[0]) ? (UILabel *)[self viewWithTag:col.tag + 1] : self.textLabel;
 		if (label) {
 			// The cell label gets a shorter text (sock.name), but the summary page will get the full one
 			label.text = col.style & ColumnStyleTooLong ? sock.name : col.getData(sock);
@@ -232,12 +232,12 @@
 		[self.labels addObject:label];
 		[label release];
 		label.textAlignment = footer && col.getSummary ? col.align : NSTextAlignmentCenter;
-		label.font = footer && col.tag != 1 ? [UIFont systemFontOfSize:12.0] : [UIFont boldSystemFontOfSize:16.0];
+		label.font = footer && col != columns[0] ? [UIFont systemFontOfSize:12.0] : [UIFont boldSystemFontOfSize:16.0];
 		label.adjustsFontSizeToFitWidth = YES;
 		label.text = footer ? @"-" : col.name;
 		label.textColor = [UIColor blackColor];
 		label.backgroundColor = [UIColor clearColor];
-		label.tag = col.tag;
+		label.tag = col.tag + 1;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
 		[self.contentView addSubview:label];
 #else
@@ -262,11 +262,11 @@
 {
 	UILabel *label;
 	if (oldCol && oldCol != newCol)
-	if ((label = (UILabel *)[self viewWithTag:oldCol.tag])) {
+	if ((label = (UILabel *)[self viewWithTag:oldCol.tag + 1])) {
 		label.textColor = [UIColor blackColor];
 		label.text = oldCol.name;
 	}
-	if ((label = (UILabel *)[self viewWithTag:newCol.tag])) {
+	if ((label = (UILabel *)[self viewWithTag:newCol.tag + 1])) {
 		label.textColor = [UIColor whiteColor];
 		label.text = [newCol.name stringByAppendingString:(desc ? @"\u25BC" : @"\u25B2")];
 	}
@@ -276,7 +276,7 @@
 {
 	for (PSColumn *col in columns)
 		if (col.getSummary) {
-			UILabel *label = (UILabel *)[self viewWithTag:col.tag];
+			UILabel *label = (UILabel *)[self viewWithTag:col.tag + 1];
 			if (label) label.text = col.getSummary(procs);
 		}
 }

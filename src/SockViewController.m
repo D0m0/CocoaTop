@@ -264,10 +264,10 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 			loc.x -= col.width;
 			continue;
 		}
-		self.sortdesc = self.sorter == col ? !self.sortdesc : col.sortDesc;
+		self.sortdesc = self.sorter == col ? !self.sortdesc : col.style & ColumnStyleSortDesc;
 		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
 		self.sorter = col;
-		[[NSUserDefaults standardUserDefaults] setInteger:col.tag-1 forKey:[NSString stringWithFormat:@"Mode%dSortColumn", self.mode]];
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag forKey:[NSString stringWithFormat:@"Mode%dSortColumn", self.mode]];
 		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:[NSString stringWithFormat:@"Mode%dSortDescending", self.mode]];
 		[self.timer fire];
 		break;
@@ -280,10 +280,8 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	self.configId++;
 	self.columns = [PSColumn psGetTaskColumnsWithWidth:self.tableView.bounds.size.width mode:self.mode];
 	// Find sort column and create table header
-	NSUInteger sortCol = [[NSUserDefaults standardUserDefaults] integerForKey:[NSString stringWithFormat:@"Mode%dSortColumn", self.mode]];
-	NSArray *allColumns = [PSColumn psGetTaskColumns:self.mode];
-	if (sortCol >= allColumns.count) sortCol = 1;
-	self.sorter = allColumns[sortCol];
+	self.sorter = [PSColumn psTaskColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:[NSString stringWithFormat:@"Mode%dSortColumn", self.mode]] forMode:self.mode];
+	if (!self.sorter) self.sorter = self.columns[0];
 	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:[NSString stringWithFormat:@"Mode%dSortDescending", self.mode]];
 	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(0, self.tableView.sectionHeaderHeight)];
 	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
