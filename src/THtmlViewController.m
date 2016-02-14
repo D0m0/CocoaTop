@@ -18,15 +18,14 @@
 	[webView release];
 }
 
-- (void)handleTapBehind:(UITapGestureRecognizer *)sender
+- (BOOL)navigationShouldPopOnBackButton
 {
-	if (sender.state == UIGestureRecognizerStateEnded) {
-		CGPoint location = [sender locationInView:self.view];
-		if (![self.view pointInside:location withEvent:nil]) {
-			[self.view.window removeGestureRecognizer:sender];
-			[self dismissViewControllerAnimated:YES completion:nil];
-		}
+	UIWebView *webView = (UIWebView *)self.view;
+	if (webView.canGoBack) {
+		[webView goBack];
+		return NO;
 	}
+	return YES;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
