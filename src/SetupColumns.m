@@ -33,8 +33,10 @@ static NSArray *presetNames;
 				@"4: Minimalistic":@[@0, @3, @7],
 				@"5: Mach-obsessed":@[@0, @3, @12, @13, @15, @14, @21, @22],
 				@"6: RAM usage":@[@0, @1, @7, @23, @24, @8],
-				@"7: Disk usage":@[@0, @1, @25, @26, @27, @28],
-				@"8: Net usage":@[@0, @1, @33, @42, @43, @44, @45],
+				@"7: Net usage":@[@0, @1, @33, @42, @43, @44, @45],
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+				@"8: Disk usage":@[@0, @1, @25, @26, @27, @28],
+#endif
 			} retain];
 		else
 			presetList = [@{
@@ -44,8 +46,10 @@ static NSArray *presetNames;
 				@"4: Minimalistic":@[@0, @1, @3, @5, @7, @20],
 				@"5: Mach-obsessed":@[@0, @1, @5, @6, @7, @3, @12, @16, @13, @15, @14, @21, @22],
 				@"6: RAM usage":@[@0, @1, @3, @5, @7, @23, @24, @8],
-				@"7: Disk usage":@[@0, @1, @9, @25, @26, @27, @28, @24],
-				@"8: Net usage":@[@0, @1, @3, @5, @33, @42, @43, @44, @45, @46, @47],
+				@"7: Net usage":@[@0, @1, @3, @5, @33, @42, @43, @44, @45, @46, @47],
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+				@"8: Disk usage":@[@0, @1, @9, @25, @26, @27, @28, @24],
+#endif
 			} retain];
 		presetNames = [[presetList.allKeys sortedArrayUsingSelector:@selector(compare:)] retain];
 	});
@@ -69,7 +73,7 @@ static NSArray *presetNames;
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-	return @"Select a preset column layout";
+	return @"Select a column layout";
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -86,7 +90,8 @@ static NSArray *presetNames;
 	NSString *colNames = @"Command";
 	for (NSNumber *idx in presetList[presetNames[indexPath.row]]) {
 		NSInteger i = [idx intValue];
-		if (i) colNames = [colNames stringByAppendingFormat:@", %@", [PSColumn psColumnWithTag:i].name];
+		PSColumn *col = i ? [PSColumn psColumnWithTag:i] : nil;
+		if (col) colNames = [colNames stringByAppendingFormat:@", %@", col.name];
 	}
 	cell.detailTextLabel.text = colNames;
 	return cell;
@@ -161,7 +166,6 @@ static NSArray *presetNames;
 	[super didReceiveMemoryWarning];
 }
 
-#pragma mark - UITableViewDataSource, UITableViewDelegate
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
 	return 2;
@@ -203,7 +207,6 @@ static NSArray *presetNames;
 	return cell;
 }
 
-#pragma mark - Edit Mode
 - (UITableViewCellEditingStyle) tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	return UITableViewCellEditingStyleNone;
