@@ -13,19 +13,21 @@
 		<p>Hello, friends!</p>
 		<p>This text should clarify some questionable concepts implemented in CocoaTop, the ideas behind those concepts,
 		and the idea behind the application itself. Also, it should be a fun read, at least for some ;)</p>
-		<p>Before we begin I would like to thank Luis Finke for making miniCode (available in Cydia) &ndash; a nice alternative 
-		to XCode that became an IDE for my first iOS app, which is also my first Objective C app. (Hey, if you think I 
-		typed the whole thing on the iPad, you're wrong. I even used Theos, goddamit, okay! But that's not the point!</p>
-		<p>Now, you could say that the purpose of CocoaTop is to replace the original terminal 'top' &ndash; but it is not. 
-		First of all, the UNIX terminal is a thing in itself: every iPad user has to have a terminal installed, 
-		otherwise (s)he can be mistaken for a dork, or worse &ndash; a humanitarian. Also, 'top' executed on an iPad 
+		<p>Before we begin I would like to thank Luis Finke for making miniCode <a href="cydia://package/com.brokenphysics.miniCode">
+		(available in Cydia)</a> &ndash; a nice alternative to XCode that became an IDE for my first iOS app, which is also my first 
+		Objective C app. (Hey, if you think I typed the whole thing on the iPad, you're wrong. I even used 
+		<a href="cydia://package/net.howett.Theos">Theos</a>, goddamit, okay! But that's not the point!</p>
+		<p>Now, you could say that the purpose of CocoaTop is to replace the original terminal '<a href="cydia://package/top">top</a>' 
+		&ndash; but it is not. First of all, the UNIX terminal is a thing in itself: every iPad user has to have a terminal 
+		installed, otherwise (s)he can be mistaken for a dork, or worse &ndash; a humanitarian. Also, 'top' executed on an iPad 
 		always attracts people's attention. So the idea behind CocoaTop is this: I wanted to create something nice, 
 		gaining knowledge in the process. If you find it useful, well, you're in luck!</p>
-		<p class=note>Update: While working on CocoaTop I found a book, a site, and a forum by a man named Jonathan Levin. 
-		I don't know how I managed to overlook this hilarious stuff. It gave me a great inspiration boost, not to mention 
-		loads of bad-quality source code to ponder on. Thanks to Jonathan's in-depth coverage of hidden and undocumented APIs this 
-		version of CocoaTop features real-time per-process network statistics! Also, if you're into console utilities &amp; SSH, 
-		try his Process Explorer for iOS and Mac OS X (look for 'procexp').</p>
+		<p class=note>Update: While working on CocoaTop I found <a href="http://newosxbook.com/index.php">a book, a site, 
+		and a forum</a> by a man named Jonathan Levin. I don't know how I managed to overlook this hilarious stuff. It gave me 
+		a great inspiration boost, not to mention loads of bad-quality source code to ponder on. Thanks to Jonathan's in-depth 
+		coverage of hidden and undocumented APIs this version of CocoaTop features real-time per-process network statistics! 
+		Also, if you're into console utilities &amp; SSH, try his <a href="http://newosxbook.com/tools/procexp.html">Process 
+		Explorer</a> for iOS and Mac OS X.</p>
 		<p>Ok, on to the fun facts:</p>
 		<p>&#x2605; CPU usage sums up not to 100% but to cores&times;100%. Moreover, it can actually exceed this value, and it surely 
 		will when the cores are doing the real stuff: protein folding and shit like that. CPU exceeds 100% not for your amusement, 
@@ -39,7 +41,7 @@
 		of Java, which isn't bad by itself, but... the mobile world?</p>
 		<p class=note>Update: Depending on your iOS+jailbreak version, you may or may not notice that the kernel task (pid&nbsp;0) takes 
 		up a lot of %CPU, in fact it takes up all unused CPU power. This is because for every CPU core there's a kernel thread which 
-		halts the core when it's not used to save battery life, eating up remaining CPU cycles in the process. You can actually find 
+		halts the core when it's not used to save battery life, effectively eating up remaining CPU cycles. You can actually find 
 		these threads when you switch to process details, thread mode: they will have a small 'i' for 'idle' in the state column.</p>
 		<p>&#x2605; Everyone knows about processes, but what about Mach tasks? These are actually different things. In fact, it is 
 		technically possible to create a Mach task without a BSD process. A Mach task can actually be created without threads 
@@ -67,7 +69,7 @@
 		and 'FIFO', will be marked in this column using prefixes R: and F: respectively, but I've never seen them. I added 
 		those marks out of curiosity - write me a letter.</p>
 		<p class=note>Update: Round-robin scheduling is actually used for certain threads throughout the OS, especially kernel threads. 
-		In fact, all kernel threads default to the round-robin scheme: see for yourself!</p>
+		In fact, all kernel threads default to the round-robin scheme: see for yourself! (If you're lucky to see kernel task details)</p>
 		<p>&#x2605; Apple tightens up security with each new version of iOS, so CocoaTop can no longer show details about task 0 
 		(the kernel task) on iOS&nbsp;8. You can still enjoy this data if you have iOS&nbsp;7! Actually, the iOS could be considered the 
 		most secure public platform of all times, only if it wasn't so stuffed with backdoors, at least in v.7 ;) Anyway, 
