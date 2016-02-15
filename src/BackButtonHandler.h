@@ -31,6 +31,6 @@
 -(BOOL)navigationShouldPopOnBackButton;
 @end
 
-@interface UIViewController (BackButtonHandler) <BackButtonHandlerProtocol>
+@interface UIViewController(BackButtonHandler) <BackButtonHandlerProtocol>
 
 @end

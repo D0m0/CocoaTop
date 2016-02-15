@@ -1,5 +1,5 @@
 #import "THtmlViewController.h"
-#import "UIViewController+BackButtonHandler.h"
+#import "BackButtonHandler.h"
 
 @implementation HtmlViewController
 
@@ -10,7 +10,6 @@
 	UIWebView *webView = [[UIWebView alloc] initWithFrame:CGRectZero];
 	webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	webView.dataDetectorTypes = UIDataDetectorTypeNone;
-//	webView.scalesPageToFit = YES;
 
 	NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.url];
 	[webView loadRequest:request];

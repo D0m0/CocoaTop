@@ -211,7 +211,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 				"0800	P_TRACED    	\tDebugged process being traced\n"
 				"1000	P_DISABLE_ASLR	Disable address space randomization\n"
 				"2000	P_WEXIT			Process is working on exiting\n"
-				"4000	P_EXEC         	Process has called exec()"],
+				"4000	P_EXEC      	\tProcess has called exec()"],
 				// "00040000 P_DELAYIDLESLEEP		Process is marked to delay idle sleep on disk IO\n"
 				// "00080000 P_CHECKOPENEVT			Check if a vnode has the OPENEVT flag set on open\n"
 				// "00100000 P_DEPENDENCY_CAPABLE	Process is ok to call vfs_markdependency()\n"
@@ -310,7 +310,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			descr:@"The assigned role for GUI apps (Mac-specific). This may not be shown on older iOS versions.\n\n"
 				"Possible values are:\n"
 				"None     	\tNon-UI task\n"
-				"Foreground	Normal UI application in the foreground\n"
+				"Foreground \tNormal UI application in the foreground\n"
 				"Inactive 	\tNormal UI application in the background\n"
 				"Background	OS X: Normal UI application in the background\n"
 				"Controller	\tOS X: Controller service application\n"

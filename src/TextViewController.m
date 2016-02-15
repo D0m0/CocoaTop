@@ -29,13 +29,26 @@
 
 - (void)handleTapBehind:(UITapGestureRecognizer *)sender
 {
-	if (sender.state == UIGestureRecognizerStateEnded) {
-		CGPoint location = [sender locationInView:self.view];
-		if (![self.view pointInside:location withEvent:nil]) {
-			[self.view.window removeGestureRecognizer:sender];
+	if (sender.state == UIGestureRecognizerStateEnded)
+		if (![self.view pointInside:[sender locationInView:self.view] withEvent:nil])
 			[self dismissViewControllerAnimated:NO completion:nil];
-		}
-	}
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+	[super viewDidAppear:animated];
+	self.tapBehind = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapBehind:)];
+	[self.tapBehind setNumberOfTapsRequired:1];
+	self.tapBehind.cancelsTouchesInView = NO;
+	self.tapBehind.delegate = self;
+	[self.view.window addGestureRecognizer:self.tapBehind];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+	[super viewWillDisappear:animated];
+	[self.view.window removeGestureRecognizer:self.tapBehind];
+	self.tapBehind = nil;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -46,16 +59,6 @@
 { return YES; }
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
 { return YES; }
-
-- (void)viewDidAppear:(BOOL)animated
-{
-	[super viewDidAppear:animated];
-	UITapGestureRecognizer *recognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapBehind:)];
-	[recognizer setNumberOfTapsRequired:1];
-	recognizer.cancelsTouchesInView = NO;
-	[self.view.window addGestureRecognizer:recognizer];
-	recognizer.delegate = self;
-}
 
 + (void)showText:(NSString *)text withTitle:(NSString *)title inViewController:(UIViewController *)parent
 {
@@ -80,6 +83,7 @@
 
 - (void)dealloc
 {
+	[_tapBehind release];
 	[_titleString release];
 	[_textString release];
 	[super dealloc];
