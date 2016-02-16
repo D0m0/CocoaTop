@@ -1,5 +1,4 @@
 #import <UIKit/UIKit.h>
-#import "Compat.h"
 
 @interface PSAppIcon : NSObject
 + (NSDictionary *)getAppByPath:(NSString *)path;

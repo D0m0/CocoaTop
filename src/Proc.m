@@ -3,6 +3,7 @@
 #import <mach/thread_info.h>
 #import <mach/mach_interface.h>
 #import <mach/mach_port.h>
+#import "Compat.h"
 #import "Proc.h"
 #import "AppIcon.h"
 #import "sys/proc_info.h"

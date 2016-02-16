@@ -1,5 +1,4 @@
 #import <UIKit/UIKit.h>
-#import "Compat.h"
 
 typedef enum {
 	ColumnModeSummary = 0,

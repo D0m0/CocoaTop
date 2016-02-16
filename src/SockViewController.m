@@ -1,3 +1,4 @@
+#import "Compat.h"
 #import "SockViewController.h"
 #import "GridCell.h"
 #import "Column.h"

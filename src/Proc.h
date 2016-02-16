@@ -3,8 +3,8 @@
 #import "sys/resource.h"
 #import <sys/sysctl.h>
 #define PRIVATE
-#import "net/ntstat.h"
 #import "Compat.h"
+#import "net/ntstat.h"
 
 // Display states determine grid row colors
 typedef enum {

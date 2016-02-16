@@ -1,3 +1,4 @@
+#import "Compat.h"
 #import "Column.h"
 #import "Proc.h"
 #import "ProcArray.h"

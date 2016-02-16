@@ -1,3 +1,4 @@
+#import "Compat.h"
 #import "SetupColumns.h"
 #import "Column.h"
 #import "TextViewController.h"

@@ -1,4 +1,5 @@
 #import <Foundation/NSPathUtilities.h>
+#import "Compat.h"
 #import "AppIcon.h"
 
 @interface UIImage (Private)

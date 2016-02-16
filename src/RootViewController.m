@@ -1,3 +1,4 @@
+#import "Compat.h"
 #import "RootViewController.h"
 #import "SockViewController.h"
 #import "THtmlViewController.h"

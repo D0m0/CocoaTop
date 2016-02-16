@@ -1,3 +1,4 @@
+#import "Compat.h"
 #import "Setup.h"
 
 @interface SelectFromList : UITableViewController

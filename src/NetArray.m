@@ -4,6 +4,7 @@
 #import "sys/kern_control.h"
 #import "sys/sys_domain.h"
 #define PRIVATE
+#import "Compat.h"
 #import "net/ntstat.h"
 //#import <mach/mach_init.h>
 //#import <mach/mach_host.h>
