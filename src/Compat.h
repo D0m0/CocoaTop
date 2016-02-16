@@ -34,6 +34,10 @@
 #define NSFoundationVersionNumber_iOS_9_0 1221.0
 #endif
 
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
+#define UITableViewCellAccessoryDetailButton	UITableViewCellAccessoryDetailDisclosureButton
+#endif
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_6_0
 
 #undef YES
@@ -47,7 +51,6 @@
 #define NSTextAlignmentRight					UITextAlignmentRight
 #define NSTextAlignmentCenter					UITextAlignmentCenter
 #define NSFontAttributeName						UITextAttributeFont
-#define UITableViewCellAccessoryDetailButton	UITableViewCellAccessoryDetailDisclosureButton
 
 @interface NSArray(Subscripts)
 - (id)objectAtIndexedSubscript:(NSUInteger)idx;
@@ -73,9 +76,9 @@
 
 #define UITableViewHeaderFooterView				UIView
 
-#define mach_task_basic_info_data_t	task_basic_info_data_t
-#define MACH_TASK_BASIC_INFO		TASK_BASIC_INFO
-#define MACH_TASK_BASIC_INFO_COUNT	TASK_BASIC_INFO_COUNT
+#define mach_task_basic_info_data_t				task_basic_info_data_t
+#define MACH_TASK_BASIC_INFO					TASK_BASIC_INFO
+#define MACH_TASK_BASIC_INFO_COUNT				TASK_BASIC_INFO_COUNT
 
 #endif
 
