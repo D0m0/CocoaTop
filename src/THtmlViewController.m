@@ -7,9 +7,15 @@
 {
 	[super viewDidLoad];
 	self.navigationItem.title = self.pageTitle;
+	self.indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+	self.indicator.color = [UIColor blackColor];
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.indicator];
+
 	UIWebView *webView = [[UIWebView alloc] initWithFrame:CGRectZero];
 	webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	webView.dataDetectorTypes = UIDataDetectorTypeNone;
+	webView.scalesPageToFit = YES;
+	webView.delegate = self;
 
 	NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.url];
 	[webView loadRequest:request];
@@ -26,6 +32,16 @@
 		return NO;
 	}
 	return YES;
+}
+
+- (void)webViewDidStartLoad:(UIWebView *)webView
+{
+	[self.indicator startAnimating];
+}
+
+- (void)webViewDidFinishLoad:(UIWebView *)webView
+{
+	[self.indicator stopAnimating];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -45,6 +61,7 @@
 
 - (void)dealloc
 {
+	[_indicator release];
 	[_url release];
 	[_pageTitle release];
 	[super dealloc];

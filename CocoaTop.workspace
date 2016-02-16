@@ -30,6 +30,15 @@
             <File name="src\Resources\Icon-Small.png" />
             <File name="src\Resources\Icon-Small@2x.png" />
             <File name="src\Resources\Info.plist" />
+            <File name="src\Resources\guide.html" />
+            <File name="src\Resources\story.html" />
+            <File name="src\Resources\style.css" />
+            <File name="src\Resources\ios7-chevron.png" />
+            <File name="src\Resources\ios7-chevron@2x.png" />
+            <File name="src\Resources\UIButtonBarHamburger.png" />
+            <File name="src\Resources\UIButtonBarHamburger@2x.png" />
+            <File name="src\Resources\UIButtonBarRefresh.png" />
+            <File name="src\Resources\UIButtonBarRefresh@2x.png" />
         </Folder>
         <Folder name="sys">
             <File name="src\sys\dyld64.h" />
@@ -39,8 +48,6 @@
             <File name="src\sys\resource.h" />
             <File name="src\sys\sys_domain.h" />
         </Folder>
-        <File name="src\About.h" />
-        <File name="src\About.m" />
         <File name="src\AppDelegate.h" />
         <File name="src\AppDelegate.m" />
         <File name="src\AppIcon.h" />
@@ -70,6 +77,10 @@
         <File name="src\SockViewController.m" />
         <File name="src\TextViewController.h" />
         <File name="src\TextViewController.m" />
+        <File name="src\THtmlViewController.h" />
+        <File name="src\THtmlViewController.m" />
+        <File name="src\BackButtonHandler.h" />
+        <File name="src\BackButtonHandler.m" />
         <File name="src\control" />
         <File name="src\postinst" />
         <File name="src\task.xml" />
