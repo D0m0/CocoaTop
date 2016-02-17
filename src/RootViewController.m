@@ -239,12 +239,12 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 		@"ShowHeader" : @YES,
 		@"ShowFooter" : @YES,
 		@"ShortenPaths" : @YES,
-		@"SortColumn" : @1,      @"SortDescending" : @NO,		// Main page (sort by pid)
+		@"SortColumn" : @1,         @"SortDescending" : @NO,		// Main page (sort by pid)
 		@"ProcInfoMode" : @0,
-		@"Mode0SortColumn" : @1, @"Mode0SortDescending" : @NO,	// Summary (by initial column order)
-		@"Mode1SortColumn" : @0, @"Mode1SortDescending" : @NO,	// Threads (by thread id)
-		@"Mode2SortColumn" : @2, @"Mode2SortDescending" : @YES,	// FDs (backwards by type)
-		@"Mode3SortColumn" : @1, @"Mode3SortDescending" : @NO,	// Modules (by address)
+		@"Mode0SortColumn" : @1001, @"Mode0SortDescending" : @NO,	// Summary (by initial column order)
+		@"Mode1SortColumn" : @2000, @"Mode1SortDescending" : @NO,	// Threads (by thread id)
+		@"Mode2SortColumn" : @3002, @"Mode2SortDescending" : @YES,	// FDs (backwards by type)
+		@"Mode3SortColumn" : @4001, @"Mode3SortDescending" : @NO,	// Modules (by address)
 	}];
 	self.configChange = @"";
 	self.configId = 0;
