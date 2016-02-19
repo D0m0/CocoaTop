@@ -1,12 +1,8 @@
-build
-/miniCode.sdf
-/miniCode.v11.suo
-/*.opensdf
-*.sdf
-*.suo
+/src/_
+/src/obj
+/src/.theos
+/src/theos
 /CocoaTop
 /CocoaTop5
 /CocoaTop6
 /CocoaTop7
-/iOS7
-/CocoaTop.vcxproj.user

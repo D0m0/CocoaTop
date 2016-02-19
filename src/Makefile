@@ -7,11 +7,9 @@ include theos/makefiles/common.mk
 APPLICATION_NAME = CocoaTop
 CocoaTop_FILES = RootViewController.m SockViewController.m Proc.m ProcArray.m NetArray.m Sock.m Column.m GridCell.m Setup.m SetupColumns.m AppIcon.m TextViewController.m THtmlViewController.m BackButtonHandler.m Compat.m AppDelegate.m main.m
 CocoaTop_FRAMEWORKS = UIKit CoreGraphics MessageUI
+CocoaTop_CODESIGN_FLAGS = -Stask.xml
 
 include $(THEOS_MAKE_PATH)/application.mk
-
-after-all::
-	@ldid -Stask.xml obj/CocoaTop.app/CocoaTop
 
 before-package::
 	@cp postinst _/DEBIAN/postinst
