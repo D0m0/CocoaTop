@@ -13,7 +13,7 @@
 @implementation UIButtonWithColorStates
 - (UIColor *)colorForHigh:(BOOL)high sel:(BOOL)sel
 {
-	return high ? [UIColor colorWithRed:(255.0 / 255.0) green:( 90.0 / 255.0) blue:( 90.0 / 255.0) alpha:1.0]:
+	return high ? [UIColor colorWithRed:( 16.0 / 255.0) green:( 84.0 / 255.0) blue:(152.0 / 255.0) alpha:1.0]:
 			sel ? [UIColor colorWithRed:(101.0 / 255.0) green:(170.0 / 255.0) blue:(239.0 / 255.0) alpha:1.0]:
 				  [UIColor colorWithRed:( 36.0 / 255.0) green:(132.0 / 255.0) blue:(232.0 / 255.0) alpha:1.0];
 }
