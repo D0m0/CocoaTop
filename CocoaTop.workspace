@@ -75,6 +75,8 @@
         <File name="src\Sock.m" />
         <File name="src\SockViewController.h" />
         <File name="src\SockViewController.m" />
+        <File name="src\PopupMenuView.h" />
+        <File name="src\PopupMenuView.m" />
         <File name="src\TextViewController.h" />
         <File name="src\TextViewController.m" />
         <File name="src\THtmlViewController.h" />

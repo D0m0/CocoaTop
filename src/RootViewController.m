@@ -25,160 +25,24 @@
 @property (assign) NSUInteger configId;
 @property (retain) NSString *configChange;
 @property (assign) pid_t selectedPid;
-
-@property (nonatomic, readonly) UIView *menuContainerView;
-@property (nonatomic, readonly) UIView *menuTintView;
-@property (nonatomic, readonly) UIView *menuView;
 @end
 
 @implementation RootViewController
 
-@synthesize menuContainerView = _menuContainerView;
-@synthesize menuTintView = _menuTintView;
-@synthesize menuView = _menuView;
-
-- (void)tapped:(UIButton *)sender
+- (void)popupMenuTappedItem:(NSInteger)item
 {
-	[self openActionSheet];
 	UIViewController* view = nil;
-	switch (sender.tag) {
+	switch (item) {
 	case 0: view = [[SetupViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
 	case 1: view = [[SetupColsViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
 	case 2: view = [[HtmlViewController alloc] initWithURL:@"guide" title:@"Quick Guide"]; break;
 	case 3: view = [[HtmlViewController alloc] initWithURL:@"story" title:@"The Story"]; break;
-//	case 3: view = [[AboutViewController alloc] initWithStyle:UITableViewStyleGrouped]; break;
 	}
 	if (view) {
 		[self.navigationController pushViewController:view animated:YES];
 		[view release];
 	}
 }
-
-/*
-- (void)presentHelpForName:(NSString *)name
-{
-	NSURL *url = [[NSBundle mainBundle] URLForResource:name withExtension:@"html" subdirectory:@"Documentation"];
-	if (url != nil) {
-		TSHTMLViewController *controller = [[TSHTMLViewController alloc] initWithURL:url];
-		controller.title = NSLocalizedString(name, nil);
-		[self.navigationController pushViewController:controller animated:YES];
-		[controller release];
-	}
-}
-
-- (void)helpButtonTapped
-{
-	[self presentHelpForName:@"REPORT_OVERVIEW"];
-}
-*/
-static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL action)
-{
-	const CGFloat buttonHeight = 45.0;
-	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-	button.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-	button.frame = CGRectMake(0.0, position * (1.0 + buttonHeight), 0.0, buttonHeight);
-	button.tag = position;
-	button.contentEdgeInsets = UIEdgeInsetsMake(0, buttonHeight / 2, 0, 0);
-	button.backgroundColor = [UIColor colorWithRed:(36.0 / 255.0) green:(132.0 / 255.0) blue:(232.0 / 255.0) alpha:1.0];
-	button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-	[button addTarget:target action:action forControlEvents:UIControlEventTouchUpInside];
-	[button setTitle:title forState:UIControlStateNormal];
-	return button;
-}
-
-- (UIView *)menuView
-{
-	if (_menuView == nil) {
-		const CGFloat buttonHeight = 45.0;
-		const CGFloat menuHeight = 4.0 * (1.0 + buttonHeight);
-		UIView *menuView = [[UIView alloc] initWithFrame:CGRectMake(0.0, -menuHeight, 0.0, menuHeight)];
-		menuView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-		menuView.backgroundColor = [UIColor colorWithWhite:0.85 alpha:1.0];
-		[menuView addSubview:menuButton(0, @"Settings", self, @selector(tapped:))];
-		[menuView addSubview:menuButton(1, @"Columns", self, @selector(tapped:))];
-		[menuView addSubview:menuButton(2, @"Quick Guide", self, @selector(tapped:))];
-		[menuView addSubview:menuButton(3, @"About", self, @selector(tapped:))];
-		_menuView = menuView;
-	}
-	return _menuView;
-}
-
-- (UIView *)menuTintView
-{
-	if (_menuTintView == nil) {
-		UIView *menuTintView = [[UIView alloc] initWithFrame:CGRectZero];
-		menuTintView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-		menuTintView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
-		// Add tap recognizer to dismiss menu when tapping outside its bounds.
-		UITapGestureRecognizer *recognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openActionSheet)];
-		[menuTintView addGestureRecognizer:recognizer];
-		[recognizer release];
-		_menuTintView = menuTintView;
-	}
-	return _menuTintView;
-}
-
-- (UIView *)menuContainerView
-{
-	if (_menuContainerView == nil) {
-		UIView *menuContainerView = [[UIView alloc] initWithFrame:CGRectZero];
-		menuContainerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-		menuContainerView.clipsToBounds = YES;
-		[menuContainerView addSubview:self.menuTintView];
-		[menuContainerView addSubview:self.menuView];
-		_menuContainerView = menuContainerView;
-	}
-	return _menuContainerView;
-}
-
-- (void)layoutMenuContainerView
-{
-	// NOTE: Access menu container directly (instead of via property) to prevent creation if it does not exist.
-	if ([_menuContainerView superview] != nil) {
-		CGRect frame = [self.navigationController.view convertRect:self.view.frame fromView:self.view.superview];
-		frame.origin.y += self.tableView.contentInset.top;
-		frame.size.height -= self.tableView.contentInset.top;
-		[_menuContainerView setFrame:frame];
-	}
-}
-
-- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
-{
-	[self layoutMenuContainerView];
-}
-
-- (IBAction)openActionSheet
-{
-	UIView *menuContainerView = self.menuContainerView;
-	const BOOL willAppear = (menuContainerView.superview == nil);
-	if (willAppear) {
-		[self.navigationController.view addSubview:menuContainerView];
-		[self layoutMenuContainerView];
-	}
-	// Show/hide animation
-	CGRect menuFrame = self.menuView.frame;
-	menuFrame.origin.y = willAppear ? 0.0 : -menuFrame.size.height;
-	CGFloat menuTintAlpha = willAppear ? 0.7 : 0.0;
-	void (^animations)(void) = ^ {
-		self.menuView.frame = menuFrame;
-		self.menuTintView.alpha = menuTintAlpha;
-	};
-	void (^completion)(BOOL) = ^(BOOL finished) {
-		if (!willAppear) [self.menuContainerView removeFromSuperview];
-	};
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-	if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_7_0)
-		[UIView animateWithDuration:0.4 delay:0.0 usingSpringWithDamping:1.0
-			initialSpringVelocity:4.0 options:UIViewAnimationOptionCurveEaseInOut
-			animations:animations completion:completion];
-	else
-#endif
-		[UIView animateWithDuration:0.4 delay:0.0 options:UIViewAnimationOptionCurveEaseInOut
-			animations:animations completion:completion];
-}
-
-#pragma mark -
-#pragma mark View lifecycle
 
 - (IBAction)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
 {
@@ -212,9 +76,9 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	bool isPhone = UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone;
 
 //	self.wantsFullScreenLayout = YES;
-
+	[self popupMenuWithItems:@[@"Settings", @"Columns", @"Quick Guide", @"About"] selected:-1 aligned:UIControlContentHorizontalAlignmentLeft];
 	self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarHamburger"] style:UIBarButtonItemStylePlain
-		target:self action:@selector(openActionSheet)];
+		target:self action:@selector(popupMenuToggle)];
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
 		target:self action:@selector(refreshProcs:)];
 	self.status = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width - (isPhone ? 80 : 150), 40)];
@@ -383,17 +247,6 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	[super viewWillDisappear:animated];
 	if (self.timer.isValid)
 		[self.timer invalidate];
-
-	if (_menuContainerView != nil) {
-		[_menuContainerView removeFromSuperview];
-		[_menuContainerView release];
-		_menuContainerView = nil;
-		[_menuTintView release];
-		_menuTintView = nil;
-		[_menuView release];
-		_menuView = nil;
-	}
-
 	self.header = nil;
 	self.columns = nil;
 }
@@ -561,6 +414,7 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	self.sorter = nil;
 	self.procs = nil;
 	self.columns = nil;
+	[super viewDidUnload];
 }
 
 - (void)dealloc
@@ -574,9 +428,6 @@ static UIButton *menuButton(NSUInteger position, NSString *title, id target, SEL
 	[_sorter release];
 	[_procs release];
 	[_columns release];
-	[_menuContainerView release];
-	[_menuTintView release];
-	[_menuView release];
 	[super dealloc];
 }
 

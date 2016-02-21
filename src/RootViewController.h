@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import "GridCell.h"
+#import "PopupMenuView.h"
 
-@interface RootViewController : UITableViewController<UIActionSheetDelegate>
+@interface RootViewController : UITableViewControllerWithMenu
 @end
