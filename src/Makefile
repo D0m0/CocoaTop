@@ -8,7 +8,7 @@ ifeq ($(TARGET),iphone:clang:7.0)
 CocoaTop_RESOURCE_DIRS = res
 endif
 
-include theos/makefiles/common.mk
+include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/application.mk
 
 before-package::
