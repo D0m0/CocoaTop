@@ -9,8 +9,11 @@ do
 	    make
 	    ;;
 	"Make for 5 & 6")
+	    echo ===================================== iOS5
 	    make TARGET=iphone:clang:5.0 SCHEMA=five
+	    echo ===================================== iOS6
 	    make TARGET=iphone:clang:6.0 SCHEMA=six
+	    echo ===================================== DEB
 	    make package
 	    ;;
 	"iPhone 5c")

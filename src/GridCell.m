@@ -66,48 +66,6 @@
 @end
 */
 
-static void* PathEllipsisPropertyKey = &PathEllipsisPropertyKey;
-
-@interface UILabel(WithPathEllipsis)
-@property(nonatomic, assign) BOOL pathEllipsis;
-@end
-
-@implementation UILabel(WithPathEllipsis)
-- (BOOL)pathEllipsis { NSNumber *val = objc_getAssociatedObject(self, PathEllipsisPropertyKey); return val && val.boolValue; }
-- (void)setPathEllipsis:(BOOL)pathEllipsis { objc_setAssociatedObject(self, PathEllipsisPropertyKey, pathEllipsis ? [NSNumber numberWithBool:YES] : nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC); }
-
-NSInteger textWidth(NSString *text, UILabel *label)
-{
-//	return [text sizeWithFont:label.font].width;
-	return [text sizeWithAttributes:@{NSFontAttributeName:label.font}].width;
-}
-
-- (void)layoutSubviews
-{
-	[super layoutSubviews];
-	if (self.pathEllipsis) {
-		// Shorten paths the smart way
-		NSInteger widthTotal = self.frame.size.width - 2;
-		if (widthTotal > 0 && textWidth(self.text, self) > widthTotal) {
-			NSLog(@"tag=%d", self.tag);
-			NSString *path = [self.text stringByDeletingLastPathComponent];
-			NSString *last = [@"…/" stringByAppendingString:[self.text lastPathComponent]];
-			NSInteger widthLast = textWidth(last, self);
-			if (widthLast > widthTotal)
-				self.text = last;
-			else {
-				NSInteger widthLeft = widthTotal - widthLast;
-				do {
-					path = [path substringToIndex:path.length-1];
-				} while (textWidth(path, self) > widthLeft);
-				self.text = [path stringByAppendingString:last];
-			}
-		}
-	}
-}
-
-@end
-
 @implementation GridTableCell
 
 + (NSString *)reuseIdWithIcon:(bool)withicon
@@ -152,8 +110,8 @@ NSInteger textWidth(NSString *text, UILabel *label)
 			self.firstColWidth = totalCol = col.width - 5;
 			self.textLabel.adjustsFontSizeToFitWidth = !(col.style & ColumnStyleEllipsis);
 			if (col.style & ColumnStylePath) {
-				if (!(col.style & ColumnStyleTooLong)) self.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;//.pathEllipsis = YES;
-				self.detailTextLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;//.pathEllipsis = YES;
+				if (!(col.style & ColumnStyleTooLong)) self.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
+				self.detailTextLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
 			}
 		} else {
 			UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
@@ -173,7 +131,7 @@ NSInteger textWidth(NSString *text, UILabel *label)
 			label.textAlignment = col.align;
 			label.font = col.style & ColumnStyleMonoFont ? [UIFont fontWithName:@"Courier" size:13.0] : [UIFont systemFontOfSize:12.0];
 			label.adjustsFontSizeToFitWidth = !(col.style & ColumnStyleEllipsis);
-			if (col.style & ColumnStylePath) label.lineBreakMode = NSLineBreakByTruncatingMiddle;//.pathEllipsis = YES;
+			if (col.style & ColumnStylePath) label.lineBreakMode = NSLineBreakByTruncatingMiddle;
 			label.backgroundColor = [UIColor clearColor];
 			label.tag = col.tag + 1;
 			[self.labels addObject:label];
