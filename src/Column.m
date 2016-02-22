@@ -492,7 +492,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Pri" fullname:@"Thread Priority" align:NSTextAlignmentRight width:37 tag:2004 style:ColumnStyleSortDesc
 			data:^NSString*(PSSockThreads *sock) { return [NSString stringWithFormat:@"%@%u", sock->tbi.policy == POLICY_RR ? @"R:" : sock->tbi.policy == POLICY_FIFO ? @"F:" : @"", sock.prio]; }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { COMPARE(prio); } summary:nil],
-		[PSColumn psColumnWithName:@"Dispatch Queue" fullname:@"Dispatch Queue Name" align:NSTextAlignmentLeft width:95 tag:2005 style:ColumnStyleExtend | ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Name/Dispatch" fullname:@"Thread Name & Dispatch Queue" align:NSTextAlignmentLeft width:95 tag:2005 style:ColumnStyleExtend | ColumnStyleEllipsis
 			data:^NSString*(PSSockThreads *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
 		] retain];

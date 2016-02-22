@@ -186,39 +186,45 @@ void dump(unsigned char *b, int s)
 			case TH_STATE_HALTED:			sock.color = [UIColor brownColor]; break;
 			default:						sock.color = [UIColor grayColor];
 			}
+			// Get thread name
+			sock.name = @"-";
+			struct proc_threadinfo pth = {0};
+			proc_pidinfo(socks.proc.pid, PROC_PIDTHREADINFO, tii.thread_handle, &pth, sizeof(pth));
+			if (pth.pth_name[0])
+				sock.name = [NSString stringWithUTF8String:pth.pth_name];
+			// Get dispatch queue name
+			NSString *dispQueue = nil;
 			int bits = socks.proc.flags & P_LP64 ? sizeof(uint64_t) : sizeof(uint32_t);
 			uint64_t addr = tii.dispatch_qaddr;
 			mach_vm_size_t size;
 			if (addr && mach_vm_read_overwrite(task, addr, bits, (mach_vm_address_t)&addr, &size) == KERN_SUCCESS) {
 				NSNumber *dispQueueAddr = [NSNumber numberWithUnsignedLongLong:addr];
-				sock.name = socks.proc.dispQueue[dispQueueAddr];
-				if (!sock.name) {
+				// Get it from our cache
+				dispQueue = socks.proc.dispQueue[dispQueueAddr];
+				if (!dispQueue) {
 					char buf[256] = {0};
 					if (socks.proc.flags & P_LP64) {
-						// This is just a hard-coded offset to where the name pointer should be
+						// This is just a hard-coded offset to where the name pointer should be, same for all arm64 systems
 						if (addr && mach_vm_read_overwrite(task, addr + 0x78, bits, (mach_vm_address_t)&addr, &size) == KERN_SUCCESS)
 						if (addr && mach_vm_read_overwrite(task, addr, sizeof(buf)-1, (mach_vm_address_t)buf, &size) == KERN_SUCCESS)
-							sock.name = [NSString stringWithUTF8String:buf];
+							dispQueue = [NSString stringWithUTF8String:buf];
 					} else {
 						// This is a super-hacky hack which works on all 32 bit iOSes!
 						if (mach_vm_read_overwrite(task, addr, sizeof(buf), (mach_vm_address_t)buf, &size) == KERN_SUCCESS) {
 							uint64_t addr = (uint64_t)dispatch_queue_get_label((dispatch_queue_t)buf);
 							// addr=buf+0x38 on iOS5
 							if (addr > (uint64_t)buf && addr < (uint64_t)buf + sizeof(buf))
-								sock.name = [NSString stringWithUTF8String:(char *)addr];
+								dispQueue = [NSString stringWithUTF8String:(char *)addr];
 							// addr=buf[0x3C] on iOS7, addr=buf[0x48] on iOS8
 							else if (addr && mach_vm_read_overwrite(task, addr, sizeof(buf)-1, (mach_vm_address_t)buf, &size) == KERN_SUCCESS)
-								sock.name = [NSString stringWithUTF8String:buf];
+								dispQueue = [NSString stringWithUTF8String:buf];
 						}
 					}
-					if (!sock.name)
-						sock.name = @"-";
-					[socks.proc.dispQueue setObject:sock.name forKey:dispQueueAddr];
+					[socks.proc.dispQueue setObject:dispQueue ? dispQueue : @"" forKey:dispQueueAddr];
 				}
-			} else
-				sock.name = @"-";
-			// Leave this for cool syslogd effects ;)
-			if (!j) NSLog(@"<queue %llX> %@", tii.dispatch_qaddr, sock.name);
+			}
+			if (dispQueue.length)
+				sock.name = [sock.name stringByAppendingFormat:@" [DQ:%@]", dispQueue];
 		}
 		mach_port_deallocate(mach_task_self(), thread_list[j]);
 	}
