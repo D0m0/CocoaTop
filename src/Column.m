@@ -139,7 +139,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		allColumns = [@[
-		[PSColumn psColumnWithName:@"Command line" fullname:@"Command line" align:NSTextAlignmentLeft width:170 tag:0 style:ColumnStyleExtend | ColumnStyleEllipsis | ColumnStyleTooLong
+		[PSColumn psColumnWithName:@"Command line" fullname:@"Command line" align:NSTextAlignmentLeft width:170 tag:0 style:ColumnStylePathTrunc | ColumnStyleTooLong
 			data:^NSString*(PSProc *proc) { return [proc.executable stringByAppendingString:proc.args]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"Total processes: %u", procs.count]; }
@@ -500,7 +500,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"FD" fullname:@"File Descriptor" align:NSTextAlignmentRight width:40 tag:3000 style:0
 			data:^NSString*(PSSockFiles *sock) { return [NSString stringWithFormat:@"%d", sock.fd]; }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(fd); } summary:nil],
-		[PSColumn psColumnWithName:@"Open file/socket" fullname:@"Filename or Socket Address" align:NSTextAlignmentLeft width:220 tag:3001 style:ColumnStyleExtend | ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Open file/socket" fullname:@"Filename or Socket Address" align:NSTextAlignmentLeft width:220 tag:3001 style:ColumnStylePathTrunc
 			data:^NSString*(PSSockFiles *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
 		[PSColumn psColumnWithName:@"Type" fullname:@"Descriptor Type" align:NSTextAlignmentLeft width:50 tag:3002 style:0
@@ -511,7 +511,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(flags); } summary:nil],
 		] retain];
 		sockColumns[ColumnModeModules] = [@[
-		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 tag:4000 style:ColumnStyleExtend | ColumnStyleEllipsis
+		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 tag:4000 style:ColumnStylePathTrunc
 			data:^NSString*(PSSockModules *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
 		[PSColumn psColumnWithName:@"Addr" fullname:@"Loaded Virtual Address" align:NSTextAlignmentRight width:90 tag:4001 style:ColumnStyleMonoFont

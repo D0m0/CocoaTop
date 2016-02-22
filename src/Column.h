@@ -16,6 +16,8 @@ typedef enum {
 	ColumnStyleTooLong = 16,	// Use a shorter text for cell (but not summary)
 	ColumnStyleNoSummary = 32,	// Column is not shown in process summary
 	ColumnStyleSortDesc = 64,	// Default sorting is "high to low"
+	ColumnStylePath = 128,		// This column should be truncated path-like
+	ColumnStylePathTrunc = 131,	// ColumnStylePath + ColumnStyleExtend + ColumnStyleEllipsis
 } column_style_t;
 
 typedef NSString *(^PSColumnData)(id proc);
