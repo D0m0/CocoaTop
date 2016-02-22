@@ -12,8 +12,12 @@
 #define		KEV_INET_SUBCLASS			1
 #define		KEV_DL_SUBCLASS				2
 #define		KEV_NETPOLICY_SUBCLASS		3
+#define		KEV_SOCKET_SUBCLASS			4
 #define		KEV_ATALK_SUBCLASS			5
 #define		KEV_INET6_SUBCLASS			6
+#define 	KEV_ND6_SUBCLASS 			7
+#define 	KEV_NECP_SUBCLASS 			8
+#define 	KEV_NETAGENT_SUBCLASS		9
 #define		KEV_LOG_SUBCLASS			10
 #define KEV_IOKIT_CLASS				2
 #define KEV_SYSTEM_CLASS			3
@@ -24,6 +28,7 @@
 #define		KEV_IPFW_SUBCLASS			1
 #define		KEV_IP6FW_SUBCLASS			2
 #define KEV_IEEE80211_CLASS			6
+#define 	KEV_APPLE80211_EVENT_SUBCLASS	1
 
 #define PIPE_ASYNC      0x004   /* Async? I/O. */
 #define PIPE_WANTR      0x008   /* Reader wants some characters. */

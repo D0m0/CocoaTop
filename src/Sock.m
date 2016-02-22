@@ -347,8 +347,12 @@ void dump(unsigned char *b, int s)
 				case KEV_INET_SUBCLASS:			ksubcls = @"INET"; break;
 				case KEV_DL_SUBCLASS:			ksubcls = @"DATALINK"; break;
 				case KEV_NETPOLICY_SUBCLASS:	ksubcls = @"POLICY"; break;
+				case KEV_SOCKET_SUBCLASS:		ksubcls = @"SOCKET"; break;
 				case KEV_ATALK_SUBCLASS:		ksubcls = @"APPLETALK"; break;
 				case KEV_INET6_SUBCLASS:		ksubcls = @"INET6"; break;
+				case KEV_ND6_SUBCLASS:			ksubcls = @"ND6"; break;
+				case KEV_NECP_SUBCLASS:			ksubcls = @"NECP"; break;
+				case KEV_NETAGENT_SUBCLASS:		ksubcls = @"NETAGENT"; break;
 				case KEV_LOG_SUBCLASS:			ksubcls = @"LOG"; break;
 				} break;
 			case KEV_IOKIT_CLASS:				kclass = @"IOKIT"; break;
@@ -364,6 +368,9 @@ void dump(unsigned char *b, int s)
 				case KEV_IP6FW_SUBCLASS:		ksubcls = @"IP6FW"; break;
 				} break;
 			case KEV_IEEE80211_CLASS:			kclass = @"WIFI"; break;
+				switch (ki->kesi_subclass_filter) {
+				case KEV_APPLE80211_EVENT_SUBCLASS: kclass = @"EVENT"; break;
+				} break;
 			}
 			name = [NSString stringWithFormat:@"%@:%@:%@", kvendor, kclass, ksubcls];
 			stype = "KEVNT";
