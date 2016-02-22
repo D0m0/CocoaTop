@@ -267,7 +267,11 @@ void dump(unsigned char *b, int s)
 		struct kqueue_fdinfo info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDKQUEUEINFO, &info, PROC_PIDFDKQUEUEINFO_SIZE) != PROC_PIDFDKQUEUEINFO_SIZE)
 			return nil;
-		name = [NSString stringWithFormat:@"KQUEUE: %@", info.kqueueinfo.kq_state == PROC_KQUEUE_SELECT ? @"SELECT" : info.kqueueinfo.kq_state == PROC_KQUEUE_SLEEP ? @"SLEEP" : @"SUSPENDED"];
+		name = info.kqueueinfo.kq_state & PROC_KQUEUE_64 ? @"KQUEUE64:" : info.kqueueinfo.kq_state & PROC_KQUEUE_32 ? @"KQUEUE32:" : @"KQUEUE:";
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_SELECT)	name = [name stringByAppendingString:@" SELECT"];
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_SLEEP)	name = [name stringByAppendingString:@" SLEEP"];
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_QOS)		name = [name stringByAppendingString:@" QOS"];
+		if (!(info.kqueueinfo.kq_state & ~(PROC_KQUEUE_32 | PROC_KQUEUE_64))) name = [name stringByAppendingString:@" SUSPENDED"];
 		stype = "QUEUE";
 		color = [UIColor brownColor];
 		flags = info.pfi.fi_openflags;

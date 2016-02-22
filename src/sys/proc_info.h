@@ -564,8 +564,12 @@ struct kqueue_info {
 	uint32_t		kq_state;
 	uint32_t		rfu_1;	/* reserved */
 };
-#define PROC_KQUEUE_SELECT	1
-#define PROC_KQUEUE_SLEEP	2
+
+#define PROC_KQUEUE_SELECT	0x01
+#define PROC_KQUEUE_SLEEP	0x02
+#define PROC_KQUEUE_32		0x08
+#define PROC_KQUEUE_64		0x10
+#define PROC_KQUEUE_QOS		0x20
 
 struct kqueue_fdinfo {
 	struct proc_fileinfo	pfi;
