@@ -27,7 +27,7 @@ static NSArray *presetNames;
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
-			presetList = [@{
+			presetList = @{
 				@"1: Standard":@[@0, @1, @3, @5, @20, @6, @7],
 				@"2: Inspector":@[@0, @3, @5, @6, @7, @9, @12],
 				@"3: Performance":@[@0, @3, @16, @4, @5, @17, @7, @12],
@@ -38,9 +38,9 @@ static NSArray *presetNames;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 				@"8: Disk usage":@[@0, @1, @25, @26, @27, @28],
 #endif
-			} retain];
+			};
 		else
-			presetList = [@{
+			presetList = @{
 				@"1: Standard":@[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 				@"2: Inspector":@[@0, @1, @3, @5, @6, @7, @9, @10, @12, @13],
 				@"3: Performance":@[@0, @1, @3, @16, @4, @5, @17, @7, @23, @12, @13, @14, @15, @19],
@@ -51,8 +51,8 @@ static NSArray *presetNames;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 				@"8: Disk usage":@[@0, @1, @9, @25, @26, @27, @28, @24],
 #endif
-			} retain];
-		presetNames = [[presetList.allKeys sortedArrayUsingSelector:@selector(compare:)] retain];
+			};
+		presetNames = [presetList.allKeys sortedArrayUsingSelector:@selector(compare:)];
 	});
 }
 
@@ -111,17 +111,15 @@ static NSArray *presetNames;
 {
 	NSMutableArray *ar[2];
 }
-@property(retain) NSMutableArray *in;
-@property(retain) NSMutableArray *out;
+@property(strong) NSMutableArray *in;
+@property(strong) NSMutableArray *out;
 @end
 
 @implementation SetupColsViewController
 
 - (void)openPresets
 {
-	SelectPreset* preset = [SelectPreset new];
-	[self.navigationController pushViewController:preset animated:YES];
-	[preset release];
+	[self.navigationController pushViewController:[SelectPreset new] animated:YES];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -133,11 +131,9 @@ static NSArray *presetNames;
 {
 	[super viewDidLoad];
 	self.tableView.editing = YES;
-	UIBarButtonItem *presetButton = [[UIBarButtonItem alloc] initWithTitle:@"Presets" style:UIBarButtonItemStylePlain
-		target:self action:@selector(openPresets)];
-	self.navigationItem.rightBarButtonItem = presetButton;
 	self.navigationItem.title = @"Manage columns";
-	[presetButton release];
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Presets" style:UIBarButtonItemStylePlain
+		target:self action:@selector(openPresets)];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -236,13 +232,6 @@ static NSArray *presetNames;
 {
 	self.in = nil;
 	self.out = nil;
-}
-
-- (void)dealloc
-{
-	[_in release];
-	[_out release];
-	[super dealloc];
 }
 
 @end

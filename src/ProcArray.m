@@ -22,7 +22,7 @@
 
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size
 {
-	return [[[PSProcArray alloc] initProcArrayWithIconSize:size] autorelease];
+	return [[PSProcArray alloc] initProcArrayWithIconSize:size];
 }
 
 - (void)refreshMemStats
@@ -142,13 +142,6 @@
 {
 	NSUInteger idx = [self indexForPid:pid];
 	return idx == NSNotFound ? nil : (PSProc *)self.procs[idx];
-}
-
-- (void)dealloc
-{
-	[_nstats release];
-	[_procs release];
-	[super dealloc];
 }
 
 @end

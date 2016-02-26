@@ -53,7 +53,7 @@ int nstatGetSrcDesc(int fd, nstat_provider_id_t provider, nstat_src_ref_t srcref
 
 void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void *data, void *info)
 {
-	PSNetArray *self = (PSNetArray *)info;
+	PSNetArray *self = (__bridge PSNetArray *)info;
 	NSValue *srcval;
 	int fd = CFSocketGetNative(s);
 	nstat_msg_hdr *ns = (nstat_msg_hdr *)CFDataGetBytePtr((CFDataRef)data);
@@ -134,7 +134,7 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 - (void)reopen
 {
 	[self close];
-	CFSocketContext ctx = {0, self};
+	CFSocketContext ctx = {0, (__bridge void *)self};
 	self.netStat = CFSocketCreate(0, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL, kCFSocketDataCallBack, NetStatCallBack, &ctx);
 	CFRunLoopAddSource(
 		[[NSRunLoop currentRunLoop] getCFRunLoop],
@@ -176,7 +176,7 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 
 + (instancetype)psNetArray
 {
-	return [[[PSNetArray alloc] initNetArray] autorelease];
+	return [[PSNetArray alloc] initNetArray];
 }
 
 - (void)query
@@ -217,8 +217,6 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 - (void)dealloc
 {
 	[self close];
-	[_nstats release];
-	[super dealloc];
 }
 
 @end

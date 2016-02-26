@@ -10,19 +10,7 @@
 #import "sys/dyld64.h"
 
 @implementation PSSock
-
-+ (int)refreshArray:(PSSockArray *)socks
-{
-	return 0;
-}
-
-- (void)dealloc
-{
-	[_name release];
-	[_color release];
-	[super dealloc];
-}
-
++ (int)refreshArray:(PSSockArray *)socks { return 0; }
 @end
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +31,7 @@
 
 + (instancetype)psSockWithProc:(PSProc *)proc column:(PSColumn *)col
 {
-	return [[[PSSockSummary alloc] initWithProc:proc column:col] autorelease];
+	return [[PSSockSummary alloc] initWithProc:proc column:col];
 }
 
 + (int)refreshArray:(PSSockArray *)socks
@@ -54,13 +42,6 @@
 		if (sock) [socks.socks addObject:sock];
 	}
 	return 0;
-}
-
-- (void)dealloc
-{
-	[_proc release];
-	[_col release];
-	[super dealloc];
 }
 
 @end
@@ -87,7 +68,7 @@ int stack_snapshot(int pid, char *tracebuf, int bufsize, int options)
 
 + (instancetype)psSockWithId:(uint64_t)tid
 {
-	return [[[PSSockThreads alloc] initWithId:tid] autorelease];
+	return [[PSSockThreads alloc] initWithId:tid];
 }
 
 /*
@@ -211,7 +192,11 @@ void dump(unsigned char *b, int s)
 					} else {
 						// This is a super-hacky hack which works on all 32 bit iOSes!
 						if (mach_vm_read_overwrite(task, addr, sizeof(buf), (mach_vm_address_t)buf, &size) == KERN_SUCCESS) {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_6_0
 							uint64_t addr = (uint64_t)dispatch_queue_get_label((dispatch_queue_t)buf);
+#else
+							uint64_t addr = (uint64_t)dispatch_queue_get_label((__bridge dispatch_queue_t)(void *)buf);
+#endif
 							// addr=buf+0x38 on iOS5
 							if (addr > (uint64_t)buf && addr < (uint64_t)buf + sizeof(buf))
 								dispQueue = [NSString stringWithUTF8String:(char *)addr];
@@ -410,7 +395,7 @@ void dump(unsigned char *b, int s)
 
 + (instancetype)psSockWithPid:(pid_t)pid fd:(int32_t)fd type:(uint32_t)type
 {
-	return [[[PSSockFiles alloc] initWithPid:pid fd:fd type:type] autorelease];
+	return [[PSSockFiles alloc] initWithPid:pid fd:fd type:type];
 }
 
 + (int)refreshArray:(PSSockArray *)socks
@@ -468,7 +453,7 @@ void dump(unsigned char *b, int s)
 
 + (instancetype)psSockWithRwpi:(struct proc_regionwithpathinfo *)rwpi
 {
-	return [[[PSSockModules alloc] initWithRwpi:rwpi] autorelease];
+	return [[PSSockModules alloc] initWithRwpi:rwpi];
 }
 
 + (int)refreshArray:(PSSockArray *)socks
@@ -571,7 +556,7 @@ void dump(unsigned char *b, int s)
 
 + (instancetype)psSockArrayWithProc:(PSProc *)proc
 {
-	return [[[PSSockArray alloc] initSockArrayWithProc:proc] autorelease];
+	return [[PSSockArray alloc] initSockArrayWithProc:proc];
 }
 
 - (int)refreshWithMode:(column_mode_t)mode
@@ -623,12 +608,6 @@ void dump(unsigned char *b, int s)
 {
 	NSUInteger idx = [self.socks indexOfObjectPassingTest:predicate];
 	return idx == NSNotFound ? nil : (PSSock *)self.socks[idx];
-}
-
-- (void)dealloc
-{
-	[_socks release];
-	[super dealloc];
 }
 
 @end

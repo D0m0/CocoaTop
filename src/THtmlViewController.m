@@ -17,11 +17,8 @@
 	webView.scalesPageToFit = YES;
 	webView.delegate = self;
 
-	NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.url];
-	[webView loadRequest:request];
-	[request release];
+	[webView loadRequest:[[NSURLRequest alloc] initWithURL:self.url]];
 	self.view = webView;
-	[webView release];
 }
 
 - (BOOL)navigationShouldPopOnBackButton
@@ -57,14 +54,6 @@
 		self.pageTitle = title;
 	}
 	return self;
-}
-
-- (void)dealloc
-{
-	[_indicator release];
-	[_url release];
-	[_pageTitle release];
-	[super dealloc];
 }
 
 @end

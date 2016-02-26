@@ -2,8 +2,8 @@
 #import "NetArray.h"
 
 @interface PSProcArray : NSObject
-@property (retain) NSMutableArray *procs;
-@property (retain) PSNetArray *nstats;
+@property (strong) NSMutableArray *procs;
+@property (strong) PSNetArray *nstats;
 @property (assign) CGFloat iconSize;
 @property (assign) uint64_t memUsed;
 @property (assign) uint64_t memFree;

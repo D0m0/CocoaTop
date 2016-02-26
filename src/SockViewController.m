@@ -7,13 +7,13 @@
 NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", @"Modules"};
 
 @interface SockViewController()
-@property (retain) PSProc *proc;
-@property (retain) NSString *name;
-@property (retain) GridHeaderView *header;
-@property (retain) NSArray *columns;
-@property (retain) NSTimer *timer;
-@property (retain) PSSockArray *socks;
-@property (retain) PSColumn *sorter;
+@property (strong) PSProc *proc;
+@property (strong) NSString *name;
+@property (strong) GridHeaderView *header;
+@property (strong) NSArray *columns;
+@property (strong) NSTimer *timer;
+@property (strong) PSSockArray *socks;
+@property (strong) PSColumn *sorter;
 @property (assign) BOOL sortdesc;
 @property (assign) BOOL fullScreen;
 @property (assign) CGFloat interval;
@@ -79,10 +79,8 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-	UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"Back"
+	self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back"
 		style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
-	self.navigationItem.leftBarButtonItem = item;
-	[item release];
 
 	self.mode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
 	[self popupMenuWithItems:[NSArray arrayWithObjects:ColumnModeName count:ColumnModes] selected:self.mode aligned:UIControlContentHorizontalAlignmentRight];
@@ -93,7 +91,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 #endif
 	UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideShowNavBar:)];
 	twoTap.numberOfTouchesRequired = 2;
-	[self.tableView addGestureRecognizer:twoTap]; [twoTap release];
+	[self.tableView addGestureRecognizer:twoTap];
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	self.tableView.rowHeight = self.tableView.rowHeight * 2 / 3;
@@ -267,20 +265,11 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	NSString *title = (self.mode == ColumnModeSummary) ? sock.name : @"Property",
 		   *message = (self.mode == ColumnModeSummary) ? [NSString stringWithFormat:@"%@\n\n%@", sock.col.getData(sock.proc),
 		   [sock.col.descr substringWithRange:[sock.col.descr lineRangeForRange:NSMakeRange(0,1)]]] : sock.name;
-	UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-	[alertView show];
+	[[[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
 }
 
 #pragma mark -
 #pragma mark Memory management
-
-- (void)didReceiveMemoryWarning
-{
-	// Releases the view if it doesn't have a superview.
-	[super didReceiveMemoryWarning];
-	NSLog(@"didReceiveMemoryWarning");
-	// Relinquish ownership of any cached data, images, etc that aren't in use.
-}
 
 - (void)viewDidUnload
 {
@@ -298,11 +287,6 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 {
 	if (self.timer.isValid)
 		[self.timer invalidate];
-	[_timer release];
-	[_sorter release];
-	[_socks release];
-	[_columns release];
-	[super dealloc];
 }
 
 @end

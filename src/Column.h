@@ -24,11 +24,11 @@ typedef NSString *(^PSColumnData)(id proc);
 
 @interface PSColumn : NSObject
 // Full column name (in settings)
-@property (retain) NSString *fullname;
+@property (strong) NSString *fullname;
 // Short name (in header)
-@property (retain) NSString *name;
+@property (strong) NSString *name;
 // Multiline description (in settings column info)
-@property (retain) NSString *descr;
+@property (strong) NSString *descr;
 // NSTextAlignmentLeft or NSTextAlignmentRight
 @property (assign) NSTextAlignment align;
 // Minimal column width

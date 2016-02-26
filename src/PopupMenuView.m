@@ -2,9 +2,9 @@
 #import "PopupMenuView.h"
 
 @interface UITableViewControllerWithMenu()
-@property (retain) UIView *menuContainerView;
-@property (retain) UIView *menuTintView;
-@property (retain) UIView *menuView;
+@property (strong) UIView *menuContainerView;
+@property (strong) UIView *menuTintView;
+@property (strong) UIView *menuView;
 @end
 
 @interface UIButtonWithColorStates : UIButton
@@ -120,9 +120,7 @@
 	menuTintView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	menuTintView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
 	// Add tap recognizer to dismiss menu when tapping outside its bounds.
-	UITapGestureRecognizer *recognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(popupMenuToggle)];
-	[menuTintView addGestureRecognizer:recognizer];
-	[recognizer release];
+	[menuTintView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(popupMenuToggle)]];
 	self.menuTintView = menuTintView;
 
 	UIView *menuContainerView = [[UIView alloc] initWithFrame:CGRectZero];
@@ -142,14 +140,6 @@
 		self.menuView = nil;
 	}
 	[super viewDidUnload];
-}
-
-- (void)dealloc
-{
-	[_menuContainerView release];
-	[_menuTintView release];
-	[_menuView release];
-	[super dealloc];
 }
 
 @end

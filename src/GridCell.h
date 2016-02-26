@@ -8,8 +8,8 @@
 @property (assign) NSUInteger id;
 @property (assign) NSUInteger firstColWidth;
 @property (assign) BOOL extendArgsLabel;
-@property (retain) NSMutableArray *labels;
-@property (retain) NSMutableArray *dividers;
+@property (strong) NSMutableArray *labels;
+@property (strong) NSMutableArray *dividers;
 + (NSString *)reuseIdWithIcon:(bool)withicon;
 + (instancetype)cellWithIcon:(bool)withicon;
 - (void)configureWithId:(int)id columns:(NSArray *)columns size:(CGSize)size;
@@ -18,8 +18,8 @@
 @end
 
 @interface GridHeaderView : UITableViewHeaderFooterView
-@property (retain) NSMutableArray *labels;
-@property (retain) NSMutableArray *dividers;
+@property (strong) NSMutableArray *labels;
+@property (strong) NSMutableArray *dividers;
 + (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size;
 + (instancetype)footerWithColumns:(NSArray *)columns size:(CGSize)size;
 - (void)sortColumnOld:(PSColumn *)oldCol New:(PSColumn *)newCol desc:(BOOL)desc;

@@ -69,7 +69,6 @@ uint64_t mach_time_to_milliseconds(uint64_t mach_time)
 		NSMutableArray *results = [NSMutableArray arrayWithCapacity:source.count];
 		for (NSString *src in source)
 			[results addObject:[PSSymLink absoluteSymLinkDestination:src]];
-		[source retain];
 		target = [results copy];
 	});
 	path = [path stringByStandardizingPath];

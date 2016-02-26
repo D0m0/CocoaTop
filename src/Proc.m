@@ -62,7 +62,7 @@
 
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size
 {
-	return [[[PSProc alloc] initWithKinfo:ki iconSize:size] autorelease];
+	return [[PSProc alloc] initWithKinfo:ki iconSize:size];
 }
 
 // Thread states are sorted by priority, top priority becomes a "task state"
@@ -295,8 +295,7 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 				if (*cp == '\0') c++;
 			while (sp < cp && sp[0] == '/' && sp[1] == '/') sp++;
 			if (sp != cp) {
-				args = [[[[NSString alloc] initWithBytes:sp length:(cp-sp)
-					encoding:NSUTF8StringEncoding] autorelease]
+				args = [[[NSString alloc] initWithBytes:sp length:(cp-sp) encoding:NSUTF8StringEncoding]
 					componentsSeparatedByString:@"\0"];
 			}
 		}
@@ -306,17 +305,6 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 		return args;
 	ki->kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
 	return [NSArray arrayWithObject:[NSString stringWithFormat:@"(%s)", ki->kp_proc.p_comm]];
-}
-
-- (void)dealloc
-{
-	[_name release];
-	[_executable release];
-	[_args release];
-	[_icon release];
-	[_app release];
-	[_dispQueue release];
-	[super dealloc];
 }
 
 @end

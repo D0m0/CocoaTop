@@ -4,7 +4,7 @@
 
 /*
 @interface SmallGraph : UIView
-@property (retain) NSArray *dots;
+@property (strong) NSArray *dots;
 @end
 
 @implementation SmallGraph
@@ -18,7 +18,7 @@
 
 + (id)graphWithFrame:(CGRect)frame
 {
-	return [[[SmallGraph alloc] initWithFrame:frame] autorelease];
+	return [[SmallGraph alloc] initWithFrame:frame];
 }
 
 //void draw1PxStroke(CGContextRef context, CGPoint startPoint, CGPoint endPoint, CGColorRef color)
@@ -57,12 +57,6 @@
 	CGContextRestoreGState(context);
 }
 
-- (void)dealloc
-{
-	[_dots release];
-	[super dealloc];
-}
-
 @end
 */
 
@@ -76,14 +70,14 @@
 - (instancetype)initWithIcon:(bool)withicon
 {
 	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:[GridTableCell reuseIdWithIcon:withicon]];
-	self.accessoryView = [[UIView new] autorelease];
+	self.accessoryView = [UIView new];
 	self.id = 0;
 	return self;
 }
 
 + (instancetype)cellWithIcon:(bool)withicon
 {
-	return [[[GridTableCell alloc] initWithIcon:withicon] autorelease];
+	return [[GridTableCell alloc] initWithIcon:withicon];
 }
 
 - (void)configureWithId:(int)id columns:(NSArray *)columns size:(CGSize)size
@@ -118,14 +112,12 @@
 			divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 			[self.dividers addObject:divider];
 			[self.contentView addSubview:divider];
-			[divider release];
 
 			//if (col.tag == 4) {
 			//	SmallGraph *graph = [SmallGraph graphWithFrame:CGRectMake(totalCol + 1, 0, col.width - 1, size.height)];
 			//	graph.tag = 1000;//col.tag;
 			//	[self.labels addObject:graph];
 			//	[self.contentView addSubview:graph];
-			//	[graph release];
 			//}
 			UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 4, 0, col.width - 8, size.height)];
 			label.textAlignment = col.align;
@@ -136,7 +128,6 @@
 			label.tag = col.tag + 1;
 			[self.labels addObject:label];
 			[self.contentView addSubview:label];
-			[label release];
 
 			totalCol += col.width;
 		}
@@ -145,7 +136,6 @@
 		[self.dividers addObject:divider];
 		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
 		[self.contentView addSubview:divider];
-		[divider release];
 	}
 	self.id = id;
 }
@@ -155,7 +145,7 @@
 	self.textLabel.text = proc.name;
 	self.detailTextLabel.text = [proc.executable stringByAppendingString:proc.args];
 	if (proc.icon)
-		[self.imageView initWithImage:proc.icon];
+		self.imageView.image = proc.icon;
 	for (PSColumn *col in columns)
 		if (col != columns[0]) {
 			//if (col.tag == 4) {
@@ -204,13 +194,6 @@
 		self.detailTextLabel.frame = frame;
 }
 
-- (void)dealloc
-{
-	[_labels release];
-	[_dividers release];
-	[super dealloc];
-}
-
 @end
 
 
@@ -231,13 +214,12 @@
 	self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
 	self.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
 #endif
-	self.labels = [[NSMutableArray arrayWithCapacity:columns.count] retain];
-	self.dividers = [[NSMutableArray arrayWithCapacity:columns.count] retain];
+	self.labels = [NSMutableArray arrayWithCapacity:columns.count];
+	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	NSUInteger totalCol = 0;
 	for (PSColumn *col in columns) {
 		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(totalCol + 2, 0, col.width - 4, size.height)];
 		[self.labels addObject:label];
-		[label release];
 		label.textAlignment = footer && col.getSummary ? col.align : NSTextAlignmentCenter;
 		label.font = footer && col != columns[0] ? [UIFont systemFontOfSize:12.0] : [UIFont boldSystemFontOfSize:16.0];
 		label.adjustsFontSizeToFitWidth = YES;
@@ -257,12 +239,12 @@
 
 + (instancetype)headerWithColumns:(NSArray *)columns size:(CGSize)size
 {
-	return [[[GridHeaderView alloc] initWithColumns:columns size:size footer:NO] autorelease];
+	return [[GridHeaderView alloc] initWithColumns:columns size:size footer:NO];
 }
 
 + (instancetype)footerWithColumns:(NSArray *)columns size:(CGSize)size
 {
-	return [[[GridHeaderView alloc] initWithColumns:columns size:size footer:YES] autorelease];
+	return [[GridHeaderView alloc] initWithColumns:columns size:size footer:YES];
 }
 
 - (void)sortColumnOld:(PSColumn *)oldCol New:(PSColumn *)newCol desc:(BOOL)desc
@@ -286,13 +268,6 @@
 			UILabel *label = (UILabel *)[self viewWithTag:col.tag + 1];
 			if (label) label.text = col.getSummary(procs);
 		}
-}
-
-- (void)dealloc
-{
-	[_labels release];
-	[_dividers release];
-	[super dealloc];
 }
 
 @end

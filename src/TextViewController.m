@@ -14,12 +14,9 @@
 	textView.font = [UIFont systemFontOfSize:16.0];
 	textView.text = self.textString;
 	self.view = textView;
-	[textView release];
 	// Done button
-	UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
 		target:self action:@selector(dismissViewController)];
-	self.navigationItem.rightBarButtonItem = doneButton;
-	[doneButton release];
 }
 
 - (void)dismissViewController
@@ -66,7 +63,6 @@
 	controller.textString = text;
 	controller.titleString = title;
 	UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
-	[controller release];
 	navController.modalPresentationStyle = UIModalPresentationFormSheet;
 //	navController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
 	[parent presentViewController:navController animated:NO completion:nil];
@@ -78,15 +74,6 @@
 //		navController.view.superview.layer.borderWidth = 2;
 		navController.view.superview.clipsToBounds = YES;
 	}
-	[navController release];
-}
-
-- (void)dealloc
-{
-	[_tapBehind release];
-	[_titleString release];
-	[_textString release];
-	[super dealloc];
 }
 
 @end

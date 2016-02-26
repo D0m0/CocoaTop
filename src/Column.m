@@ -138,7 +138,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 	static NSArray *allColumns;
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
-		allColumns = [@[
+		allColumns = @[
 		[PSColumn psColumnWithName:@"Command line" fullname:@"Command line" align:NSTextAlignmentLeft width:170 tag:0 style:ColumnStylePathTrunc | ColumnStyleTooLong
 			data:^NSString*(PSProc *proc) { return [proc.executable stringByAppendingString:proc.args]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }
@@ -435,7 +435,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 //		[PSColumn psColumnWithName:@"More" fullname:@"More Data" align:NSTextAlignmentLeft width:170 tag:9999 style:0
 //			data:^NSString*(PSProc *proc) { return proc.moredata; }
 //			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.moredata caseInsensitiveCompare:b.moredata]; } summary:nil],
-		] retain];
+		];
 	});
 	return allColumns;
 }
@@ -468,15 +468,15 @@ NSString *psProcessCpuTime(unsigned int ptime)
 	static NSArray *sockColumns[ColumnModes];
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
-		sockColumns[ColumnModeSummary] = [@[
+		sockColumns[ColumnModeSummary] = @[
 		[PSColumn psColumnWithName:@"Column" fullname:@"Information Column" align:NSTextAlignmentLeft width:180 tag:1000 style:ColumnStyleEllipsis
 			data:^NSString*(PSSockSummary *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
 		[PSColumn psColumnWithName:@"Value" fullname:@"Column Value" align:NSTextAlignmentLeft width:140 tag:1001 style:ColumnStyleExtend | ColumnStyleEllipsis
 			data:^NSString*(PSSockSummary *sock) { return sock.col.getData(sock.proc); }
 			sort:^NSComparisonResult(PSSock *a, PSSock *b) { return 0; } summary:nil],
-		] retain];
-		sockColumns[ColumnModeThreads] = [@[
+		];
+		sockColumns[ColumnModeThreads] = @[
 		[PSColumn psColumnWithName:@"TID" fullname:@"Thread ID" align:NSTextAlignmentRight width:53 tag:2000 style:0
 			data:^NSString*(PSSockThreads *sock) { return [NSString stringWithFormat:@"%llX", sock.tid]; }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { COMPARE(tid); } summary:nil],
@@ -495,8 +495,8 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Name/Dispatch" fullname:@"Thread Name & Dispatch Queue" align:NSTextAlignmentLeft width:95 tag:2005 style:ColumnStyleExtend | ColumnStyleEllipsis
 			data:^NSString*(PSSockThreads *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockThreads *a, PSSockThreads *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
-		] retain];
-		sockColumns[ColumnModeFiles] = [@[
+		];
+		sockColumns[ColumnModeFiles] = @[
 		[PSColumn psColumnWithName:@"FD" fullname:@"File Descriptor" align:NSTextAlignmentRight width:40 tag:3000 style:0
 			data:^NSString*(PSSockFiles *sock) { return [NSString stringWithFormat:@"%d", sock.fd]; }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(fd); } summary:nil],
@@ -509,8 +509,8 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"F" fullname:@"Open Flags" align:NSTextAlignmentLeft width:40 tag:3003 style:0
 			data:^NSString*(PSSockFiles *sock) { return psFdFlagsString(sock.flags); }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(flags); } summary:nil],
-		] retain];
-		sockColumns[ColumnModeModules] = [@[
+		];
+		sockColumns[ColumnModeModules] = @[
 		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 tag:4000 style:ColumnStylePathTrunc
 			data:^NSString*(PSSockModules *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
@@ -523,7 +523,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"iNode" fullname:@"Device and iNode of Module on Disk" align:NSTextAlignmentLeft width:80 tag:4003 style:0
 			data:^NSString*(PSSockModules *sock) { return sock.dev && sock.ino ? [NSString stringWithFormat:@"%u,%u %u", sock.dev >> 24, sock.dev & ((1<<24)-1), sock.ino] : @"  cache"; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return a.dev == b.dev ? a.ino - b.ino : a.dev - b.dev; } summary:nil],
-		] retain];
+		];
 	});
 	return sockColumns[mode];
 }
@@ -582,21 +582,13 @@ NSString *psProcessCpuTime(unsigned int ptime)
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
 	tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr
 {
-	return [[[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary descr:descr] autorelease];
+	return [[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary descr:descr];
 }
 
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
 	tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary
 {
-	return [[[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary descr:nil] autorelease];
-}
-
-- (void)dealloc
-{
-	[_name release];
-	[_fullname release];
-	[_descr release];
-	[super dealloc];
+	return [[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary descr:nil];
 }
 
 @end

@@ -2,9 +2,9 @@
 #import "Setup.h"
 
 @interface SelectFromList : UITableViewController
-@property (retain) NSArray *list;
-@property (retain) NSString *option;
-@property (retain) NSString *value;
+@property (strong) NSArray *list;
+@property (strong) NSString *option;
+@property (strong) NSString *value;
 @end
 
 @implementation SelectFromList
@@ -25,7 +25,7 @@
 
 + (instancetype)selectFromList:(NSArray *)list option:(NSString *)option
 {
-	return [[[SelectFromList alloc] initWithList:list option:option] autorelease];
+	return [[SelectFromList alloc] initWithList:list option:option];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -66,16 +66,31 @@
 	[self.navigationController popViewControllerAnimated:YES];
 }
 
-- (void)dealloc
-{
-	[_list release];
-	[_option release];
-	[_value release];
-	[super dealloc];
-}
-
 @end
 
+@interface OptionItem : NSObject
++ (instancetype)withAccessory:(id)accessory key:(NSString *)optionKey label:(NSString *)label chooseFrom:(NSArray *)choose;
+@property (assign) id accessory;
+@property (strong) NSString *optionKey;
+@property (strong) NSString *label;
+@property (strong) NSArray *choose;
+@end
+
+@implementation OptionItem
++ (instancetype)withAccessory:(id)accessory key:(NSString *)optionKey label:(NSString *)label chooseFrom:(NSArray *)choose
+{
+	OptionItem *item = [OptionItem new];
+	item.accessory = accessory;
+	item.optionKey = optionKey;
+	item.label = label;
+	item.choose = choose;
+	return item;
+}
+@end
+
+@interface SetupViewController()
+@property (strong) NSArray *optionsList;
+@end
 
 @implementation SetupViewController
 
@@ -94,39 +109,24 @@
 
 - (IBAction)factoryReset
 {
-	UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:@"Reset" message:@"Reset settings to default values?" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil] autorelease];
-	[alertView show];
+	[[[UIAlertView alloc] initWithTitle:@"Reset" message:@"Reset settings to default values?" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil] show];
 }
-
-struct optionsList_t {
-	NSString*	accessory;
-	UITableViewCellAccessoryType accType;
-	NSString*	optionKey;
-	NSString*	label;
-	NSArray*	choose;
-} optionsList[] = {
-	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"UpdateInterval", @"Update interval (seconds)", nil},
-	{@"UILabel", UITableViewCellAccessoryDisclosureIndicator, @"FirstColumnStyle", @"First column style", nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"FullWidthCommandLine", @"Full width command line", nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"ShortenPaths", @"Show short (symlinked) paths", nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"AutoJumpNewProcess", @"Auto scroll to new/terminated processes", nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowHeader", @"Show column sort header", nil},
-	{@"UISwitch", UITableViewCellAccessoryNone, @"ShowFooter", @"Show column totals (footer)", nil},
-};
 
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-	UIBarButtonItem *resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain
-		target:self action:@selector(factoryReset)];
-	self.navigationItem.rightBarButtonItem = resetButton;
 	self.navigationItem.title = @"Settings";
-	[resetButton release];
-
-	if (!optionsList[0].choose)
-		optionsList[0].choose = [@[@"0.5",@"1",@"2",@"3",@"5",@"10",@"Never"] retain];
-	if (!optionsList[1].choose)
-		optionsList[1].choose = [@[@"Bundle Identifier",@"Bundle Name",@"Bundle Display Name",@"Executable Name",@"Executable With Args"] retain];
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain
+		target:self action:@selector(factoryReset)];
+	self.optionsList = @[
+		[OptionItem withAccessory:[UILabel class] key:@"UpdateInterval" label:@"Update interval (seconds)" chooseFrom:@[@"0.5",@"1",@"2",@"3",@"5",@"10",@"Never"]],
+		[OptionItem withAccessory:[UILabel class] key:@"FirstColumnStyle" label:@"First column style" chooseFrom:@[@"Bundle Identifier",@"Bundle Name",@"Bundle Display Name",@"Executable Name",@"Executable With Args"]],
+		[OptionItem withAccessory:[UISwitch class] key:@"FullWidthCommandLine" label:@"Full width command line" chooseFrom:nil],
+		[OptionItem withAccessory:[UISwitch class] key:@"ShortenPaths" label:@"Show short (symlinked) paths" chooseFrom:nil],
+		[OptionItem withAccessory:[UISwitch class] key:@"AutoJumpNewProcess" label:@"Auto scroll to new/terminated processes" chooseFrom:nil],
+		[OptionItem withAccessory:[UISwitch class] key:@"ShowHeader" label:@"Show column sort header" chooseFrom:nil],
+		[OptionItem withAccessory:[UISwitch class] key:@"ShowFooter" label:@"Show column totals (footer)" chooseFrom:nil],
+	];
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
@@ -153,13 +153,14 @@ struct optionsList_t {
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return sizeof(optionsList) / sizeof(struct optionsList_t);
+	return self.optionsList.count;
 }
 
 - (void)flipSwitch:(id)sender
 {
 	UISwitch *onOff = (UISwitch *)sender;
-	[[NSUserDefaults standardUserDefaults] setBool:onOff.on forKey:optionsList[onOff.tag - 1].optionKey];
+	OptionItem *option = self.optionsList[onOff.tag - 1];
+	[[NSUserDefaults standardUserDefaults] setBool:onOff.on forKey:option.optionKey];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -168,21 +169,20 @@ struct optionsList_t {
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:rid];
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:rid];
-	struct optionsList_t *option = &optionsList[indexPath.row];
+	OptionItem *option = self.optionsList[indexPath.row];
 	cell.selectionStyle = UITableViewCellSelectionStyleNone;
-	cell.textLabel.text = option->label;
-	if ([option->accessory isEqualToString:@"UISwitch"]) {
+	cell.textLabel.text = option.label;
+	if (option.accessory == [UISwitch class]) {
 		UISwitch *onOff = [[UISwitch alloc] initWithFrame:CGRectZero];
 		[onOff addTarget:self action:@selector(flipSwitch:) forControlEvents:UIControlEventValueChanged];
-		onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:option->optionKey];
+		onOff.on = [[NSUserDefaults standardUserDefaults] boolForKey:option.optionKey];
 //		onOff.onTintColor = [UIColor redColor];
 		onOff.tag = indexPath.row + 1;
 		cell.accessoryView = onOff;
-		[onOff release];
 	} else {
-		cell.accessoryType = option->accType;
+		cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
 		cell.accessoryView = nil;
-		if ([option->accessory isEqualToString:@"UILabel"]) {
+		if (option.accessory == [UILabel class]) {
 			cell.selectionStyle = UITableViewCellSelectionStyleBlue;
 			cell.contentView.autoresizesSubviews = YES;
 			UILabel *label = (UILabel *)[cell viewWithTag:indexPath.row + 1];
@@ -192,13 +192,12 @@ struct optionsList_t {
 				label.font = [UIFont systemFontOfSize:16.0];
 				label.textColor = [UIColor grayColor];
 				label.backgroundColor = [UIColor clearColor];
-				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
+				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option.optionKey];
 				label.tag = indexPath.row + 1;
 				label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleWidth;
 				[cell.contentView addSubview:label];
-				[label release];
 			} else
-				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option->optionKey];
+				label.text = [[NSUserDefaults standardUserDefaults] stringForKey:option.optionKey];
 		}
 	}
 	return cell;
@@ -206,7 +205,8 @@ struct optionsList_t {
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if ([optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
+	OptionItem *option = self.optionsList[indexPath.row];
+	if (option.accessory == [UILabel class]) {
 		UIView *label = [cell viewWithTag:indexPath.row + 1];
 		[cell.textLabel sizeToFit];
 		CGFloat labelstart = cell.textLabel.frame.size.width + 20;
@@ -217,9 +217,9 @@ struct optionsList_t {
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if ([optionsList[indexPath.row].accessory isEqualToString:@"UILabel"]) {
-		struct optionsList_t *option = &optionsList[indexPath.row];
-		SelectFromList* selectView = [SelectFromList selectFromList:option->choose option:option->optionKey];
+	OptionItem *option = self.optionsList[indexPath.row];
+	if (option.accessory == [UILabel class]) {
+		SelectFromList* selectView = [SelectFromList selectFromList:option.choose option:option.optionKey];
 		[self.navigationController pushViewController:selectView animated:YES];
 	}
 }

@@ -49,14 +49,14 @@
 
 @interface PSSock : NSObject
 @property (assign) display_t display;
-@property (retain) NSString *name;
-@property (retain) UIColor *color;
+@property (strong) NSString *name;
+@property (strong) UIColor *color;
 + (int)refreshArray:(PSSockArray *)socks;
 @end
 
 @interface PSSockSummary : PSSock
-@property (retain) PSProc *proc;
-@property (retain) PSColumn *col;
+@property (strong) PSProc *proc;
+@property (strong) PSColumn *col;
 @end
 
 @interface PSSockThreads : PSSock
@@ -81,8 +81,8 @@
 @end
 
 @interface PSSockArray : NSObject
-@property (retain) PSProc *proc;
-@property (retain) NSMutableArray *socks;
+@property (strong) PSProc *proc;
+@property (strong) NSMutableArray *socks;
 + (instancetype)psSockArrayWithProc:(PSProc *)proc;
 - (int)refreshWithMode:(column_mode_t)mode;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;

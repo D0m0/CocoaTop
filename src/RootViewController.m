@@ -12,18 +12,18 @@
 #define NTSTAT_PREQUERY_INTERVAL	0.1
 
 @interface RootViewController()
-@property (retain) GridHeaderView *header;
-@property (retain) GridHeaderView *footer;
-@property (retain) PSProcArray *procs;
-@property (retain) NSTimer *timer;
-@property (retain) UILabel *status;
-@property (retain) NSArray *columns;
-@property (retain) PSColumn *sorter;
+@property (strong) GridHeaderView *header;
+@property (strong) GridHeaderView *footer;
+@property (strong) PSProcArray *procs;
+@property (strong) NSTimer *timer;
+@property (strong) UILabel *status;
+@property (strong) NSArray *columns;
+@property (strong) PSColumn *sorter;
 @property (assign) BOOL sortdesc;
 @property (assign) BOOL fullScreen;
 @property (assign) CGFloat interval;
 @property (assign) NSUInteger configId;
-@property (retain) NSString *configChange;
+@property (strong) NSString *configChange;
 @property (assign) pid_t selectedPid;
 @end
 
@@ -38,10 +38,8 @@
 	case 2: view = [[HtmlViewController alloc] initWithURL:@"guide" title:@"Quick Guide"]; break;
 	case 3: view = [[HtmlViewController alloc] initWithURL:@"story" title:@"The Story"]; break;
 	}
-	if (view) {
+	if (view)
 		[self.navigationController pushViewController:view animated:YES];
-		[view release];
-	}
 }
 
 - (IBAction)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
@@ -88,7 +86,6 @@
 	UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideShowNavBar:)];
 	twoTap.numberOfTouchesRequired = 2;
 	[self.tableView addGestureRecognizer:twoTap];
-	[twoTap release];
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
@@ -320,6 +317,8 @@
 	[cell configureWithId:self.configId columns:self.columns size:CGSizeMake(0, tableView.rowHeight)];
 	if (proc != nil)
 		[cell updateWithProc:proc columns:self.columns];
+	if (cell == nil)
+		NSLog(@"*** cellForRowAtIndexPath requested row %d, cell = nil", indexPath.row);
 	return cell;
 }
 
@@ -343,8 +342,7 @@
 	// task_terminate(task)
 	if (kill(proc.pid, sig)) {
 		NSString *msg = [NSString stringWithFormat:@"Error %d while terminating app", errno];
-		UIAlertView *alertView = [[[UIAlertView alloc] initWithTitle:proc.name message:msg delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
-		[alertView show];
+		[[[UIAlertView alloc] initWithTitle:proc.name message:msg delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
 	}
 	// Refresh immediately to show process termination
 	tableView.editing = NO;
@@ -387,9 +385,7 @@
 		[self hideShowNavBar:nil];
 	PSProc *proc = self.procs[indexPath.row];
 	self.selectedPid = proc.pid;
-	SockViewController* sockViewController = [[SockViewController alloc] initWithProc:proc];
-		[self.navigationController pushViewController:sockViewController animated:anim];
-		[sockViewController release];
+	[self.navigationController pushViewController:[[SockViewController alloc] initWithProc:proc] animated:anim];
 }
 
 #pragma mark -
@@ -400,12 +396,10 @@
 	// Releases the view if it doesn't have a superview.
 	[super didReceiveMemoryWarning];
 	NSLog(@"didReceiveMemoryWarning");
-	// Relinquish ownership of any cached data, images, etc that aren't in use.
 }
 
 - (void)viewDidUnload
 {
-	// Relinquish ownership of anything that can be recreated in viewDidLoad or on demand.
 	if (self.timer.isValid)
 		[self.timer invalidate];
 	self.status = nil;
@@ -421,14 +415,6 @@
 {
 	if (self.timer.isValid)
 		[self.timer invalidate];
-	[_timer release];
-	[_status release];
-	[_header release];
-	[_footer release];
-	[_sorter release];
-	[_procs release];
-	[_columns release];
-	[super dealloc];
 }
 
 @end
