@@ -8,12 +8,10 @@
 
 // Display states determine grid row colors
 typedef enum {
-	ProcDisplaySystem,
 	ProcDisplayUser,
 	ProcDisplayNormal,
 	ProcDisplayStarted,
-	ProcDisplayTerminated,
-	ProcDisplayRemove
+	ProcDisplayTerminated
 } display_t;
 
 // Thread states are sorted by priority, top priority becomes a "task state"
