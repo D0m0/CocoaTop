@@ -46,6 +46,7 @@
 #define NO __objc_no
 
 #define NSLineBreakByWordWrapping				UILineBreakModeWordWrap
+#define NSLineBreakByTruncatingMiddle			UILineBreakModeMiddleTruncation
 #define NSTextAlignment							UITextAlignment
 #define NSTextAlignmentLeft						UITextAlignmentLeft
 #define NSTextAlignmentRight					UITextAlignmentRight
