@@ -36,6 +36,7 @@
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
 #define UITableViewCellAccessoryDetailButton	UITableViewCellAccessoryDetailDisclosureButton
+#define barTintColor							tintColor
 #endif
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_6_0

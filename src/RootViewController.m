@@ -215,6 +215,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
+	self.navigationController.navigationBar.barTintColor = nil;
 	// When major options change, process list is rebuilt from scratch
 	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
 	NSString *configCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"ShortenPaths"], [def stringForKey:@"FirstColumnStyle"]];
@@ -241,7 +242,7 @@
 
 - (void)viewDidDisappear:(BOOL)animated
 {
-	[super viewWillDisappear:animated];
+	[super viewDidDisappear:animated];
 	if (self.timer.isValid)
 		[self.timer invalidate];
 	self.header = nil;

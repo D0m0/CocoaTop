@@ -580,8 +580,7 @@ void dump(unsigned char *b, int s)
 	}]];
 	[self setAllDisplayed:ProcDisplayTerminated];
 	Class ModeClass[ColumnModes] = {[PSSockSummary class], [PSSockThreads class], [PSSockFiles class], [PSSockModules class]};
-	[ModeClass[mode] refreshArray:self];
-	return 0;
+	return [ModeClass[mode] refreshArray:self];
 }
 
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc

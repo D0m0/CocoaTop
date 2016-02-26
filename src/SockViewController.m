@@ -111,7 +111,8 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[self.proc update];
 	self.navigationItem.title = [self.name stringByAppendingFormat:@" (CPU %.1f%%)", (float)self.proc.pcpu / 10];
 	// Update tableview
-	[self.socks refreshWithMode:self.mode];
+	if ([self.socks refreshWithMode:self.mode])
+		self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
 	[self.socks sortUsingComparator:self.sorter.sort desc:self.sortdesc];
 	[self.tableView reloadData];
 	// First time refresh?
@@ -184,7 +185,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 - (void)viewDidDisappear:(BOOL)animated
 {
-	[super viewWillDisappear:animated];
+	[super viewDidDisappear:animated];
 	if (self.timer.isValid)
 		[self.timer invalidate];
 	self.socks = nil;
