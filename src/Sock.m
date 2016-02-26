@@ -243,7 +243,7 @@ void dump(unsigned char *b, int s)
 		struct pipe_fdinfo info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDPIPEINFO, &info, PROC_PIDFDPIPEINFO_SIZE) != PROC_PIDFDPIPEINFO_SIZE)
 			return nil;
-		name = [NSString stringWithFormat:@"%llX -> %llX", info.pipeinfo.pipe_handle, info.pipeinfo.pipe_peerhandle];
+		name = [NSString stringWithFormat:@"%llX \u2192 %llX", info.pipeinfo.pipe_handle, info.pipeinfo.pipe_peerhandle];
 		if (info.pipeinfo.pipe_status & PIPE_WANTR)		name = [name stringByAppendingString:@" READ"];
 		if (info.pipeinfo.pipe_status & PIPE_WANTW)		name = [name stringByAppendingString:@" WRITE"];
 		if (info.pipeinfo.pipe_status & PIPE_SEL)		name = [name stringByAppendingString:@" SELECT"];
@@ -290,16 +290,14 @@ void dump(unsigned char *b, int s)
 			fsp = s->insi_fport ? getservbyport(s->insi_fport, 0) : &any;
 			if (info.psi.soi_family == AF_INET6) stype = (info.psi.soi_kind == SOCKINFO_TCP) ? "TCP6" : "UDP6";
 											else stype = (info.psi.soi_kind == SOCKINFO_TCP) ? "TCP" : "UDP";
-			if (lsp) name = [NSString stringWithFormat:@"%s:%s -> ", lip, lsp->s_name];
-				else name = [NSString stringWithFormat:@"%s:%d -> ", lip, ntohs(s->insi_lport)];
+			if (lsp) name = [NSString stringWithFormat:@"%s:%s \u2192 ", lip, lsp->s_name];
+				else name = [NSString stringWithFormat:@"%s:%d \u2192 ", lip, ntohs(s->insi_lport)];
 			if (!s->insi_fport) name = [name stringByAppendingString:@"Listening"]; else
 			if (fsp) name = [name stringByAppendingFormat:@"%s:%s", fip, fsp->s_name];
 				else name = [name stringByAppendingFormat:@"%s:%d", fip, ntohs(s->insi_fport)];
 			color = [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0];
 			break;
 		case SOCKINFO_UN: {
-			if (!info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path[0] &&
-				!info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path[0]) return nil;
 			stype = "UNIX";
 			switch (info.psi.soi_type) {
 			case SOCK_STREAM:	name = @"STREAM"; break;
@@ -307,11 +305,15 @@ void dump(unsigned char *b, int s)
 			case SOCK_RAW:		name = @"RAW"; break;
 			case SOCK_RDM:		name = @"RDM"; break;
 			case SOCK_SEQPACKET:name = @"SEQPACKET"; break;
-			default: name = @"";
+			default: 			name = [NSString stringWithFormat:@"UNIX: %d", info.psi.soi_type];
 			}
-			NSString *server = [NSString stringWithUTF8String:info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path],
-					 *client = [NSString stringWithUTF8String:info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path];
-			name = [name stringByAppendingFormat:@" %@ -> %@", [PSSymLink simplifyPathName:server], [PSSymLink simplifyPathName:client]];
+			if (info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path[0] ||
+				info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path[0]) {
+				NSString *server = [NSString stringWithUTF8String:info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path],
+						 *client = [NSString stringWithUTF8String:info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path];
+				name = [name stringByAppendingFormat:@": %@ \u2192 %@", [PSSymLink simplifyPathName:server], [PSSymLink simplifyPathName:client]];
+			} else
+				name = [name stringByAppendingFormat:@": \u2192 %llX", info.psi.soi_proto.pri_un.unsi_conn_so];
 			color = [UIColor brownColor];
 			break; }
 		case SOCKINFO_GENERIC:
@@ -412,16 +414,27 @@ void dump(unsigned char *b, int s)
 	// Get socket list and update the socks array
 	bufSize = proc_pidinfo(socks.proc.pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
 	if (bufSize > 0) {
-		for (int i = 0; i < bufSize / PROC_PIDLISTFD_SIZE; i++) {
-// This is bad: fds are often reused, so we wouldn't notice if it changed (at least we check the fdtype...)
+		int totalfds = bufSize / PROC_PIDLISTFD_SIZE;
+		for (int i = 0; i < totalfds; i++) {
 			PSSockFiles *sock = (PSSockFiles *)[socks objectPassingTest:^BOOL(PSSockFiles *obj, NSUInteger idx, BOOL *stop) {
 				return obj.fd == fdinfo[i].proc_fd && obj.type == fdinfo[i].proc_fdtype;
 			}];
 			if (!sock) {
 				sock = [PSSockFiles psSockWithPid:socks.proc.pid fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
 				if (sock) [socks.socks addObject:sock];
-			} else if (sock.display != ProcDisplayStarted)
-				sock.display = ProcDisplayUser;
+			} else {
+				if (i + 1 == totalfds || fdinfo[i].proc_fd != fdinfo[i + 1].proc_fd + 1) {
+					// Last-in-a-row fds are often reused, so we wouldn't notice if it changed, until we get full info
+					PSSockFiles *newsock = [PSSockFiles psSockWithPid:socks.proc.pid fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
+					if (newsock && ![newsock.name isEqualToString:sock.name]) {
+						sock.display = ProcDisplayTerminated;
+						[socks.socks addObject:newsock];
+						continue;
+					}
+				}
+				if (sock.display != ProcDisplayStarted)
+					sock.display = ProcDisplayUser;
+			}
 		}
 	}
 	free(fdinfo);
