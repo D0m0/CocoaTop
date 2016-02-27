@@ -303,22 +303,14 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	PSProc *proc = nil;
-	if (indexPath.row >= procs.count) {
-		NSLog(@"*** cellForRowAtIndexPath requested row %d of %d", indexPath.row, procs.count);
-//		return [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
-	} else if (!columns || !columns.count) {
-		NSLog(@"*** cellForRowAtIndexPath requested row %d with empty columns", indexPath.row);
-//		return [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
-	} else
+	if (indexPath.row < procs.count && columns && columns.count)
 		proc = procs[indexPath.row];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:proc.icon != nil]];
 	if (cell == nil)
 		cell = [GridTableCell cellWithIcon:proc.icon != nil];
 	[cell configureWithId:configId columns:columns size:CGSizeMake(0, tableView.rowHeight)];
-	if (proc != nil)
+	if (proc)
 		[cell updateWithProc:proc columns:columns];
-	if (cell == nil)
-		NSLog(@"*** cellForRowAtIndexPath requested row %d, cell = nil", indexPath.row);
 	return cell;
 }
 

@@ -230,14 +230,15 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if (indexPath.row >= socks.count)
-		return nil;
-	PSSock *sock = socks[indexPath.row];
+	PSSock *sock = nil;
+	if (indexPath.row < socks.count && columns && columns.count)
+		sock = socks[indexPath.row];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
 	if (cell == nil)
 		cell = [GridTableCell cellWithIcon:NO];
 	[cell configureWithId:configId columns:columns size:CGSizeMake(0, tableView.rowHeight)];
-	[cell updateWithSock:sock columns:columns];
+	if (sock)
+		[cell updateWithSock:sock columns:columns];
 	return cell;
 }
 
