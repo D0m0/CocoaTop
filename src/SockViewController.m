@@ -110,7 +110,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[proc update];
 	self.navigationItem.title = [procName stringByAppendingFormat:@" (CPU %.1f%%)", (float)proc.pcpu / 10];
 	// Update tableview
-	if ([socks refreshWithMode:viewMode])
+	if ([socks refreshWithMode:viewMode] && socks.proc.pid != 0)
 		self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
 	[socks sortUsingComparator:sortColumn.sort desc:sortDescending];
 	[self.tableView reloadData];
