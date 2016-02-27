@@ -4,7 +4,7 @@
 #import "Column.h"
 #import "Sock.h"
 
-NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", @"Modules"};
+NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", @"Open ports", @"Modules"};
 
 @implementation SockViewController
 {

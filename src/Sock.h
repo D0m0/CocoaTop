@@ -73,6 +73,13 @@
 @property (assign) char *stype;
 @end
 
+@interface PSSockPorts : PSSock
+@property (assign) mach_port_name_t ind;
+@property (assign) mach_port_type_t type;
+@property (assign) mach_port_urefs_t refs;
+@property (assign) natural_t object;
+@end
+
 @interface PSSockModules : PSSock
 @property (assign) mach_vm_address_t addr;
 @property (assign) mach_vm_address_t addrend;

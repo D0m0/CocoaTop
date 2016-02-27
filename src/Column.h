@@ -4,6 +4,7 @@ typedef enum {
 	ColumnModeSummary = 0,
 	ColumnModeThreads,
 	ColumnModeFiles,
+	ColumnModePorts,
 	ColumnModeModules,
 	ColumnModes
 } column_mode_t;

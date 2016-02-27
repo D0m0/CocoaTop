@@ -510,6 +510,17 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			data:^NSString*(PSSockFiles *sock) { return psFdFlagsString(sock.flags); }
 			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(flags); } summary:nil],
 		];
+		sockColumns[ColumnModePorts] = @[
+		[PSColumn psColumnWithName:@"Id" fullname:@"Port Name" align:NSTextAlignmentRight width:53 tag:5000 style:0
+			data:^NSString*(PSSockPorts *sock) { return [NSString stringWithFormat:@"%X", sock.ind]; }
+			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { COMPARE(ind); } summary:nil],
+//		[PSColumn psColumnWithName:@"Refs" fullname:@"Reference Count" align:NSTextAlignmentRight width:37 tag:5001 style:ColumnStyleSortDesc
+//			data:^NSString*(PSSockPorts *sock) { return [NSString stringWithFormat:@"%u", sock.refs]; }
+//			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { COMPARE(refs); } summary:nil],
+		[PSColumn psColumnWithName:@"Port Details" fullname:@"Port Details" align:NSTextAlignmentLeft width:220 tag:5002 style:ColumnStylePathTrunc
+			data:^NSString*(PSSockPorts *sock) { return sock.name; }
+			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
+		];
 		sockColumns[ColumnModeModules] = @[
 		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 tag:4000 style:ColumnStylePathTrunc
 			data:^NSString*(PSSockModules *sock) { return sock.name; }

@@ -444,6 +444,79 @@ void dump(unsigned char *b, int s)
 @end
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  OPEN PORTS PAGE
+
+@implementation PSSockPorts
+
+const char *port_types[] = {"NONE","(thread)","(task)","(host)","(host priv)","(processor)","(pset)","(pset-name)",
+	"(timer)","(pager-req)","(mig)","(memobj)","(pager)","(xmm-kernel)","(xmm-reply)","(und-reply)","(host-notif)",
+	"(security)","(ledger)","(iomaster)","(task-name)","(subsystem)","(ioqueue-done)","(semaphore)","(lockset)",
+	"(clock)","(clock-ctl)","(iokit-spare)","(named-mem)","(ioconnect)","(ioobject)","(upl)","(xmm-ctrl)",
+	"(auditses)","(file)","(macf-label)","(task-resume)","(voucher)","(voucher-attr)"};
+
+- (instancetype)initWithTask:(task_port_t)task ipcInfo:(ipc_info_name_t *)iin
+{
+	if (self = [super init]) {
+		self.display = ProcDisplayStarted;
+		self.ind = iin->iin_name;
+		self.type = iin->iin_type;
+		self.refs = iin->iin_urefs;
+		self.object = iin->iin_object;
+
+		unsigned int object_type = 0;
+		vm_offset_t object_addr = 0;
+		mach_port_kernel_object(task, iin->iin_name, &object_type, &object_addr);
+		self.name = [NSString stringWithFormat:@"%s", object_type ? port_types[object_type] : "-"];
+//		dumpPortStats(table[j].iin_object, table[j].iin_type & MACH_PORT_TYPE_RECEIVE);
+	}
+	return self;
+}
+
++ (instancetype)psSockWithTask:(task_port_t)task ipcInfo:(ipc_info_name_t *)iin
+{
+	return [[PSSockPorts alloc] initWithTask:task ipcInfo:iin];
+}
+
++ (int)refreshArray:(PSSockArray *)socks
+{
+	task_port_t task;
+	kern_return_t ret = task_for_pid(mach_task_self(), socks.proc.pid, &task);
+	if (ret != KERN_SUCCESS)
+		return ret;
+
+	ipc_info_space_t info;		// iis_genno_mask, iis_tree_size
+	ipc_info_name_array_t table = 0;
+	mach_msg_type_number_t tableCount = 0;
+	ipc_info_tree_name_array_t tree = 0;
+	mach_msg_type_number_t treeCount = 0;
+
+	ret = mach_port_space_info(task, &info, &table, &tableCount, &tree, &treeCount);
+	if (ret != KERN_SUCCESS) {
+		mach_port_deallocate(mach_task_self(), task);
+		return ret;
+	}
+	if (table)
+	for (mach_msg_type_number_t i = 0; i < tableCount; i++)
+		if (table[i].iin_object) {
+			PSSockPorts *sock = (PSSockPorts *)[socks objectPassingTest:^BOOL(PSSockPorts *obj, NSUInteger idx, BOOL *stop) {
+				return obj.object == table[i].iin_object;
+			}];
+			if (!sock) {
+				sock = [PSSockPorts psSockWithTask:task ipcInfo:&table[i]];
+				if (sock) [socks.socks addObject:sock];
+			} else if (sock.display != ProcDisplayStarted)
+				sock.display = ProcDisplayUser;
+		}
+
+	if (table) vm_deallocate(mach_task_self(), (vm_address_t)table, tableCount * sizeof(*table));
+	if (tree) vm_deallocate(mach_task_self(), (vm_address_t)tree, treeCount * sizeof(*tree));
+	mach_port_deallocate(mach_task_self(), task);
+	return 0;
+}
+
+@end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  MODULES PAGE
 
 @implementation PSSockModules
@@ -579,7 +652,7 @@ void dump(unsigned char *b, int s)
 		return obj.display != ProcDisplayTerminated;
 	}]];
 	[self setAllDisplayed:ProcDisplayTerminated];
-	Class ModeClass[ColumnModes] = {[PSSockSummary class], [PSSockThreads class], [PSSockFiles class], [PSSockModules class]};
+	Class ModeClass[ColumnModes] = {[PSSockSummary class], [PSSockThreads class], [PSSockFiles class], [PSSockPorts class], [PSSockModules class]};
 	return [ModeClass[mode] refreshArray:self];
 }
 
