@@ -88,11 +88,10 @@
 }
 @end
 
-@interface SetupViewController()
-@property (strong) NSArray *optionsList;
-@end
-
 @implementation SetupViewController
+{
+	NSArray *optionsList;
+}
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
@@ -118,7 +117,7 @@
 	self.navigationItem.title = @"Settings";
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain
 		target:self action:@selector(factoryReset)];
-	self.optionsList = @[
+	optionsList = @[
 		[OptionItem withAccessory:[UILabel class] key:@"UpdateInterval" label:@"Update interval (seconds)" chooseFrom:@[@"0.5",@"1",@"2",@"3",@"5",@"10",@"Never"]],
 		[OptionItem withAccessory:[UILabel class] key:@"FirstColumnStyle" label:@"First column style" chooseFrom:@[@"Bundle Identifier",@"Bundle Name",@"Bundle Display Name",@"Executable Name",@"Executable With Args"]],
 		[OptionItem withAccessory:[UISwitch class] key:@"FullWidthCommandLine" label:@"Full width command line" chooseFrom:nil],
@@ -153,13 +152,13 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return self.optionsList.count;
+	return optionsList.count;
 }
 
 - (void)flipSwitch:(id)sender
 {
 	UISwitch *onOff = (UISwitch *)sender;
-	OptionItem *option = self.optionsList[onOff.tag - 1];
+	OptionItem *option = optionsList[onOff.tag - 1];
 	[[NSUserDefaults standardUserDefaults] setBool:onOff.on forKey:option.optionKey];
 }
 
@@ -169,7 +168,7 @@
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:rid];
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:rid];
-	OptionItem *option = self.optionsList[indexPath.row];
+	OptionItem *option = optionsList[indexPath.row];
 	cell.selectionStyle = UITableViewCellSelectionStyleNone;
 	cell.textLabel.text = option.label;
 	if (option.accessory == [UISwitch class]) {
@@ -205,7 +204,7 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	OptionItem *option = self.optionsList[indexPath.row];
+	OptionItem *option = optionsList[indexPath.row];
 	if (option.accessory == [UILabel class]) {
 		UIView *label = [cell viewWithTag:indexPath.row + 1];
 		[cell.textLabel sizeToFit];
@@ -217,7 +216,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	OptionItem *option = self.optionsList[indexPath.row];
+	OptionItem *option = optionsList[indexPath.row];
 	if (option.accessory == [UILabel class]) {
 		SelectFromList* selectView = [SelectFromList selectFromList:option.choose option:option.optionKey];
 		[self.navigationController pushViewController:selectView animated:YES];

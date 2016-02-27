@@ -106,16 +106,15 @@ static NSArray *presetNames;
 
 @end
 
-
-@interface SetupColsViewController()
-{
-	NSMutableArray *ar[2];
-}
-@property(strong) NSMutableArray *in;
-@property(strong) NSMutableArray *out;
-@end
+enum InOutCols {
+	_in = 0,
+	_out = 1
+};
 
 @implementation SetupColsViewController
+{
+	NSMutableArray *cols[2];
+}
 
 - (void)openPresets
 {
@@ -139,21 +138,19 @@ static NSArray *presetNames;
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	self.in = [PSColumn psGetShownColumnsWithWidth:100000000];
-	self.out = [NSMutableArray array];
+	cols[_in] = [PSColumn psGetShownColumnsWithWidth:100000000];
+	cols[_out] = [NSMutableArray array];
 	for (PSColumn* col in [PSColumn psGetAllColumns])
 		if (!(col.style & ColumnStyleForSummary))
-			if (![self.in containsObject:col])
-				[self.out addObject:col];
-	ar[0] = self.in;
-	ar[1] = self.out;
+			if (![cols[_in] containsObject:col])
+				[cols[_out] addObject:col];
 	[self.tableView reloadData];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
 	NSMutableArray *order = [NSMutableArray array];
-	for (PSColumn* col in self.in)
+	for (PSColumn* col in cols[_in])
 		[order addObject:[NSNumber numberWithUnsignedInteger:col.tag]];
 	[[NSUserDefaults standardUserDefaults] setObject:order forKey:@"Columns"];
 }
@@ -180,13 +177,13 @@ static NSArray *presetNames;
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return ar[section].count;
+	return cols[section].count;
 }
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)src
 {
 	[tableView selectRowAtIndexPath:src animated:YES scrollPosition:UITableViewScrollPositionNone];
-	PSColumn *col = ar[src.section][src.row];
+	PSColumn *col = cols[src.section][src.row];
 	[TextViewController showText:col.descr withTitle:col.fullname inViewController:self];
 //	[tableView deselectRowAtIndexPath:src animated:YES];
 }
@@ -194,12 +191,12 @@ static NSArray *presetNames;
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)src
 {
 	BOOL isUnmoveable = src.section == 0 && src.row == 0;
-	BOOL hasDecription = ((PSColumn *)ar[src.section][src.row]).descr != nil;
+	BOOL hasDecription = ((PSColumn *)cols[src.section][src.row]).descr != nil;
 	NSString *reuseId = [NSString stringWithFormat:@"SetupColumn-%d-%d", isUnmoveable, hasDecription];
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuseId];
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseId];
-	cell.textLabel.text = ((PSColumn *)ar[src.section][src.row]).fullname;
+	cell.textLabel.text = ((PSColumn *)cols[src.section][src.row]).fullname;
 	cell.editingAccessoryType = hasDecription ? UITableViewCellAccessoryDetailButton : UITableViewCellAccessoryNone;
 	return cell;
 }
@@ -223,15 +220,15 @@ static NSArray *presetNames;
 
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)src toIndexPath:(NSIndexPath *)dst
 {
-	id save = ar[src.section][src.row];
-	[ar[src.section] removeObjectAtIndex:src.row];
-	[ar[dst.section] insertObject:save atIndex:dst.row];
+	id save = cols[src.section][src.row];
+	[cols[src.section] removeObjectAtIndex:src.row];
+	[cols[dst.section] insertObject:save atIndex:dst.row];
 }
 
 - (void)viewDidUnload
 {
-	self.in = nil;
-	self.out = nil;
+	cols[_in] = nil;
+	cols[_out] = nil;
 }
 
 @end

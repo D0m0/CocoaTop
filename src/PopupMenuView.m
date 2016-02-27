@@ -1,12 +1,6 @@
 #import "Compat.h"
 #import "PopupMenuView.h"
 
-@interface UITableViewControllerWithMenu()
-@property (strong) UIView *menuContainerView;
-@property (strong) UIView *menuTintView;
-@property (strong) UIView *menuView;
-@end
-
 @interface UIButtonWithColorStates : UIButton
 @end
 
@@ -32,15 +26,20 @@
 @end
 
 @implementation UITableViewControllerWithMenu
+{
+	UIView *menuContainerView;
+	UIView *menuTintView;
+	UIView *menuView;
+}
 
 - (void)popupMenuLayout
 {
-	if ([self.menuContainerView superview] != nil) {
+	if ([menuContainerView superview] != nil) {
 		CGRect frame = [self.navigationController.view convertRect:self.view.frame fromView:self.view.superview];
 		frame.origin.y += self.tableView.contentInset.top;
 		frame.size.height -= self.tableView.contentInset.top;
-		[self.menuContainerView setFrame:frame];
-		for (UIButton *button in self.menuView.subviews)
+		[menuContainerView setFrame:frame];
+		for (UIButton *button in menuView.subviews)
 			button.selected = button.tag == self.popupMenuSelected;
 	}
 }
@@ -52,21 +51,21 @@
 
 - (IBAction)popupMenuToggle
 {
-	const BOOL willAppear = (self.menuContainerView.superview == nil);
+	const BOOL willAppear = (menuContainerView.superview == nil);
 	if (willAppear) {
-		[self.navigationController.view addSubview:self.menuContainerView];
+		[self.navigationController.view addSubview:menuContainerView];
 		[self popupMenuLayout];
 	}
 	// Show/hide animation
-	CGRect menuFrame = self.menuView.frame;
+	CGRect menuFrame = menuView.frame;
 	menuFrame.origin.y = willAppear ? 0.0 : -menuFrame.size.height;
 	CGFloat menuTintAlpha = willAppear ? 0.7 : 0.0;
 	void (^animations)(void) = ^ {
-		self.menuView.frame = menuFrame;
-		self.menuTintView.alpha = menuTintAlpha;
+		menuView.frame = menuFrame;
+		menuTintView.alpha = menuTintAlpha;
 	};
 	void (^completion)(BOOL) = ^(BOOL finished) {
-		if (!willAppear) [self.menuContainerView removeFromSuperview];
+		if (!willAppear) [menuContainerView removeFromSuperview];
 	};
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_7_0)
@@ -105,7 +104,8 @@
 {
 	const CGFloat buttonHeight = 45.0;
 	const CGFloat menuHeight = items.count * (1.0 + buttonHeight);
-	UIView *menuView = [[UIView alloc] initWithFrame:CGRectMake(0.0, -menuHeight, 0.0, menuHeight)];
+
+	menuView = [[UIView alloc] initWithFrame:CGRectMake(0.0, -menuHeight, 0.0, menuHeight)];
 	menuView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	menuView.backgroundColor = [UIColor colorWithWhite:0.85 alpha:1.0];
 	self.popupMenuSelected = sel;
@@ -114,30 +114,27 @@
 		[menuView addSubview:[self popupMenuButtonWithTitle:item position:pos aligned:align]];
 		pos++;
 	}
-	self.menuView = menuView;
 
-	UIView *menuTintView = [[UIView alloc] initWithFrame:CGRectZero];
+	menuTintView = [[UIView alloc] initWithFrame:CGRectZero];
 	menuTintView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	menuTintView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
 	// Add tap recognizer to dismiss menu when tapping outside its bounds.
 	[menuTintView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(popupMenuToggle)]];
-	self.menuTintView = menuTintView;
 
-	UIView *menuContainerView = [[UIView alloc] initWithFrame:CGRectZero];
+	menuContainerView = [[UIView alloc] initWithFrame:CGRectZero];
 	menuContainerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	menuContainerView.clipsToBounds = YES;
-	[menuContainerView addSubview:self.menuTintView];
-	[menuContainerView addSubview:self.menuView];
-	self.menuContainerView = menuContainerView;
+	[menuContainerView addSubview:menuTintView];
+	[menuContainerView addSubview:menuView];
 }
 
 - (void)viewDidUnload
 {
-	if (self.menuContainerView != nil) {
-		[self.menuContainerView removeFromSuperview];
-		self.menuContainerView = nil;
-		self.menuTintView = nil;
-		self.menuView = nil;
+	if (menuContainerView != nil) {
+		[menuContainerView removeFromSuperview];
+		menuContainerView = nil;
+		menuTintView = nil;
+		menuView = nil;
 	}
 	[super viewDidUnload];
 }
