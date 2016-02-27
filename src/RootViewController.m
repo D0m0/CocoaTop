@@ -19,7 +19,7 @@
 	NSTimer *timer;
 	UILabel *statusLabel;
 	NSArray *columns;
-	PSColumn *sorterColumn;
+	PSColumn *sortColumn;
 	BOOL sortDescending;
 	BOOL fullScreen;
 	CGFloat timerInterval;
@@ -134,7 +134,7 @@
 	if (self.tableView.editing)
 		return;
 	[procs refresh];
-	[procs sortUsingComparator:sorterColumn.sort desc:sortDescending];
+	[procs sortUsingComparator:sortColumn.sort desc:sortDescending];
 	[self.tableView reloadData];
 	[footer updateSummaryWithColumns:columns procs:procs];
 	// Status bar
@@ -195,9 +195,9 @@
 			loc.x -= col.width;
 			continue;
 		}
-		sortDescending = sorterColumn == col ? !sortDescending : col.style & ColumnStyleSortDesc;
-		[header sortColumnOld:sorterColumn New:col desc:sortDescending];
-		sorterColumn = col;
+		sortDescending = sortColumn == col ? !sortDescending : col.style & ColumnStyleSortDesc;
+		[header sortColumnOld:sortColumn New:col desc:sortDescending];
+		sortColumn = col;
 		[[NSUserDefaults standardUserDefaults] setInteger:col.tag forKey:@"SortColumn"];
 		[[NSUserDefaults standardUserDefaults] setBool:sortDescending forKey:@"SortDescending"];
 		[timer fire];
@@ -226,12 +226,12 @@
 	configId++;
 	columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
 	// Find sort column and create table header
-	sorterColumn = [PSColumn psColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"]];
-	if (!sorterColumn) sorterColumn = columns[0];
+	sortColumn = [PSColumn psColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"]];
+	if (!sortColumn) sortColumn = columns[0];
 	sortDescending = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
 	header = [GridHeaderView headerWithColumns:columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionHeaderHeight)];
 	footer = [GridHeaderView footerWithColumns:columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionFooterHeight)];
-	[header sortColumnOld:nil New:sorterColumn desc:sortDescending];
+	[header sortColumnOld:nil New:sortColumn desc:sortDescending];
 	[header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
 	// Refresh interval
@@ -266,7 +266,7 @@
 	columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
 	header = [GridHeaderView headerWithColumns:columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionHeaderHeight)];
 	footer = [GridHeaderView footerWithColumns:columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionFooterHeight)];
-	[header sortColumnOld:nil New:sorterColumn desc:sortDescending];
+	[header sortColumnOld:nil New:sortColumn desc:sortDescending];
 	[header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
 	[timer fire];
@@ -405,7 +405,7 @@
 	statusLabel = nil;
 	header = nil;
 	footer = nil;
-	sorterColumn = nil;
+	sortColumn = nil;
 	procs = nil;
 	columns = nil;
 	[super viewDidUnload];

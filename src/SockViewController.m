@@ -6,39 +6,38 @@
 
 NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", @"Modules"};
 
-@interface SockViewController()
-@property (strong) PSProc *proc;
-@property (strong) NSString *name;
-@property (strong) GridHeaderView *header;
-@property (strong) NSArray *columns;
-@property (strong) NSTimer *timer;
-@property (strong) PSSockArray *socks;
-@property (strong) PSColumn *sorter;
-@property (assign) BOOL sortdesc;
-@property (assign) BOOL fullScreen;
-@property (assign) CGFloat interval;
-@property (assign) NSUInteger configId;
-@property (assign) column_mode_t mode;
-@end
-
 @implementation SockViewController
+{
+	PSProc *proc;
+	NSString *procName;
+	GridHeaderView *header;
+	NSArray *columns;
+	NSTimer *timer;
+	PSSockArray *socks;
+	PSColumn *sortColumn;
+	BOOL sortDescending;
+	BOOL fullScreen;
+	CGFloat timerInterval;
+	NSUInteger configId;
+	column_mode_t viewMode;
+}
 
 - (void)popupMenuTappedItem:(NSInteger)item
 {
-	if (self.mode != item) {
+	if (viewMode != item) {
 		// Mode changed - need to reset all information
-		self.mode = self.popupMenuSelected = item;
-		self.socks = [PSSockArray psSockArrayWithProc:self.proc];
+		viewMode = self.popupMenuSelected = item;
+		socks = [PSSockArray psSockArrayWithProc:proc];
 		[self configureMode];
-		[[NSUserDefaults standardUserDefaults] setInteger:self.mode forKey:@"ProcInfoMode"];
+		[[NSUserDefaults standardUserDefaults] setInteger:viewMode forKey:@"ProcInfoMode"];
 		[self refreshSocks:nil];
 	}
 }
 
-- (instancetype)initWithProc:(PSProc *)proc
+- (instancetype)initWithProc:(PSProc *)_proc
 {
 	self = [super init];
-	self.proc = proc;
+	proc = _proc;
 	return self;
 }
 
@@ -55,9 +54,9 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 - (IBAction)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
 {
 	if (!gestureRecognizer || gestureRecognizer.state == UIGestureRecognizerStateEnded) {
-		self.fullScreen = !self.navigationController.navigationBarHidden;
+		fullScreen = !self.navigationController.navigationBarHidden;
 		// This "scrolls" tableview so that it doesn't actually move when the bars disappear
-		if (!self.fullScreen) {			// Show navbar & scrollbar (going out of fullscreen)
+		if (!fullScreen) {			// Show navbar & scrollbar (going out of fullscreen)
 			[[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
 			[self.navigationController setNavigationBarHidden:NO animated:NO];
 		}
@@ -66,13 +65,13 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 			self.navigationController.navigationBar.frame.size.height +
 			([[NSUserDefaults standardUserDefaults] boolForKey:@"ShowHeader"] ? self.tableView.sectionHeaderHeight : 0);
 		CGPoint contentOffset = self.tableView.contentOffset;
-		contentOffset.y += self.fullScreen ? -slide : slide;
+		contentOffset.y += fullScreen ? -slide : slide;
 		[self.tableView setContentOffset:contentOffset animated:NO];
-		if (self.fullScreen) {			// Hide navbar & scrollbar (entering fullscreen)
+		if (fullScreen) {			// Hide navbar & scrollbar (entering fullscreen)
 			[self.navigationController setNavigationBarHidden:YES animated:NO];
 			[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
 		}
-		[self.timer fire];
+		[timer fire];
 	}
 }
 
@@ -82,8 +81,8 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back"
 		style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
 
-	self.mode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
-	[self popupMenuWithItems:[NSArray arrayWithObjects:ColumnModeName count:ColumnModes] selected:self.mode aligned:UIControlContentHorizontalAlignmentRight];
+	viewMode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
+	[self popupMenuWithItems:[NSArray arrayWithObjects:ColumnModeName count:ColumnModes] selected:viewMode aligned:UIControlContentHorizontalAlignmentRight];
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarHamburger"] style:UIBarButtonItemStylePlain
 		target:self action:@selector(popupMenuToggle)];
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
@@ -95,40 +94,40 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 	self.tableView.rowHeight = self.tableView.rowHeight * 2 / 3;
-	self.configId = 0;
-	self.fullScreen = NO;
+	configId = 0;
+	fullScreen = NO;
 }
 
-- (void)refreshSocks:(NSTimer *)timer
+- (void)refreshSocks:(NSTimer *)_timer
 {
 	// Rearm the timer: this way the timer will wait for a full interval after each 'fire'
-	if (self.interval >= 0.1) {
-		if (self.timer.isValid)
-			[self.timer invalidate];
-		self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(refreshSocks:) userInfo:nil repeats:NO];
+	if (timerInterval >= 0.1) {
+		if (timer.isValid)
+			[timer invalidate];
+		timer = [NSTimer scheduledTimerWithTimeInterval:timerInterval target:self selector:@selector(refreshSocks:) userInfo:nil repeats:NO];
 	}
 	// Update titlebar
-	[self.proc update];
-	self.navigationItem.title = [self.name stringByAppendingFormat:@" (CPU %.1f%%)", (float)self.proc.pcpu / 10];
+	[proc update];
+	self.navigationItem.title = [procName stringByAppendingFormat:@" (CPU %.1f%%)", (float)proc.pcpu / 10];
 	// Update tableview
-	if ([self.socks refreshWithMode:self.mode])
+	if ([socks refreshWithMode:viewMode])
 		self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
-	[self.socks sortUsingComparator:self.sorter.sort desc:self.sortdesc];
+	[socks sortUsingComparator:sortColumn.sort desc:sortDescending];
 	[self.tableView reloadData];
 	// First time refresh?
-	if (timer == nil) {
+	if (_timer == nil) {
 		// We don't need info about new sockets, they are all new :)
-		[self.socks setAllDisplayed:ProcDisplayNormal];
+		[socks setAllDisplayed:ProcDisplayNormal];
 		// When mode changes return to top
-		if (self.socks.count)
+		if (socks.count)
 			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]
 				atScrollPosition:UITableViewScrollPositionNone animated:NO];
 	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
 		// If there's a new socket, scroll to it
 		NSUInteger
-			idx = [self.socks indexOfDisplayed:ProcDisplayStarted];
+			idx = [socks indexOfDisplayed:ProcDisplayStarted];
 		if (idx == NSNotFound)
-			idx = [self.socks indexOfDisplayed:ProcDisplayTerminated];
+			idx = [socks indexOfDisplayed:ProcDisplayTerminated];
 		if (idx != NSNotFound)
 			[self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]
 				atScrollPosition:UITableViewScrollPositionNone animated:YES];
@@ -137,18 +136,18 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 - (void)sortHeader:(UIGestureRecognizer *)gestureRecognizer
 {
-	CGPoint loc = [gestureRecognizer locationInView:self.header];
-	for (PSColumn *col in self.columns) {
+	CGPoint loc = [gestureRecognizer locationInView:header];
+	for (PSColumn *col in columns) {
 		if (loc.x > col.width) {
 			loc.x -= col.width;
 			continue;
 		}
-		self.sortdesc = self.sorter == col ? !self.sortdesc : col.style & ColumnStyleSortDesc;
-		[self.header sortColumnOld:self.sorter New:col desc:self.sortdesc];
-		self.sorter = col;
-		[[NSUserDefaults standardUserDefaults] setInteger:col.tag forKey:[NSString stringWithFormat:@"Mode%dSortColumn", self.mode]];
-		[[NSUserDefaults standardUserDefaults] setBool:self.sortdesc forKey:[NSString stringWithFormat:@"Mode%dSortDescending", self.mode]];
-		[self.timer fire];
+		sortDescending = sortColumn == col ? !sortDescending : col.style & ColumnStyleSortDesc;
+		[header sortColumnOld:sortColumn New:col desc:sortDescending];
+		sortColumn = col;
+		[[NSUserDefaults standardUserDefaults] setInteger:col.tag forKey:[NSString stringWithFormat:@"Mode%dSortColumn", viewMode]];
+		[[NSUserDefaults standardUserDefaults] setBool:sortDescending forKey:[NSString stringWithFormat:@"Mode%dSortDescending", viewMode]];
+		[timer fire];
 		break;
 	}
 }
@@ -156,42 +155,42 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 - (void)configureMode
 {
 	// When configId changes, all cells are reconfigured
-	self.configId++;
-	self.columns = [PSColumn psGetTaskColumnsWithWidth:self.tableView.bounds.size.width mode:self.mode];
+	configId++;
+	columns = [PSColumn psGetTaskColumnsWithWidth:self.tableView.bounds.size.width mode:viewMode];
 	// Find sort column and create table header
-	NSString *key = [NSString stringWithFormat:@"Mode%dSortColumn", self.mode];
-	self.sorter = [PSColumn psTaskColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:key] forMode:self.mode];
-	if (!self.sorter) {
+	NSString *key = [NSString stringWithFormat:@"Mode%dSortColumn", viewMode];
+	sortColumn = [PSColumn psTaskColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:key] forMode:viewMode];
+	if (!sortColumn) {
 		[[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-		self.sorter = [PSColumn psTaskColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:key] forMode:self.mode];
-		if (!self.sorter) self.sorter = self.columns[0];
+		sortColumn = [PSColumn psTaskColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:key] forMode:viewMode];
+		if (!sortColumn) sortColumn = columns[0];
 	}
-	self.sortdesc = [[NSUserDefaults standardUserDefaults] boolForKey:[NSString stringWithFormat:@"Mode%dSortDescending", self.mode]];
-	self.header = [GridHeaderView headerWithColumns:self.columns size:CGSizeMake(0, self.tableView.sectionHeaderHeight)];
-	[self.header sortColumnOld:nil New:self.sorter desc:self.sortdesc];
-	[self.header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+	sortDescending = [[NSUserDefaults standardUserDefaults] boolForKey:[NSString stringWithFormat:@"Mode%dSortDescending", viewMode]];
+	header = [GridHeaderView headerWithColumns:columns size:CGSizeMake(0, self.tableView.sectionHeaderHeight)];
+	[header sortColumnOld:nil New:sortColumn desc:sortDescending];
+	[header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	self.socks = [PSSockArray psSockArrayWithProc:self.proc];
-	self.name = [self.proc.executable lastPathComponent];
+	socks = [PSSockArray psSockArrayWithProc:proc];
+	procName = [proc.executable lastPathComponent];
 	[self configureMode];
 	// Refresh interval
-	self.interval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
+	timerInterval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	[self refreshSocks:nil];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
 {
 	[super viewDidDisappear:animated];
-	if (self.timer.isValid)
-		[self.timer invalidate];
-	self.socks = nil;
-	self.header = nil;
-	self.columns = nil;
-	self.proc = nil;
+	if (timer.isValid)
+		[timer invalidate];
+	socks = nil;
+	header = nil;
+	columns = nil;
+	proc = nil;
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
@@ -204,7 +203,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 		return;
 	// Size changed - need to redraw
 	[self configureMode];
-	[self.timer fire];
+	[timer fire];
 }
 
 #pragma mark -
@@ -218,33 +217,33 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 // Section header/footer will be used as a grid header/footer
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{ return !self.fullScreen ? self.header : nil; }
+{ return !fullScreen ? header : nil; }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
-{ return !self.fullScreen ? self.tableView.sectionHeaderHeight : 0; }
+{ return !fullScreen ? self.tableView.sectionHeaderHeight : 0; }
 
 // Data is acquired from PSProcArray
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return self.socks.count;
+	return socks.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	if (indexPath.row >= self.socks.count)
+	if (indexPath.row >= socks.count)
 		return nil;
-	PSSock *sock = self.socks[indexPath.row];
+	PSSock *sock = socks[indexPath.row];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:NO]];
 	if (cell == nil)
 		cell = [GridTableCell cellWithIcon:NO];
-	[cell configureWithId:self.configId columns:self.columns size:CGSizeMake(0, tableView.rowHeight)];
-	[cell updateWithSock:sock columns:self.columns];
+	[cell configureWithId:configId columns:columns size:CGSizeMake(0, tableView.rowHeight)];
+	[cell updateWithSock:sock columns:columns];
 	return cell;
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	display_t display = self.socks[indexPath.row].display;
+	display_t display = socks[indexPath.row].display;
 	if (display == ProcDisplayTerminated)
 		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
 	else if (display == ProcDisplayStarted)
@@ -260,11 +259,11 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	PSSockSummary *sock = (PSSockSummary *)self.socks[indexPath.row];
+	PSSockSummary *sock = (PSSockSummary *)socks[indexPath.row];
 	if (!sock)
 		return;
-	NSString *title = (self.mode == ColumnModeSummary) ? sock.name : @"Property",
-		   *message = (self.mode == ColumnModeSummary) ? [NSString stringWithFormat:@"%@\n\n%@", sock.col.getData(sock.proc),
+	NSString *title = (viewMode == ColumnModeSummary) ? sock.name : @"Property",
+		   *message = (viewMode == ColumnModeSummary) ? [NSString stringWithFormat:@"%@\n\n%@", sock.col.getData(sock.proc),
 		   [sock.col.descr substringWithRange:[sock.col.descr lineRangeForRange:NSMakeRange(0,1)]]] : sock.name;
 	[[[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
 }
@@ -275,19 +274,19 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 - (void)viewDidUnload
 {
 	// Relinquish ownership of anything that can be recreated in viewDidLoad or on demand.
-	if (self.timer.isValid)
-		[self.timer invalidate];
-	self.header = nil;
-	self.sorter = nil;
-	self.socks = nil;
-	self.columns = nil;
+	if (timer.isValid)
+		[timer invalidate];
+	header = nil;
+	sortColumn = nil;
+	socks = nil;
+	columns = nil;
 	[super viewDidUnload];
 }
 
 - (void)dealloc
 {
-	if (self.timer.isValid)
-		[self.timer invalidate];
+	if (timer.isValid)
+		[timer invalidate];
 }
 
 @end
