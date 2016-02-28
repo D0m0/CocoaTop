@@ -128,6 +128,13 @@
 	[menuContainerView addSubview:menuView];
 }
 
+- (void)viewWillDisappear:(BOOL)animated
+{
+	if (menuContainerView.superview != nil)
+		[self popupMenuToggle];
+	[super viewWillDisappear:animated];
+}
+
 - (void)viewDidUnload
 {
 	if (menuContainerView != nil) {
