@@ -34,10 +34,16 @@
 		<string>Icon-72.png</string>
 		<!-- iOS 7 iPhone (home) [60x60] -->
 		<string>Icon-60</string>
+		<!-- iOS 7 iPad (home) [76x76] --> 
+		<string>Icon-76</string> 
+		<!-- iOS 7 (spotlight) [40x40] -->
+		<string>Icon-Small-40</string>
 		<!-- iOS 6 iPhone (spotlight) [29x29] -->
 		<!-- iOS 7 All Devices (settings) [29x29] -->
-		<string>Icon-Small.png</string>
-		<string>Icon-Small@2x.png</string>
+		<string>Icon-Small</string>
+		<string>Icon-Small@2x</string>
+		<!-- iOS 6 iPad (spotlight) [50x50] -->
+		<string>Icon-Small-50</string>
 	</array>
 	<key>UILaunchImages</key>
 	<array>
