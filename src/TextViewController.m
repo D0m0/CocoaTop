@@ -59,7 +59,7 @@
 
 + (void)showText:(NSString *)text withTitle:(NSString *)title inViewController:(UIViewController *)parent
 {
-	TextViewController *controller = [[TextViewController alloc] init];//WithText:text withTitle:title];
+	TextViewController *controller = [TextViewController new];
 	controller.textString = text;
 	controller.titleString = title;
 	UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
