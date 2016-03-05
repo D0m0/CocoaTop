@@ -47,6 +47,7 @@
             <File name="src\sys\proc_info.h" />
             <File name="src\sys\resource.h" />
             <File name="src\sys\sys_domain.h" />
+            <File name="src\sys\codesign.h" />
         </Folder>
         <File name="src\AppDelegate.h" />
         <File name="src\AppDelegate.m" />
