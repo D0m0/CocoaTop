@@ -14,32 +14,6 @@
         <Folder name="netinet">
             <File name="src\netinet\tcp_fsm.h" />
         </Folder>
-        <Folder name="Resources">
-            <File name="src\Resources\CocoaTop_" />
-            <File name="src\Resources\Default-1024h.png" />
-            <File name="src\Resources\Default-1024h@2x.png" />
-            <File name="src\Resources\Default-568h@2x.png" />
-            <File name="src\Resources\Default-667h@2x.png" />
-            <File name="src\Resources\Default-736h@3x.png" />
-            <File name="src\Resources\Default.png" />
-            <File name="src\Resources\Default@2x.png" />
-            <File name="src\Resources\Icon.png" />
-            <File name="src\Resources\Icon@2x.png" />
-            <File name="src\Resources\Icon-60.png" />
-            <File name="src\Resources\Icon-72.png" />
-            <File name="src\Resources\Icon-Small.png" />
-            <File name="src\Resources\Icon-Small@2x.png" />
-            <File name="src\Resources\Info.plist" />
-            <File name="src\Resources\guide.html" />
-            <File name="src\Resources\story.html" />
-            <File name="src\Resources\style.css" />
-            <File name="src\Resources\ios7-chevron.png" />
-            <File name="src\Resources\ios7-chevron@2x.png" />
-            <File name="src\Resources\UIButtonBarHamburger.png" />
-            <File name="src\Resources\UIButtonBarHamburger@2x.png" />
-            <File name="src\Resources\UIButtonBarRefresh.png" />
-            <File name="src\Resources\UIButtonBarRefresh@2x.png" />
-        </Folder>
         <Folder name="sys">
             <File name="src\sys\dyld64.h" />
             <File name="src\sys\kern_control.h" />
@@ -48,6 +22,13 @@
             <File name="src\sys\resource.h" />
             <File name="src\sys\sys_domain.h" />
             <File name="src\sys\codesign.h" />
+        </Folder>
+        <Folder name="res">
+            <File name="src\res\CocoaTop_" />
+            <File name="src\res\guide.html" />
+            <File name="src\res\Info.plist" />
+            <File name="src\res\story.html" />
+            <File name="src\res\style.css" />
         </Folder>
         <File name="src\AppDelegate.h" />
         <File name="src\AppDelegate.m" />
