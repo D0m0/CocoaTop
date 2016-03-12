@@ -62,7 +62,7 @@
 @interface PSSockThreads : PSSock
 { @public struct thread_basic_info tbi; }
 @property (assign) uint64_t tid;
-@property (assign) unsigned int ptime;	// 100's of a second
+@property (assign) unsigned int ptime;	// 0.01's of a second
 @property (assign) unsigned int prio;
 @end
 

@@ -658,9 +658,9 @@ const char *port_types[] = {"NONE","(thread)","(task)","(host)","(host priv)","(
 
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc
 {
-	if (desc) {
+	if (desc)
 		[self.socks sortUsingComparator:^NSComparisonResult(id a, id b) { return comp(b, a); }];
-	} else
+	else
 		[self.socks sortUsingComparator:comp];
 }
 

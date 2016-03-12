@@ -58,7 +58,7 @@ typedef struct PSCounts {
 @property (assign) task_role_t role;
 @property (assign) int nice;
 @property (assign) unsigned int flags;
-@property (assign) unsigned int ptime;	// 100's of a second
+@property (assign) unsigned int ptime;	// 0.01's of a second
 @property (assign) dev_t tdev;
 @property (assign) uid_t uid;
 @property (assign) gid_t gid;
