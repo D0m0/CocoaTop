@@ -33,10 +33,10 @@ typedef struct PSCounts {
 	pid_t				pid;
 	nstat_provider_id_t	provider;
 	nstat_src_ref_t		srcref;
-	u_int64_t			rxpackets;
-	u_int64_t			rxbytes;
-	u_int64_t			txpackets;
-	u_int64_t			txbytes;
+	uint64_t			rxpackets;
+	uint64_t			rxbytes;
+	uint64_t			txpackets;
+	uint64_t			txbytes;
 } PSCounts;
 
 @interface PSProc : NSObject
@@ -58,7 +58,7 @@ typedef struct PSCounts {
 @property (assign) task_role_t role;
 @property (assign) int nice;
 @property (assign) unsigned int flags;
-@property (assign) unsigned int ptime;	// 0.01's of a second
+@property (assign) uint64_t ptime;		// 0.01's of a second
 @property (assign) dev_t tdev;
 @property (assign) uid_t uid;
 @property (assign) gid_t gid;
@@ -67,6 +67,7 @@ typedef struct PSCounts {
 @property (assign) unsigned int threads;
 @property (assign) unsigned int ports;
 @property (assign) unsigned int files;
+@property (assign) unsigned int socks;
 @property (strong) NSString *name;
 @property (strong) NSString *executable;
 @property (strong) NSString *args;

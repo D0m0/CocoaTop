@@ -124,7 +124,7 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	// Mach task info
 	[self updateMachInfo];
 	// Open files count
-	self.files = 0;
+	self.files = self.socks = 0;
 	int bufSize = proc_pidinfo(self.pid, PROC_PIDLISTFDS, 0, 0, 0);
 	if (bufSize > 0) {
 		bufSize *= 2;
@@ -134,10 +134,11 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 			if (bufSize > 0)
 				for (int i = 0; i < bufSize / PROC_PIDLISTFD_SIZE; i++) {
 					switch (fdinfo[i].proc_fdtype) {
+					case PROX_FDTYPE_SOCKET:
+						self.socks++;
 					case PROX_FDTYPE_VNODE:
 					case PROX_FDTYPE_PIPE:
 					case PROX_FDTYPE_KQUEUE:
-					case PROX_FDTYPE_SOCKET:
 						self.files++; break;
 					}
 				}

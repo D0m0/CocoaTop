@@ -30,7 +30,7 @@
 }
 @end
 
-int nstatAddSrc(int fd, int provider, u_int64_t ctx)
+int nstatAddSrc(int fd, int provider, uint64_t ctx)
 {
 	nstat_msg_add_all_srcs aasreq = {{ctx, NSTAT_MSG_TYPE_ADD_ALL_SRCS, 0}, provider, NSTAT_FILTER_ACCEPT_ALL | NSTAT_FILTER_PROVIDER_NOZEROBYTES | NSTAT_FILTER_REQUIRE_SRC_ADDED};
 //	CFDataRef data = CFDataCreate(NULL, &aasreq, sizeof(aasreq));
@@ -39,7 +39,7 @@ int nstatAddSrc(int fd, int provider, u_int64_t ctx)
 	return write(fd, &aasreq, sizeof(aasreq));
 }
 
-int nstatQuerySrc(int fd, nstat_src_ref_t srcref, u_int64_t ctx)
+int nstatQuerySrc(int fd, nstat_src_ref_t srcref, uint64_t ctx)
 {
 	nstat_msg_query_src_req qsreq = {{ctx, NSTAT_MSG_TYPE_QUERY_SRC, 0}, srcref};
 	return write(fd, &qsreq, sizeof(qsreq));
@@ -158,8 +158,8 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 		[self close];
 		return;
 	}
-	nstatAddSrc(fd, NSTAT_PROVIDER_TCP, (u_int64_t)self);
-	nstatAddSrc(fd, NSTAT_PROVIDER_UDP, (u_int64_t)self);
+	nstatAddSrc(fd, NSTAT_PROVIDER_TCP, (uint64_t)self);
+	nstatAddSrc(fd, NSTAT_PROVIDER_UDP, (uint64_t)self);
 //	nstatQuerySrc(fd, NSTAT_SRC_REF_ALL, ctx);
 }
 

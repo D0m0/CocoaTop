@@ -344,6 +344,11 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(files); } summary:nil
 			descr:@"Number of active file descriptors opened by process.\n\nThis includes open files, pipes, network sockets, kernel sockets, "
 				"and kernel queues. Tap the process and go to 'Open Files' pane for lots of details."],
+		[PSColumn psColumnWithName:@"Sock" fullname:@"Open sockets" align:NSTextAlignmentRight width:42 tag:48 style:ColumnStyleSortDesc
+			data:^NSString*(PSProc *proc) { return !proc.socks ? @"-" : [NSString stringWithFormat:@"%u", proc.socks]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(socks); } summary:nil
+			descr:@"Number of active socket descriptors opened by process.\n\nThis includes IP network sockets, UNIX, and XNU kernel sockets. "
+				"Tap the process and go to 'Open Files' pane for details."],
 		[PSColumn psColumnWithName:@"" fullname:@"Bundle Identifier" align:NSTextAlignmentLeft width:0 tag:34 style:ColumnStyleForSummary
 			data:^NSString*(PSProc *proc) { return proc.app ? proc.app[@"CFBundleIdentifier"] : @"N/A"; } sort:nil summary:nil],
 		[PSColumn psColumnWithName:@"" fullname:@"Bundle Name" align:NSTextAlignmentLeft width:0 tag:35 style:ColumnStyleForSummary
