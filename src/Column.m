@@ -339,12 +339,12 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.csw]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.csw); } summary:nil
 			descr:@"Total number of context switches by this process.\n\nAlso see 'Context Switches (Delta)' column."],
-		[PSColumn psColumnWithName:@"FDs" fullname:@"Open file/socket Descriptors" align:NSTextAlignmentRight width:42 tag:33 style:ColumnStyleSortDesc
+		[PSColumn psColumnWithName:@"FDs" fullname:@"Open File/Socket Descriptors" align:NSTextAlignmentRight width:42 tag:33 style:ColumnStyleSortDesc
 			data:^NSString*(PSProc *proc) { return !proc.files ? @"-" : [NSString stringWithFormat:@"%u", proc.files]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(files); } summary:nil
 			descr:@"Number of active file descriptors opened by process.\n\nThis includes open files, pipes, network sockets, kernel sockets, "
 				"and kernel queues. Tap the process and go to 'Open Files' pane for lots of details."],
-		[PSColumn psColumnWithName:@"Sock" fullname:@"Open sockets" align:NSTextAlignmentRight width:42 tag:48 style:ColumnStyleSortDesc
+		[PSColumn psColumnWithName:@"Sock" fullname:@"Open Socket Descriptors" align:NSTextAlignmentRight width:42 tag:48 style:ColumnStyleSortDesc
 			data:^NSString*(PSProc *proc) { return !proc.socks ? @"-" : [NSString stringWithFormat:@"%u", proc.socks]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(socks); } summary:nil
 			descr:@"Number of active socket descriptors opened by process.\n\nThis includes IP network sockets, UNIX, and XNU kernel sockets. "
@@ -525,6 +525,9 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Port Details" fullname:@"Port Details" align:NSTextAlignmentLeft width:220 tag:5002 style:ColumnStylePathTrunc
 			data:^NSString*(PSSockPorts *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
+		[PSColumn psColumnWithName:@"F" fullname:@"Rights" align:NSTextAlignmentRight width:40 tag:5003 style:0
+			data:^NSString*(PSSockFiles *sock) { return [NSString stringWithFormat:@"%X", (sock.type >> 16) & 0xF]; }
+			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(type); } summary:nil],
 		];
 		sockColumns[ColumnModeModules] = @[
 		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 tag:4000 style:ColumnStylePathTrunc

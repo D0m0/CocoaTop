@@ -90,6 +90,7 @@
 @interface PSSockArray : NSObject
 @property (strong) PSProc *proc;
 @property (strong) NSMutableArray *socks;
+@property (strong) NSMutableDictionary *objects;	// Kernel objects for communication between processes (ports, pipes, sockets)
 + (instancetype)psSockArrayWithProc:(PSProc *)proc;
 - (int)refreshWithMode:(column_mode_t)mode;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
