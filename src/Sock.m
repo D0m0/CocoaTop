@@ -6,8 +6,9 @@
 #import <netdb.h>
 #import "sys/proc_info.h"
 #import "sys/libproc.h"
-#import "kern/debug.h"
 #import "sys/dyld64.h"
+#import "kern/debug.h"
+#import "xpc/xpc.h"
 
 @implementation PSSock
 + (int)refreshArray:(PSSockArray *)socks { return 0; }
@@ -534,7 +535,8 @@ const char *port_types[] = {"NONE","(thread)","(task)","(host)","(host priv)","(
 		mach_port_kernel_object(task, iin->iin_name, &object_type, &object_addr);
 		self.name = [NSString stringWithFormat:@"%s", object_type ? port_types[object_type] : "-"];
 		NSString *partner = ports[@((iin->iin_object & ~1) | recv)];
-		if (partner) self.name = [NSString stringWithFormat:send && recv ? @" \u21C4 %@" : recv ? @" \u2190 %@" : @" \u2192 %@", partner];	// 21C4
+		if (partner)
+			self.name = partner;
 		self.color = send && recv ? [UIColor orangeColor] : recv ? [UIColor blueColor] : [UIColor blackColor];
 	}
 	return self;
@@ -548,6 +550,44 @@ const char *port_types[] = {"NONE","(thread)","(task)","(host)","(host priv)","(
 // Get system-wide ports that can potentially be used for IPC with this process
 + (int)getKernelObjects:(NSMutableDictionary *)objects
 {
+	NSMutableDictionary *knownPorts = [NSMutableDictionary dictionaryWithCapacity:1000];
+	int hpipe[2];
+	pipe(hpipe);
+	xpc_object_t xpc_out = 0, xpc_in = xpc_dictionary_create(0, 0, 0);
+	xpc_dictionary_set_uint64(xpc_in, "handle", 0);
+	xpc_dictionary_set_uint64(xpc_in, "routine", 828);
+	xpc_dictionary_set_uint64(xpc_in, "subsystem", 3);
+	xpc_dictionary_set_uint64(xpc_in, "type", 1);
+	xpc_dictionary_set_fd(xpc_in, "fd", hpipe[1]);
+
+	xpc_pipe_t xp = xpc_pipe_create_from_port(bootstrap_port, 0);
+//	xpc_pipe_t xp = (xpc_pipe_t)_os_alloc_once_table[1].ptr[3];
+	if (xpc_pipe_routine(xp, xpc_in, &xpc_out) || !xpc_dictionary_get_int64(xpc_out, "error")) {
+		char *buf = (char *)malloc(0x100000u);
+		read(hpipe[0], buf, 0x100000u);
+		char *endpoints_start = strstr(buf, "\tendpoints = {");
+		if (endpoints_start) {
+			endpoints_start += 14;
+			char *endpoints_end = strchr(endpoints_start, '}');
+			if (endpoints_end)
+				*endpoints_end = 0;
+			NSScanner *endpoints = [NSScanner scannerWithString:[NSString stringWithUTF8String:endpoints_start]];
+			free(buf);
+			while (!endpoints.isAtEnd) {
+				mach_port_name_t port;
+				NSString *name;
+				if (![endpoints scanHexInt:&port]) break;
+				[endpoints scanCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"MU"] intoString:nil];
+				[endpoints scanCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"DA"] intoString:nil];
+				if (![endpoints scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&name]) break;
+				knownPorts[@(port)] = name;
+			}
+		}
+	}
+	if (xpc_in) xpc_release(xpc_in);
+	if (xpc_out) xpc_release(xpc_out);
+	xpc_release(xp);
+
 	// Get buffer size
 	size_t bufSize = 0;
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
@@ -559,7 +599,8 @@ const char *port_types[] = {"NONE","(thread)","(task)","(host)","(host priv)","(
 	int err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
 	if (err)
 		{ free(kp); return err; }
-	for (int i = 0; i < bufSize / sizeof(struct kinfo_proc); i++) {
+	int tot = bufSize / sizeof(struct kinfo_proc);
+	for (int i = tot - 1; i >= 0; i--) {
 		kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
 
 		task_port_t task;
@@ -582,9 +623,23 @@ const char *port_types[] = {"NONE","(thread)","(task)","(host)","(host priv)","(
 				unsigned int object_type = 0;
 				vm_offset_t object_addr = 0;
 				mach_port_kernel_object(task, table[j].iin_name, &object_type, &object_addr);
-				if (!object_type)
-					objects[@((table[j].iin_object & ~1) | (table[j].iin_type & MACH_PORT_TYPE_RECEIVE ? 0 : 1))] =
-						[NSString stringWithFormat:@"[%s:%X]", kp[i].kp_proc.p_comm, table[j].iin_name];
+				if (!object_type) {
+					natural_t key = (table[j].iin_object & ~1);
+					natural_t dir = (table[j].iin_type & MACH_PORT_TYPE_RECEIVE ? 0 : 1);
+
+					if (kp[i].kp_proc.p_pid == 1) {
+						NSString *name = knownPorts[@(table[j].iin_name)];
+						if (name) {
+							objects[@(key)]   = [name stringByAppendingString:@" \u2192"];
+							objects[@(key|1)] = [name stringByAppendingString:@" \u2190"];
+						}
+//if (table[j].iin_name == 0x5203) NSLog(@"port = %X obj = %X name = %@", table[j].iin_name, key, name);
+					}
+
+					NSString *obj = objects[@(key|dir)];
+					objects[@(key|dir)] = [obj ? obj : dir ? @"\u2190" : @"\u2192"
+						stringByAppendingFormat:@" [%s:%X]", kp[i].kp_proc.p_comm, table[j].iin_name];
+				}
 			}
 		if (table) vm_deallocate(mach_task_self(), (vm_address_t)table, tableCount * sizeof(*table));
 		if (tree) vm_deallocate(mach_task_self(), (vm_address_t)tree, treeCount * sizeof(*tree));
