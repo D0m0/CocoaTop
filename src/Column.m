@@ -519,9 +519,6 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Name" fullname:@"Port Name" align:NSTextAlignmentRight width:53 tag:5000 style:0
 			data:^NSString*(PSSockPorts *sock) { return [NSString stringWithFormat:@"%X", sock.port]; }
 			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { COMPARE(port); } summary:nil],
-//		[PSColumn psColumnWithName:@"Refs" fullname:@"Reference Count" align:NSTextAlignmentRight width:37 tag:5001 style:ColumnStyleSortDesc
-//			data:^NSString*(PSSockPorts *sock) { return [NSString stringWithFormat:@"%u", sock.refs]; }
-//			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { COMPARE(refs); } summary:nil],
 		[PSColumn psColumnWithName:@"Connection" fullname:@"Port Connection" align:NSTextAlignmentLeft width:220 tag:5002 style:ColumnStylePathTrunc
 			data:^NSString*(PSSockPorts *sock) { return sock.name; }
 			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
