@@ -421,8 +421,16 @@ void dump(unsigned char *b, int s)
 	bufSize = curBufSize = 0;
 	for (int i = 0; i < tot; i++) {
 		pid_t pid = kp[i].kp_proc.p_pid;
-		kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;	// Just in case
-
+		// Get process name
+		char procname[MAXPATHLEN], *pname;
+		if (proc_pidpath(pid, procname, sizeof(procname))) {
+			char *last = strrchr(procname, '/');
+			pname = last ? last + 1 : procname;
+		} else {
+			kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;
+			pname = kp[i].kp_proc.p_comm;
+		}
+		// Get descriptors
 		bufSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, 0, 0);
 		if (bufSize <= 0)
 			continue;
@@ -437,25 +445,21 @@ void dump(unsigned char *b, int s)
 		bufSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
 		if (bufSize <= 0)
 			continue;
-
 		for (int j = 0; j < bufSize / PROC_PIDLISTFD_SIZE; j++) {
 			int32_t fd = fdinfo[j].proc_fd;
 			if (fdinfo[j].proc_fdtype == PROX_FDTYPE_PIPE) {
 				struct pipe_fdinfo info;
 				if (proc_pidfdinfo(pid, fd, PROC_PIDFDPIPEINFO, &info, PROC_PIDFDPIPEINFO_SIZE) != PROC_PIDFDPIPEINFO_SIZE)
 					continue;
-				objects[@(info.pipeinfo.pipe_handle)] = [NSString stringWithFormat:@"[%s:%d]", kp[i].kp_proc.p_comm, fd];
+				objects[@(info.pipeinfo.pipe_handle)] = [NSString stringWithFormat:@"[%s:%d]", pname, fd];
 			} else if (fdinfo[j].proc_fdtype == PROX_FDTYPE_SOCKET) {
 				struct socket_fdinfo info;
 				if (proc_pidfdinfo(pid, fd, PROC_PIDFDSOCKETINFO, &info, PROC_PIDFDSOCKETINFO_SIZE) != PROC_PIDFDSOCKETINFO_SIZE)
 					continue;
 				if (info.psi.soi_kind == SOCKINFO_UN && info.psi.soi_so)
-					objects[@(info.psi.soi_so)] = [NSString stringWithFormat:@"[%s:%d]", kp[i].kp_proc.p_comm, fd];
+					objects[@(info.psi.soi_so)] = [NSString stringWithFormat:@"[%s:%d]", pname, fd];
 			}
 		}
-//		char buffer[MAXPATHLEN];
-//		if (proc_pidpath(pid, buffer, sizeof(buffer)))
-//			self.executable = [NSString stringWithUTF8String:buffer];
 	}
 	if (fdinfo) free(fdinfo);
 	free(kp);
@@ -468,7 +472,6 @@ void dump(unsigned char *b, int s)
 		socks.objects = [NSMutableDictionary dictionaryWithCapacity:1000];
 		[self getKernelObjects:socks.objects];
 	}
-
 	// Get buffer size
 	int bufSize = proc_pidinfo(socks.proc.pid, PROC_PIDLISTFDS, 0, 0, 0);
 	if (bufSize <= 0)
@@ -513,61 +516,53 @@ void dump(unsigned char *b, int s)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  OPEN PORTS PAGE
 
-@implementation PSSockPorts
+@interface PSPortInfo : NSObject {
+@public task_port_t task;
+@public ipc_info_name_array_t table;
+@public mach_msg_type_number_t count;
+@public kern_return_t ret;
+}
++ (instancetype)psPortInfoForPid:(pid_t)pid;
+@end
 
-const char *port_types[] = {"NONE","(thread)","(task)","(host)","(host priv)","(processor)","(pset)","(pset-name)",
-	"(timer)","(pager-req)","(mig)","(memobj)","(pager)","(xmm-kernel)","(xmm-reply)","(und-reply)","(host-notif)",
-	"(security)","(ledger)","(iomaster)","(task-name)","(subsystem)","(ioqueue-done)","(semaphore)","(lockset)",
-	"(clock)","(clock-ctl)","(iokit-spare)","(named-mem)","(ioconnect)","(ioobject)","(upl)","(xmm-ctrl)",
-	"(auditses)","(file)","(macf-label)","(task-resume)","(voucher)","(voucher-attr)"};
-
-- (instancetype)initWithTask:(task_port_t)task ipcInfo:(ipc_info_name_t *)iin ports:(NSMutableDictionary *)ports
+@implementation PSPortInfo
+- (instancetype)initPortInfoForPid:(pid_t)pid
 {
-	if (self = [super init]) {
-		self.display = ProcDisplayStarted;
-		self.port = iin->iin_name;
-		self.type = iin->iin_type;
-		self.object = iin->iin_object;
-		natural_t send = (iin->iin_type & MACH_PORT_TYPE_SEND) ? 1 : 0;
-		natural_t recv = (iin->iin_type & MACH_PORT_TYPE_RECEIVE) ? 1 : 0;
-
-		unsigned int object_type = 0;
-		vm_offset_t object_addr = 0;
-		mach_port_kernel_object(task, iin->iin_name, &object_type, &object_addr);
-		NSString *partner = ports[@((iin->iin_object & ~1) | recv)];
-		if (!partner)
-			self.name = [NSString stringWithFormat:@"%s", object_type ? port_types[object_type] : "-"];
-		else if (!object_type)
-			self.name = partner;
-		else
-			self.name = [NSString stringWithFormat:@"%s %@", port_types[object_type], partner];
-		self.color = send && recv ? [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0] : recv ? [UIColor blueColor] : [UIColor blackColor];
+	self = [super init];
+	self->task = 0;
+	self->table = 0;
+	self->count = 0;
+	self->ret = task_for_pid(mach_task_self(), pid, &self->task);
+	if (self->ret == KERN_SUCCESS) {
+		ipc_info_space_t info;		// iis_genno_mask
+		ipc_info_tree_name_array_t tree = 0;
+		mach_msg_type_number_t treeCount = 0;
+		self->ret = mach_port_space_info(self->task, &info, &self->table, &self->count, &tree, &treeCount);
+		if (self->ret != KERN_SUCCESS)
+			self->count = 0;
+		else if (tree)
+			vm_deallocate(mach_task_self(), (vm_address_t)tree, treeCount * sizeof(*tree));
 	}
 	return self;
 }
 
-+ (instancetype)psSockWithTask:(task_port_t)task ipcInfo:(ipc_info_name_t *)iin ports:(NSMutableDictionary *)ports
++ (instancetype)psPortInfoForPid:(pid_t)pid
 {
-	return [[PSSockPorts alloc] initWithTask:task ipcInfo:iin ports:ports];
+	return [[PSPortInfo alloc] initPortInfoForPid:pid];
 }
 
-void logMachTime_withIdentifier_(uint64_t machTime, NSString *identifier)
+- (void)dealloc
 {
-	static double timeScaleSeconds = 0.0;
-	if (timeScaleSeconds == 0.0) {
-		mach_timebase_info_data_t timebaseInfo;
-		if (mach_timebase_info(&timebaseInfo) == KERN_SUCCESS) {    // returns scale factor for ns
-			double timeScaleMicroSeconds = ((double) timebaseInfo.numer / (double) timebaseInfo.denom) / 1000;
-			timeScaleSeconds = timeScaleMicroSeconds / 1000000;
-		}
-	}
-	NSLog(@"%@: %g seconds", identifier, timeScaleSeconds*machTime);
+	if (table) vm_deallocate(mach_task_self(), (vm_address_t)table, count * sizeof(*table));
+	if (task) mach_port_deallocate(mach_task_self(), task);
 }
+@end
 
-// Get system-wide ports that can potentially be used for IPC with this process
-+ (int)getKernelObjects:(NSMutableDictionary *)objects forPid:(pid_t)pid
+@implementation PSSockPorts
+
++ (NSMutableDictionary *)getLaunchdPortNames
 {
-	NSMutableDictionary *knownPorts = [NSMutableDictionary dictionaryWithCapacity:1000];
+	NSMutableDictionary *knownPorts = nil;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
 	int hpipe[2];
 	pipe(hpipe);
@@ -588,16 +583,22 @@ void logMachTime_withIdentifier_(uint64_t machTime, NSString *identifier)
 			char *endpoints_end = strchr(endpoints_start, '}');
 			if (endpoints_end)
 				*endpoints_end = 0;
+			PSPortInfo *ports = [PSPortInfo psPortInfoForPid:1];
 			NSScanner *endpoints = [NSScanner scannerWithString:[NSString stringWithUTF8String:endpoints_start]];
 			free(buf);
+			knownPorts = [NSMutableDictionary dictionaryWithCapacity:1000];
 			while (!endpoints.isAtEnd) {
 				mach_port_name_t port;
 				NSString *name;
 				if (![endpoints scanHexInt:&port]) break;
 				[endpoints scanCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"MU"] intoString:nil];
-				[endpoints scanCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"DA"] intoString:nil];
+				[endpoints scanCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"AD"] intoString:nil];
 				if (![endpoints scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&name]) break;
-				knownPorts[@(port)] = name;
+				for (mach_msg_type_number_t i = 0; i < ports->count; i++)
+					if (ports->table[i].iin_name == port) {
+						knownPorts[@(ports->table[i].iin_object)] = name;
+						break;
+					}
 			}
 		}
 	}
@@ -607,9 +608,67 @@ void logMachTime_withIdentifier_(uint64_t machTime, NSString *identifier)
 	close(hpipe[0]);
 	close(hpipe[1]);
 #endif
+	return knownPorts;
+}
 
-uint64_t startTime, stopTime;
-startTime = mach_absolute_time();
+typedef struct ps_port_info {
+	pid_t				pid;
+	mach_port_name_t	name;
+	mach_port_type_t	type;
+	natural_t			object;
+} ps_port_info_t;
+
+const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(processor)","(pset)","(pset-name)",
+	"(timer)","(pager-req)","(mig)","(memobj)","(pager)","(xmm-kernel)","(xmm-reply)","(und-reply)","(host-notif)",
+	"(security)","(ledger)","(iomaster)","(task-name)","(subsystem)","(ioqueue-done)","(semaphore)","(lockset)",
+	"(clock)","(clock-ctl)","(iokit-spare)","(named-mem)","(ioconnect)","(ioobject)","(upl)","(xmm-ctrl)",
+	"(auditses)","(file)","(macf-label)","(task-resume)","(voucher)","(voucher-attr)"};
+
+- (instancetype)initWithTask:(task_port_t)task ipcInfo:(ipc_info_name_t *)iin pids:(NSMutableDictionary *)pids names:(NSMutableDictionary *)names ports:(ps_port_info_t *)ports count:(size_t)count
+{
+	if (self = [super init]) {
+		self.display = ProcDisplayStarted;
+		self.port = iin->iin_name;
+		self.type = iin->iin_type;
+		self.object = iin->iin_object;
+		mach_port_type_t send = iin->iin_type & MACH_PORT_TYPE_SEND_RIGHTS;
+		mach_port_type_t recv = iin->iin_type & MACH_PORT_TYPE_RECEIVE;
+
+		unsigned int object_type = 0;
+		vm_offset_t object_addr = 0;
+		mach_port_kernel_object(task, iin->iin_name, &object_type, &object_addr);
+
+		NSMutableString *full = [names[@(iin->iin_object)] mutableCopy];
+		if (!full) full = [NSMutableString stringWithUTF8String:port_types[object_type]];
+		for (size_t i = 0; i < count; i++)
+			if (ports[i].object == iin->iin_object) {
+				if (recv && (ports[i].type & MACH_PORT_TYPE_SEND_RIGHTS))
+					[full appendFormat:@" <%@:%X", pids[@(ports[i].pid)], ports[i].name];
+				else if (send && (ports[i].type & MACH_PORT_TYPE_RECEIVE))
+					[full appendFormat:@" >%@:%X", pids[@(ports[i].pid)], ports[i].name];
+			}
+		self.name = full.length ? [full copy] : @"-";
+		self.color = send && recv ? [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0] : recv ? [UIColor blueColor] : [UIColor blackColor];
+	}
+	return self;
+}
+
++ (instancetype)psSockWithTask:(task_port_t)task ipcInfo:(ipc_info_name_t *)iin pids:(NSMutableDictionary *)pids names:(NSMutableDictionary *)names ports:(ps_port_info_t *)ports count:(size_t)count
+{
+	return [[PSSockPorts alloc] initWithTask:task ipcInfo:iin pids:pids names:names ports:ports count:count];
+}
+
+int sort_procs_by_pid(const void *p1, const void *p2)
+{
+	pid_t kp1 = ((struct kinfo_proc *)p1)->kp_proc.p_pid, kp2 = ((struct kinfo_proc *)p2)->kp_proc.p_pid;
+	return kp1 == kp2 ? 0 : kp1 > kp2 ? -1 : 1;
+}
+
++ (int)refreshArray:(PSSockArray *)socks
+{
+	PSPortInfo *myports = [PSPortInfo psPortInfoForPid:socks.proc.pid];
+	if (myports->ret != KERN_SUCCESS)
+		return myports->ret;
 	// Get buffer size
 	size_t bufSize = 0;
 	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
@@ -621,138 +680,51 @@ startTime = mach_absolute_time();
 	int err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
 	if (err)
 		{ free(kp); return err; }
-	int tot = bufSize / sizeof(struct kinfo_proc);
-	for (int i = tot - 1; i >= 0; i--) {
-		char procname[MAXPATHLEN+20], *procnameend;
-		if (proc_pidpath(kp[i].kp_proc.p_pid, procname, sizeof(procname))) {
-			char *last = strrchr(procname, '/');
-			procnameend = procname;
-			if (last) { last++; while (*last) *(procnameend++) = *(last++); }
-		} else {
-			strncpy(procname, kp[i].kp_proc.p_comm, MAXCOMLEN + 1);
-			procname[MAXCOMLEN] = 0;
-			procnameend = procname + strlen(procname);
+	ps_port_info_t *table = 0, *next;
+	size_t tsize = 0, count = 0, procs = bufSize / sizeof(struct kinfo_proc);
+	if (!socks.pids) socks.pids = [NSMutableDictionary dictionaryWithCapacity:(bufSize / sizeof(struct kinfo_proc))];
+	qsort(kp, procs, sizeof(*kp), sort_procs_by_pid);
+	for (int i = procs - 1; i >= 0; i--) if (kp[i].kp_proc.p_pid != socks.proc.pid) {
+		pid_t pid = kp[i].kp_proc.p_pid;
+		// Get process ports
+		PSPortInfo *ports = [PSPortInfo psPortInfoForPid:pid];
+		for (mach_msg_type_number_t j = 0; j < ports->count; j++) if (ports->table[j].iin_object) {
+			if (count >= tsize) {
+				tsize += 10000;
+				table = (ps_port_info_t *)realloc(table, tsize * sizeof(*table));
+				next = table + count;
+			}
+			next->pid = pid;
+			next->name = ports->table[j].iin_name;
+			next->type = ports->table[j].iin_type;
+			next->object = ports->table[j].iin_object;
+			next++; count++;
 		}
-		*(procnameend++) = ':';
-
-		task_port_t task;
-		kern_return_t ret = task_for_pid(mach_task_self(), kp[i].kp_proc.p_pid, &task);
-		if (ret != KERN_SUCCESS)
-			continue;
-
-		ipc_info_space_t info;
-		ipc_info_name_array_t table = 0;
-		mach_msg_type_number_t tableCount = 0;
-		ipc_info_tree_name_array_t tree = 0;
-		mach_msg_type_number_t treeCount = 0;
-
-		ret = mach_port_space_info(task, &info, &table, &tableCount, &tree, &treeCount);
-		if (ret != KERN_SUCCESS)
-			{ mach_port_deallocate(mach_task_self(), task); continue; }
-		if (table)
-		for (mach_msg_type_number_t j = 0; j < tableCount; j++) if (table[j].iin_object) {
-			natural_t key = (table[j].iin_object & ~1);
-			natural_t send = table[j].iin_type & MACH_PORT_TYPE_SEND;
-			natural_t recv = table[j].iin_type & MACH_PORT_TYPE_RECEIVE;
-
-			if (kp[i].kp_proc.p_pid == 1) {
-				NSString *name = knownPorts[@(table[j].iin_name)];
-				if (name) {
-					objects[@(key)]   = [name mutableCopy];
-					objects[@(key|1)] = [name mutableCopy];
-				}
+		// Get process name
+		if (!socks.pids[@(pid)]) {
+			char procname[MAXPATHLEN];
+			if (proc_pidpath(pid, procname, sizeof(procname))) {
+				char *last = strrchr(procname, '/');
+				socks.pids[@(pid)] = [NSString stringWithUTF8String:(last ? last + 1 : procname)];
+			} else {
+				kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;
+				socks.pids[@(pid)] = [NSString stringWithUTF8String:kp[i].kp_proc.p_comm];
 			}
-			
-			if (kp[i].kp_proc.p_pid == pid) continue;
-
-			static const char nums[] = "0123456789ABCDEF";
-			char *tok = procnameend;
-			uint32_t ll = table[j].iin_name, xx = 0x10000000, yy = 28;
-			while (xx) { if (ll >= xx) break; xx >>= 4; yy -= 4; }
-			while (xx) { *(tok++) = nums[ll >> yy]; ll &= xx-1; xx >>= 4; yy -= 4; }
-			*(tok++) = 0;
-
-			key |= recv ? 0 : 1;
-			NSMutableString *obj = objects[@(key)];
-			if (!obj) obj = objects[@(key)] = [NSMutableString stringWithCapacity:100];
-			[obj appendString:recv ? @" >" : @" <"];
-			[obj appendString:[NSString stringWithUTF8String:procname]];
-			
-			if (!recv && send) {
-				key ^= 1;
-				NSMutableString *obj = objects[@(key)];
-				if (!obj) obj = objects[@(key)] = [NSMutableString stringWithCapacity:100];
-				[obj appendString:recv ? @" <" : @" >"];
-				[obj appendString:[NSString stringWithUTF8String:procname]];
-			}
-/*
-			natural_t dir = recv ? 0 : 1;
-
-			NSMutableString *obj = objects[@(key|dir)];
-			if (!obj) obj = objects[@(key|dir)] = [NSMutableString stringWithCapacity:100];
-//			[obj appendFormat:@" [%s:%X]", kp[i].kp_proc.p_comm, table[j].iin_name];
-			[obj appendString:dir ? @" \u2192" : @" \u2190"];
-			[obj appendString:[NSString stringWithUTF8String:procname]];
-			
-			if (!recv && send) {
-				dir = dir ? 0 : 1;
-				NSMutableString *obj = objects[@(key|dir)];
-				if (!obj) obj = objects[@(key|dir)] = [NSMutableString stringWithCapacity:100];
-				[obj appendString:dir ? @" \u2192" : @" \u2190"];
-				[obj appendString:[NSString stringWithUTF8String:procname]];
-			}
-*/
 		}
-		if (table) vm_deallocate(mach_task_self(), (vm_address_t)table, tableCount * sizeof(*table));
-		if (tree) vm_deallocate(mach_task_self(), (vm_address_t)tree, treeCount * sizeof(*tree));
-		mach_port_deallocate(mach_task_self(), task);
 	}
 	free(kp);
-stopTime = mach_absolute_time();
-logMachTime_withIdentifier_(stopTime - startTime, @"Got all ports");
-NSLog(@"capacity: objects=%d  knownPorts=%d", objects.count, knownPorts.count);
-	return 0;
-}
-
-+ (int)refreshArray:(PSSockArray *)socks
-{
-	if (!socks.objects) {
-		socks.objects = [NSMutableDictionary dictionaryWithCapacity:20000];
-		[self getKernelObjects:socks.objects forPid:socks.proc.pid];
+	if (!socks.objects) socks.objects = [self getLaunchdPortNames];
+	for (mach_msg_type_number_t i = 0; i < myports->count; i++) if (myports->table[i].iin_object) {
+		PSSockPorts *sock = (PSSockPorts *)[socks objectPassingTest:^BOOL(PSSockPorts *obj, NSUInteger idx, BOOL *stop) {
+			return obj.object == myports->table[i].iin_object;
+		}];
+		if (!sock) {
+			sock = [PSSockPorts psSockWithTask:myports->task ipcInfo:&myports->table[i] pids:socks.pids names:socks.objects ports:table count:count];
+			if (sock) [socks.socks addObject:sock];
+		} else if (sock.display != ProcDisplayStarted)
+			sock.display = ProcDisplayUser;
 	}
-
-	task_port_t task;
-	kern_return_t ret = task_for_pid(mach_task_self(), socks.proc.pid, &task);
-	if (ret != KERN_SUCCESS)
-		return ret;
-
-	ipc_info_space_t info;		// iis_genno_mask
-	ipc_info_name_array_t table = 0;
-	mach_msg_type_number_t tableCount = 0;
-	ipc_info_tree_name_array_t tree = 0;
-	mach_msg_type_number_t treeCount = 0;
-
-	ret = mach_port_space_info(task, &info, &table, &tableCount, &tree, &treeCount);
-	if (ret != KERN_SUCCESS) {
-		mach_port_deallocate(mach_task_self(), task);
-		return ret;
-	}
-	if (table)
-	for (mach_msg_type_number_t i = 0; i < tableCount; i++)
-		if (table[i].iin_object) {
-			PSSockPorts *sock = (PSSockPorts *)[socks objectPassingTest:^BOOL(PSSockPorts *obj, NSUInteger idx, BOOL *stop) {
-				return obj.object == table[i].iin_object;
-			}];
-			if (!sock) {
-				sock = [PSSockPorts psSockWithTask:task ipcInfo:&table[i] ports:socks.objects];
-				if (sock) [socks.socks addObject:sock];
-			} else if (sock.display != ProcDisplayStarted)
-				sock.display = ProcDisplayUser;
-		}
-
-	if (table) vm_deallocate(mach_task_self(), (vm_address_t)table, tableCount * sizeof(*table));
-	if (tree) vm_deallocate(mach_task_self(), (vm_address_t)tree, treeCount * sizeof(*tree));
-	mach_port_deallocate(mach_task_self(), task);
+	if (table) free(table);
 	return 0;
 }
 
