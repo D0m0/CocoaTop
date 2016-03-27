@@ -65,11 +65,7 @@
         <File name="src\THtmlViewController.m" />
         <File name="src\BackButtonHandler.h" />
         <File name="src\BackButtonHandler.m" />
-        <File name="src\control" />
-        <File name="src\postinst" />
         <File name="src\task.xml" />
         <File name="src\Makefile" />
-        <File name="Makefile5" />
-        <File name="Makefile6" />
     </Project>
 </NotepadPlus>
