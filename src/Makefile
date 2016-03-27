@@ -15,4 +15,3 @@ include $(THEOS_MAKE_PATH)/application.mk
 before-package::
 	@cp obj/five/CocoaTop.app/CocoaTop _/Applications/CocoaTop.app/CocoaTop5
 	@cp obj/six/CocoaTop.app/CocoaTop _/Applications/CocoaTop.app/CocoaTop6
-	@cp postinst _/DEBIAN/postinst
