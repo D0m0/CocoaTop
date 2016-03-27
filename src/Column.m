@@ -132,6 +132,8 @@ NSString *psProcessCpuTime(unsigned int ptime)
 #define COMPARE(field) return COMPARE_ORDER(a.field, b.field);
 #define COMPARE_VAR(field) return COMPARE_ORDER(a->field, b->field);
 #define COMPARE_DELTA(field1, field2) return COMPARE_ORDER(DELTA(a,field1,field2), DELTA(b,field1,field2));
+#define COLOR_ORDER(a, b) ((a) == (b) ? [UIColor blackColor] : (a) < (b) ? [UIColor redColor] : [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0])
+#define COLOR_DELTA(field1, field2) return COLOR_ORDER(proc->field1.field2, proc->field1 ## _prev.field2);
 
 + (NSArray *)psGetAllColumns
 {
@@ -265,24 +267,27 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.portCount]; }
 			descr:@"Number of Mach ports opened by the process.\n\n"
 				"Mach ports are the primary means of low-level communication with the kernel and between the processes in a microkernel environment."],
-		[PSColumn psColumnWithName:@"Mach" fullname:@"Mach System Calls (Delta)" align:NSTextAlignmentRight width:52 tag:14 style:ColumnStyleSortDesc
+		[PSColumn psColumnWithName:@"Mach" fullname:@"Mach System Calls (Delta)" align:NSTextAlignmentRight width:52 tag:14 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,syscalls_mach)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, syscalls_mach); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.machCalls]; }
+			color:^UIColor*(PSProc *proc) { COLOR_DELTA(events, syscalls_mach); }
 			descr:@"Number of Mach system calls per update interval.\n\n"
 				"Mach system calls are calls to the Mach microkernel within the XNU kernel. "
 				"There are 180 to 200 Mach services available on iOS depending on kernel version."],
-		[PSColumn psColumnWithName:@"BSD" fullname:@"BSD System Calls (Delta)" align:NSTextAlignmentRight width:52 tag:15 style:ColumnStyleSortDesc
+		[PSColumn psColumnWithName:@"BSD" fullname:@"BSD System Calls (Delta)" align:NSTextAlignmentRight width:52 tag:15 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,syscalls_unix)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, syscalls_unix); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.unixCalls]; }
+			color:^UIColor*(PSProc *proc) { COLOR_DELTA(events, syscalls_unix); }
 			descr:@"Number of BSD system calls per update interval.\n\n"
 				"BSD system calls are calls to the BSD part of the XNU kernel. "
 				"There are almost 1000 BSD services available on iOS depending on kernel version."],
-		[PSColumn psColumnWithName:@"CSw" fullname:@"Context Switches (Delta)" align:NSTextAlignmentRight width:52 tag:16 style:ColumnStyleSortDesc
+		[PSColumn psColumnWithName:@"CSw" fullname:@"Context Switches (Delta)" align:NSTextAlignmentRight width:52 tag:16 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", DELTA(proc,events,csw)]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(events, csw); }
 			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:@"%u", procs.switchCount]; }
+			color:^UIColor*(PSProc *proc) { COLOR_DELTA(events, csw); }
 			descr:@"Number of context switches by this process per update interval.\n\n"
 				"This is the number of times the CPU has activated this process to execute its code.\n\n"
 				"Summary of this column indicates total number of context switches per update interval."],
@@ -578,7 +583,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 }
 
 - (instancetype)initWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
-	tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr
+	tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary color:(PSColumnColor)color descr:(NSString *)descr
 {
 	if (self = [super init]) {
 		self.name = name;
@@ -588,6 +593,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		self.minwidth = self.width = width;
 		self.getData = data;
 		self.getSummary = summary;
+		self.getColor = color;
 		self.sort = sort;
 		self.tag = tag;
 		self.style = style;
@@ -596,15 +602,21 @@ NSString *psProcessCpuTime(unsigned int ptime)
 }
 
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
+	tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary color:(PSColumnColor)color descr:(NSString *)descr
+{
+	return [[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary color:color descr:descr];
+}
+
++ (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
 	tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr
 {
-	return [[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary descr:descr];
+	return [[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary color:nil descr:descr];
 }
 
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width
 	tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary
 {
-	return [[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary descr:nil];
+	return [[PSColumn alloc] initWithName:name fullname:fullname align:align width:width tag:tag style:style data:data sort:sort summary:summary color:nil descr:nil];
 }
 
 @end

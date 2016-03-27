@@ -19,9 +19,11 @@ typedef enum {
 	ColumnStyleSortDesc = 64,	// Default sorting is "high to low"
 	ColumnStylePath = 128,		// This column should be truncated path-like
 	ColumnStylePathTrunc = 131,	// ColumnStylePath + ColumnStyleExtend + ColumnStyleEllipsis
+	ColumnStyleColor = 256,		// Column label can change color
 } column_style_t;
 
 typedef NSString *(^PSColumnData)(id proc);
+typedef UIColor *(^PSColumnColor)(id proc);
 
 @interface PSColumn : NSObject
 // Full column name (in settings)
@@ -40,6 +42,8 @@ typedef NSString *(^PSColumnData)(id proc);
 @property (assign) PSColumnData getData;
 // Summary displayer (based on PSProcArray data)
 @property (assign) PSColumnData getSummary;
+// Color changer
+@property (assign) PSColumnColor getColor;
 // Sort comparator
 @property (assign) NSComparator sort;
 // Column styles bitmask
@@ -47,6 +51,8 @@ typedef NSString *(^PSColumnData)(id proc);
 // Label tag
 @property (assign) int tag;
 
++ (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
+	width:(NSInteger)width tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary color:(PSColumnColor)color descr:(NSString *)descr;
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
 	width:(NSInteger)width tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr;
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align

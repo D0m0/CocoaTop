@@ -154,6 +154,7 @@
 			//} //else {
 			UILabel *label = (UILabel *)[self viewWithTag:col.tag + 1];
 			if (label) label.text = col.getData(proc);
+			if (label && (col.style & ColumnStyleColor)) label.textColor = col.getColor(proc);
 		}
 }
 
