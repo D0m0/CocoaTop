@@ -94,6 +94,7 @@
 	self.labels = [NSMutableArray arrayWithCapacity:columns.count-1];
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	self.extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
+	self.colorDiffs = [[NSUserDefaults standardUserDefaults] boolForKey:@"ColorDiffs"];
 	if (size.height < 40)
 		self.textLabel.font = [UIFont systemFontOfSize:12.0];
 	else if (self.extendArgsLabel)
@@ -153,8 +154,11 @@
 			//	if (graph) { graph.dots = [proc.cpuhistory copy]; [graph setNeedsDisplay]; }
 			//} //else {
 			UILabel *label = (UILabel *)[self viewWithTag:col.tag + 1];
-			if (label) label.text = col.getData(proc);
-			if (label && (col.style & ColumnStyleColor)) label.textColor = col.getColor(proc);
+			if (label) {
+				label.text = col.getData(proc);
+				if (self.colorDiffs && (col.style & ColumnStyleColor))
+					label.textColor = col.getColor(proc);
+			}
 		}
 }
 

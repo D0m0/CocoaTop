@@ -76,7 +76,9 @@ typedef struct PSCounts {
 @property (strong) NSMutableDictionary *dispQueue;
 //@property (strong) NSMutableArray *cpuhistory;
 //@property (strong) NSString *moredata;
+@property (strong) PSProc *prev;		// Previous data for comparison
 + (instancetype)psProcWithKinfo:(struct kinfo_proc *)ki iconSize:(CGFloat)size;
+- (instancetype)psProcCopy;
 - (void)update;
 - (void)updateWithKinfo:(struct kinfo_proc *)ki;
 @end

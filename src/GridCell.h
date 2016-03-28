@@ -8,6 +8,7 @@
 @property (assign) NSUInteger id;
 @property (assign) NSUInteger firstColWidth;
 @property (assign) BOOL extendArgsLabel;
+@property (assign) BOOL colorDiffs;
 @property (strong) NSMutableArray *labels;
 @property (strong) NSMutableArray *dividers;
 + (NSString *)reuseIdWithIcon:(bool)withicon;

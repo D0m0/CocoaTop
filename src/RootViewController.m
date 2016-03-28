@@ -94,6 +94,7 @@
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 		@"UpdateInterval" : @"1",
 		@"FullWidthCommandLine" : @NO,
+		@"ColorDiffs" : @YES,
 		@"AutoJumpNewProcess" : @NO,
 		@"FirstColumnStyle" : @"Bundle Identifier",
 		@"ShowHeader" : @YES,

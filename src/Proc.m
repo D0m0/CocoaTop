@@ -65,6 +65,27 @@
 	return [[PSProc alloc] initWithKinfo:ki iconSize:size];
 }
 
+- (instancetype)psProcCopy
+{
+	PSProc *proc = [PSProc new];
+	proc.prio = self.prio;
+	proc.nice = self.nice;
+	proc.ptime = self.ptime;
+	proc.pcpu = self.pcpu;
+	proc.threads = self.threads;
+	proc.ports = self.ports;
+	proc.files = self.files;
+	proc.socks = self.socks;
+	memcpy(&proc->basic, &basic, sizeof(basic));
+	memcpy(&proc->events, &events, sizeof(events));
+	memcpy(&proc->rusage, &rusage, sizeof(rusage));
+	memcpy(&proc->netstat, &netstat, sizeof(netstat));
+	memcpy(&proc->events_prev, &events_prev, sizeof(events_prev));
+	memcpy(&proc->rusage_prev, &rusage_prev, sizeof(rusage_prev));
+	memcpy(&proc->netstat_prev, &netstat_prev, sizeof(netstat_prev));
+	return proc;
+}
+
 // Thread states are sorted by priority, top priority becomes a "task state"
 proc_state_t mach_state_order(struct thread_basic_info *tbi)
 {
@@ -169,7 +190,8 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 {
 	time_value_t total_time = {0};
 	task_port_t task;
-	unsigned int info_count;
+
+	self.prev = [self psProcCopy];
 	// Task info
 	memcpy(&events_prev, &events, sizeof(events_prev));
 	memset(&basic, 0, sizeof(basic));
@@ -180,7 +202,7 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	if (task_for_pid(mach_task_self(), self.pid, &task) != KERN_SUCCESS)
 		return;
 	// Basic task info
-	info_count = MACH_TASK_BASIC_INFO_COUNT;
+	unsigned int info_count = MACH_TASK_BASIC_INFO_COUNT;
 	if (task_info(task, MACH_TASK_BASIC_INFO, (task_info_t)&basic, &info_count) == KERN_SUCCESS) {
 		// Time
 		total_time = basic.user_time;

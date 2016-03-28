@@ -125,6 +125,7 @@
 		[OptionItem withAccessory:[UISwitch class] key:@"AutoJumpNewProcess" label:@"Auto scroll to new/terminated processes" chooseFrom:nil],
 		[OptionItem withAccessory:[UISwitch class] key:@"ShowHeader" label:@"Show column sort header" chooseFrom:nil],
 		[OptionItem withAccessory:[UISwitch class] key:@"ShowFooter" label:@"Show column totals (footer)" chooseFrom:nil],
+		[OptionItem withAccessory:[UISwitch class] key:@"ColorDiffs" label:@"Color changing values" chooseFrom:nil],
 	];
 }
 
