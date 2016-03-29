@@ -343,13 +343,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.messages_received); } summary:nil
 			color:^UIColor*(PSProc *proc) { DIFF_VAR(events.messages_received); }
 			descr:@"Total Mach messages received by the process.\n\nMessages are received using Mach ports. Also see 'Mach Ports' column."],
-		[PSColumn psColumnWithName:@"RMax" fullname:@"Maximum Resident Memory Usage" align:NSTextAlignmentRight width:70 tag:23 style:ColumnStyleSortDesc | ColumnStyleColor
-			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size_max ? @"-" :
-				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size_max countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size_max); } summary:nil
-			color:^UIColor*(PSProc *proc) { DIFF_VAR(basic.resident_size_max); }
-			descr:@"Maximum resident memory usage since process launch."],
-		// Columns 24-29 have moved below (ios7 and up)
+		// Columns 23-29 have moved below (ios7 and up)
 		[PSColumn psColumnWithName:@"\u03A3Mach" fullname:@"Mach Total System Calls" align:NSTextAlignmentRight width:52 tag:30 style:ColumnStyleForSummary | ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc->events.syscalls_mach]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(events.syscalls_mach); } summary:nil
@@ -436,6 +430,12 @@ NSString *psProcessCpuTime(unsigned int ptime)
 				"This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
 				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+		[PSColumn psColumnWithName:@"RMax" fullname:@"Maximum Resident Memory Usage" align:NSTextAlignmentRight width:70 tag:23 style:ColumnStyleSortDesc | ColumnStyleColor
+			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size_max ? @"-" :
+				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size_max countStyle:NSByteCountFormatterCountStyleMemory]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size_max); } summary:nil
+			color:^UIColor*(PSProc *proc) { DIFF_VAR(basic.resident_size_max); }
+			descr:@"Maximum resident memory usage since process launch."],
 		[PSColumn psColumnWithName:@"Phys" fullname:@"Physical Memory Footprint" align:NSTextAlignmentRight width:70 tag:24 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_phys_footprint ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_phys_footprint countStyle:NSByteCountFormatterCountStyleMemory]; }
