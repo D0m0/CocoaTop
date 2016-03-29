@@ -572,7 +572,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 //			data:^NSString*(PSSockModules *sock) { return sock.addrend == sock.addr ? @"-" : [NSString stringWithFormat:@"%llX", sock.addrend]; }
 //			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(addrend); } summary:nil],
 		[PSColumn psColumnWithName:@"iNode" fullname:@"Device and iNode of Module on Disk" align:NSTextAlignmentLeft width:80 tag:4003 style:0
-			data:^NSString*(PSSockModules *sock) { return sock.dev && sock.ino ? [NSString stringWithFormat:@"%u,%u %u", sock.dev >> 24, sock.dev & ((1<<24)-1), sock.ino] : @"  cache"; }
+			data:^NSString*(PSSockModules *sock) { return sock.dev || sock.ino ? [NSString stringWithFormat:@"%u,%u %u", sock.dev >> 24, sock.dev & ((1<<24)-1), sock.ino] : @"  cache"; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return a.dev == b.dev ? a.ino - b.ino : a.dev - b.dev; } summary:nil],
 		];
 	});

@@ -756,11 +756,45 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 	return [[PSSockModules alloc] initWithRwpi:rwpi];
 }
 
+- (instancetype)initWithDict:(NSDictionary *)dict 
+{
+	if (self = [super init]) {
+		self.display = ProcDisplayUser;
+		self.name = dict[@"OSBundleExecutablePath"];
+		self.addr = [dict[@"OSBundleLoadAddress"] longLongValue] & 0xffffffffffffLL;
+		self.addrend = self.addr + [dict[@"OSBundleLoadSize"] longLongValue];
+		self.dev = [dict[@"OSBundleLoadTag"] longValue];
+		self.ino = [dict[@"OSBundleRetainCount"] longValue];
+		self.color = self.name ? [UIColor blackColor] : [UIColor grayColor];
+		if (!self.name) self.name = dict[@"CFBundleIdentifier"];
+	}
+	return self;
+}
+
++ (instancetype)psSockWithDict:(NSDictionary *)dict 
+{
+	return [[PSSockModules alloc] initWithDict:dict];
+}
+
+extern CFDictionaryRef OSKextCopyLoadedKextInfo(CFArrayRef kextIdentifiers, CFArrayRef infoKeys);
+
 + (int)refreshArray:(PSSockArray *)socks
 {
-	// Avoid resetting device...
-	if (socks.proc.pid == 0)
-		return EPERM;
+	// For the kernel task we will show loaded kernel extensions
+	if (socks.proc.pid == 0) {
+		if (!socks.objects) {
+			NSArray *infoKeys = @[@"CFBundleIdentifier", @"OSBundleExecutablePath", @"OSBundleLoadAddress", @"OSBundleLoadSize", @"OSBundleLoadTag", @"OSBundleRetainCount"];
+			NSDictionary *kextDict = (__bridge NSDictionary*)OSKextCopyLoadedKextInfo(0, (__bridge CFArrayRef)infoKeys);
+			[kextDict enumerateKeysAndObjectsUsingBlock: ^void(NSString *key, NSDictionary *kext, BOOL *stop) {
+				[socks.socks addObject:[PSSockModules psSockWithDict:kext]];
+			}];
+			socks.objects = [NSMutableDictionary dictionaryWithCapacity:1];
+		} else {
+			[socks setAllDisplayed:ProcDisplayUser];
+		}
+		return 0;
+	}
+
 	task_port_t task;
 	if (task_for_pid(mach_task_self(), socks.proc.pid, &task) != KERN_SUCCESS)
 		return EPERM;
