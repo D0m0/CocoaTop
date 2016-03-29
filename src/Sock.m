@@ -783,6 +783,7 @@ extern CFDictionaryRef OSKextCopyLoadedKextInfo(CFArrayRef kextIdentifiers, CFAr
 	// For the kernel task we will show loaded kernel extensions
 	if (socks.proc.pid == 0) {
 		if (!socks.objects) {
+			// CFBundleVersion OSBundleStarted
 			NSArray *infoKeys = @[@"CFBundleIdentifier", @"OSBundleExecutablePath", @"OSBundleLoadAddress", @"OSBundleLoadSize", @"OSBundleLoadTag", @"OSBundleRetainCount"];
 			NSDictionary *kextDict = (__bridge NSDictionary*)OSKextCopyLoadedKextInfo(0, (__bridge CFArrayRef)infoKeys);
 			[kextDict enumerateKeysAndObjectsUsingBlock: ^void(NSString *key, NSDictionary *kext, BOOL *stop) {
