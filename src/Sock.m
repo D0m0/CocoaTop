@@ -10,7 +10,74 @@
 #import "kern/debug.h"
 #import "xpc/xpc.h"
 
-#import <mach/mach_time.h>
+@interface PSProcInfo : NSObject {
+@public struct kinfo_proc *kp;
+@public size_t count;
+@public int ret;
+}
++ (instancetype)psProcInfoSort:(BOOL)sort;
+@end
+
+@implementation PSProcInfo
+int sort_procs_by_pid(const void *p1, const void *p2)
+{
+	pid_t kp1 = ((struct kinfo_proc *)p1)->kp_proc.p_pid, kp2 = ((struct kinfo_proc *)p2)->kp_proc.p_pid;
+	return kp1 == kp2 ? 0 : kp1 > kp2 ? 1 : -1;
+}
+
++ (NSString *)getProcessName:(struct extern_proc *)ep
+{
+	static pid_t pid = -1;
+	static NSString *procname = 0;
+	if (ep->p_pid == pid)
+		return procname;
+	char path[MAXPATHLEN];
+	if (proc_pidpath(ep->p_pid, path, sizeof(path))) {
+		char *last = strrchr(path, '/');
+		procname = [NSString stringWithUTF8String:(last ? last + 1 : path)];
+	} else {
+		ep->p_comm[MAXCOMLEN] = 0;
+		procname = [NSString stringWithUTF8String:ep->p_comm];
+	}
+	pid = ep->p_pid;
+	return procname;
+}
+
+- (instancetype)initProcInfoSort:(BOOL)sort
+{
+	self = [super init];
+	self->kp = 0;
+	self->count = 0;
+	// Get buffer size
+	size_t bufSize = 0;
+	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
+		{ self->ret = errno; return self; }
+	bufSize *= 2;
+	self->kp = (struct kinfo_proc *)malloc(bufSize);
+	// Get process list
+	self->ret = sysctl(mib, 4, self->kp, &bufSize, NULL, 0);
+	if (self->ret)
+		{ free(self->kp); self->kp = 0; return self; }
+	self->count = bufSize / sizeof(struct kinfo_proc);
+	if (sort)
+		qsort(self->kp, self->count, sizeof(*kp), sort_procs_by_pid);
+	return self;
+}
+
++ (instancetype)psProcInfoSort:(BOOL)sort
+{
+	return [[PSProcInfo alloc] initProcInfoSort:sort];
+}
+
+- (void)dealloc
+{
+	if (self->kp) free(self->kp);
+}
+@end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  BASE CLASS
 
 @implementation PSSock
 + (int)refreshArray:(PSSockArray *)socks { return 0; }
@@ -406,33 +473,14 @@ void dump(unsigned char *b, int s)
 // Get system-wide fds that can potentially be used for IPC with this process
 + (int)getKernelObjects:(NSMutableDictionary *)objects
 {
+	PSProcInfo *procs = [PSProcInfo psProcInfoSort:YES];
+	if (procs->ret)
+		return procs->ret;
 	struct proc_fdinfo *fdinfo = 0;
-	size_t bufSize, curBufSize;
-	// Get buffer size
-	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
-	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
-		return errno;
-	bufSize *= 2;
-	struct kinfo_proc *kp = (struct kinfo_proc *)malloc(bufSize);
-	// Get process list
-	int err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
-	if (err)
-		{ free(kp); return err; }
-	int tot = bufSize / sizeof(struct kinfo_proc);
-	bufSize = curBufSize = 0;
-	for (int i = 0; i < tot; i++) {
-		pid_t pid = kp[i].kp_proc.p_pid;
-		// Get process name
-		char procname[MAXPATHLEN], *pname;
-		if (proc_pidpath(pid, procname, sizeof(procname))) {
-			char *last = strrchr(procname, '/');
-			pname = last ? last + 1 : procname;
-		} else {
-			kp[i].kp_proc.p_comm[MAXCOMLEN] = 0;
-			pname = kp[i].kp_proc.p_comm;
-		}
-		// Get descriptors
-		bufSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, 0, 0);
+	size_t bufSize = 0, curBufSize = 0;
+	for (int i = 0; i < procs->count; i++) {
+		struct extern_proc *ep = &procs->kp[i].kp_proc;
+		bufSize = proc_pidinfo(ep->p_pid, PROC_PIDLISTFDS, 0, 0, 0);
 		if (bufSize <= 0)
 			continue;
 		if (bufSize > curBufSize) {
@@ -440,30 +488,29 @@ void dump(unsigned char *b, int s)
 			if (fdinfo) free(fdinfo);
 			fdinfo = (struct proc_fdinfo *)malloc(bufSize);
 			if (!fdinfo)
-				{ free(kp); return ENOMEM; }
+				return ENOMEM;
 			curBufSize = bufSize;
 		}
-		bufSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
+		bufSize = proc_pidinfo(ep->p_pid, PROC_PIDLISTFDS, 0, fdinfo, bufSize);
 		if (bufSize <= 0)
 			continue;
 		for (int j = 0; j < bufSize / PROC_PIDLISTFD_SIZE; j++) {
 			int32_t fd = fdinfo[j].proc_fd;
 			if (fdinfo[j].proc_fdtype == PROX_FDTYPE_PIPE) {
 				struct pipe_fdinfo info;
-				if (proc_pidfdinfo(pid, fd, PROC_PIDFDPIPEINFO, &info, PROC_PIDFDPIPEINFO_SIZE) != PROC_PIDFDPIPEINFO_SIZE)
+				if (proc_pidfdinfo(ep->p_pid, fd, PROC_PIDFDPIPEINFO, &info, PROC_PIDFDPIPEINFO_SIZE) != PROC_PIDFDPIPEINFO_SIZE)
 					continue;
-				objects[@(info.pipeinfo.pipe_handle)] = [NSString stringWithFormat:@"[%s:%d]", pname, fd];
+				objects[@(info.pipeinfo.pipe_handle)] = [NSString stringWithFormat:@"[%@:%d]", [PSProcInfo getProcessName:ep], fd];
 			} else if (fdinfo[j].proc_fdtype == PROX_FDTYPE_SOCKET) {
 				struct socket_fdinfo info;
-				if (proc_pidfdinfo(pid, fd, PROC_PIDFDSOCKETINFO, &info, PROC_PIDFDSOCKETINFO_SIZE) != PROC_PIDFDSOCKETINFO_SIZE)
+				if (proc_pidfdinfo(ep->p_pid, fd, PROC_PIDFDSOCKETINFO, &info, PROC_PIDFDSOCKETINFO_SIZE) != PROC_PIDFDSOCKETINFO_SIZE)
 					continue;
 				if (info.psi.soi_kind == SOCKINFO_UN && info.psi.soi_so)
-					objects[@(info.psi.soi_so)] = [NSString stringWithFormat:@"[%s:%d]", pname, fd];
+					objects[@(info.psi.soi_so)] = [NSString stringWithFormat:@"[%@:%d]", [PSProcInfo getProcessName:ep], fd];
 			}
 		}
 	}
 	if (fdinfo) free(fdinfo);
-	free(kp);
 	return 0;
 }
 
@@ -516,54 +563,6 @@ void dump(unsigned char *b, int s)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  OPEN PORTS PAGE
-
-@interface PSProcInfo : NSObject {
-@public struct kinfo_proc *kp;
-@public size_t count;
-@public int ret;
-}
-+ (instancetype)psProcInfoSort:(BOOL)sort;
-@end
-
-@implementation PSProcInfo
-int sort_procs_by_pid(const void *p1, const void *p2)
-{
-	pid_t kp1 = ((struct kinfo_proc *)p1)->kp_proc.p_pid, kp2 = ((struct kinfo_proc *)p2)->kp_proc.p_pid;
-	return kp1 == kp2 ? 0 : kp1 > kp2 ? 1 : -1;
-}
-
-- (instancetype)initProcInfoSort:(BOOL)sort
-{
-	self = [super init];
-	self->kp = 0;
-	self->count = 0;
-	// Get buffer size
-	size_t bufSize = 0;
-	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
-	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
-		{ self->ret = errno; return self; }
-	bufSize *= 2;
-	self->kp = (struct kinfo_proc *)malloc(bufSize);
-	// Get process list
-	self->ret = sysctl(mib, 4, self->kp, &bufSize, NULL, 0);
-	if (self->ret)
-		{ free(self->kp); self->kp = 0; return self; }
-	self->count = bufSize / sizeof(struct kinfo_proc);
-	if (sort)
-		qsort(self->kp, self->count, sizeof(*kp), sort_procs_by_pid);
-	return self;
-}
-
-+ (instancetype)psProcInfoSort:(BOOL)sort
-{
-	return [[PSProcInfo alloc] initProcInfoSort:sort];
-}
-
-- (void)dealloc
-{
-	if (self->kp) free(self->kp);
-}
-@end
 
 @interface PSPortInfo : NSObject {
 @public task_port_t task;
@@ -708,24 +707,6 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 	return [[PSSockPorts alloc] initWithTask:task ipcInfo:iin name:name];
 }
 
-NSString *psGetProcessName(struct extern_proc *ep)
-{
-	static pid_t pid = -1;
-	static NSString *procname = 0;
-	if (ep->p_pid == pid)
-		return procname;
-	char path[MAXPATHLEN];
-	if (proc_pidpath(ep->p_pid, path, sizeof(path))) {
-		char *last = strrchr(path, '/');
-		procname = [NSString stringWithUTF8String:(last ? last + 1 : path)];
-	} else {
-		ep->p_comm[MAXCOMLEN] = 0;
-		procname = [NSString stringWithUTF8String:ep->p_comm];
-	}
-	pid = ep->p_pid;
-	return procname;
-}
-
 + (int)refreshArray:(PSSockArray *)socks
 {
 	PSPortInfo *myports = [PSPortInfo psPortInfoForPid:socks.proc.pid];
@@ -766,9 +747,9 @@ NSString *psGetProcessName(struct extern_proc *ep)
 				if (!sock)
 					continue;
 				if (sock.recv && (ports->table[j].iin_type & MACH_PORT_TYPE_SEND_RIGHTS))
-					[sock.connect appendFormat:@" <%@:%X", psGetProcessName(ep), ports->table[j].iin_name];
+					[sock.connect appendFormat:@" <%@:%X", [PSProcInfo getProcessName:ep], ports->table[j].iin_name];
 				else if (sock.send && (ports->table[j].iin_type & MACH_PORT_TYPE_RECEIVE))
-					[sock.connect appendFormat:@" >%@:%X", psGetProcessName(ep), ports->table[j].iin_name];
+					[sock.connect appendFormat:@" >%@:%X", [PSProcInfo getProcessName:ep], ports->table[j].iin_name];
 			}
 		}
 	}
