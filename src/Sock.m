@@ -678,15 +678,27 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 		self.display = ProcDisplayStarted;
 		self.port = iin->iin_name;
 		self.object = iin->iin_object;
+		self.type = iin->iin_type;
 		self.send = iin->iin_type & MACH_PORT_TYPE_SEND_RIGHTS;
 		self.recv = iin->iin_type & MACH_PORT_TYPE_RECEIVE;
+		mach_port_type_t pset = iin->iin_type & MACH_PORT_TYPE_PORT_SET;
 
 		unsigned int object_type = 0;
 		vm_offset_t object_addr = 0;
 		mach_port_kernel_object(task, iin->iin_name, &object_type, &object_addr);
-
 		self.connect = name ? [name mutableCopy] : [NSMutableString stringWithUTF8String:port_types[object_type]];
-		self.color = _send && _recv ? [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0] : _recv ? [UIColor blueColor] : [UIColor blackColor];
+		if (pset) {
+			[self.connect appendString:@"(port set)"];
+			mach_port_name_array_t members = 0;
+			mach_msg_type_number_t memberCount = 0;
+			if (mach_port_get_set_status(task, iin->iin_name, &members, &memberCount) != KERN_SUCCESS)
+				memberCount = 0;
+			for (size_t i = 0; i < memberCount; i++)
+				[self.connect appendFormat:@" %X", members[i]];
+			if (members)
+				vm_deallocate(mach_task_self(), (vm_address_t)members, memberCount * sizeof(*members));
+		} else
+		self.color = pset ? [UIColor orangeColor] : _send && _recv ? [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0] : _recv ? [UIColor blueColor] : [UIColor blackColor];
 	}
 	return self;
 }

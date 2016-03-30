@@ -64,6 +64,25 @@ NSString *psFdFlagsString(uint32_t openflags)
 	return [NSString stringWithCharacters:st length:(pst - st)];
 }
 
+NSString *psPortRightsString(uint32_t rights)
+{
+	unichar st[8], *pst = st;
+
+	if (rights & MACH_PORT_TYPE_SEND_RIGHTS)
+		*pst++ = L'S';
+	if (rights & MACH_PORT_TYPE_SEND_ONCE)
+		*pst++ = L'o';
+	if (rights & MACH_PORT_TYPE_RECEIVE)
+		*pst++ = L'R';
+	if (rights & MACH_PORT_TYPE_PORT_SET)
+		*pst++ = L'P';
+	if (rights & MACH_PORT_TYPE_PORT_SET)
+		*pst++ = L's';
+	if (rights & MACH_PORT_TYPE_DEAD_NAME)
+		*pst++ = L'D';
+	return [NSString stringWithCharacters:st length:(pst - st)];
+}
+
 NSString *psTaskRoleString(PSProc *proc)
 {
 	switch (proc.role) {
@@ -557,9 +576,9 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Connection" fullname:@"Port Connection" align:NSTextAlignmentLeft width:220 tag:5002 style:ColumnStylePathTrunc
 			data:^NSString*(PSSockPorts *sock) { return sock.description; }
 			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { return [a.description caseInsensitiveCompare:b.description]; } summary:nil],
-//		[PSColumn psColumnWithName:@"F" fullname:@"Rights" align:NSTextAlignmentRight width:40 tag:5003 style:0
-//			data:^NSString*(PSSockFiles *sock) { return [NSString stringWithFormat:@"%X", (sock.type >> 16) & 0xF]; }
-//			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(type); } summary:nil],
+		[PSColumn psColumnWithName:@"R" fullname:@"Rights" align:NSTextAlignmentLeft width:30 tag:5003 style:0
+			data:^NSString*(PSSockPorts *sock) { return psPortRightsString(sock.type); }
+			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { COMPARE(type & MACH_PORT_TYPE_ALL_RIGHTS); } summary:nil],
 		];
 		sockColumns[ColumnModeModules] = @[
 		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 tag:4000 style:ColumnStylePathTrunc
