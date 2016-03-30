@@ -555,8 +555,8 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			data:^NSString*(PSSockPorts *sock) { return [NSString stringWithFormat:@"%X", sock.port]; }
 			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { COMPARE(port); } summary:nil],
 		[PSColumn psColumnWithName:@"Connection" fullname:@"Port Connection" align:NSTextAlignmentLeft width:220 tag:5002 style:ColumnStylePathTrunc
-			data:^NSString*(PSSockPorts *sock) { return sock.name; }
-			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
+			data:^NSString*(PSSockPorts *sock) { return sock.description; }
+			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { return [a.description caseInsensitiveCompare:b.description]; } summary:nil],
 //		[PSColumn psColumnWithName:@"F" fullname:@"Rights" align:NSTextAlignmentRight width:40 tag:5003 style:0
 //			data:^NSString*(PSSockFiles *sock) { return [NSString stringWithFormat:@"%X", (sock.type >> 16) & 0xF]; }
 //			sort:^NSComparisonResult(PSSockFiles *a, PSSockFiles *b) { COMPARE(type); } summary:nil],

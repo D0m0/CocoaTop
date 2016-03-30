@@ -52,6 +52,7 @@
 @property (strong) NSString *name;
 @property (strong) UIColor *color;
 + (int)refreshArray:(PSSockArray *)socks;
+- (NSString *)description;
 @end
 
 @interface PSSockSummary : PSSock
@@ -74,8 +75,10 @@
 @end
 
 @interface PSSockPorts : PSSock
+@property (strong) NSMutableString *connect;
 @property (assign) mach_port_name_t port;
-@property (assign) mach_port_type_t type;
+@property (assign) mach_port_type_t send;
+@property (assign) mach_port_type_t recv;
 @property (assign) natural_t object;
 @end
 
@@ -89,7 +92,6 @@
 @interface PSSockArray : NSObject
 @property (strong) PSProc *proc;
 @property (strong) NSMutableArray *socks;
-@property (strong) NSMutableDictionary *pids;		// Process names
 @property (strong) NSMutableDictionary *objects;	// Kernel objects for communication between processes (ports, pipes, sockets)
 + (instancetype)psSockArrayWithProc:(PSProc *)proc;
 - (int)refreshWithMode:(column_mode_t)mode;
