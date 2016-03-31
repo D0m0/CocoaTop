@@ -78,8 +78,6 @@
 @property (strong) NSMutableString *connect;
 @property (assign) mach_port_name_t port;
 @property (assign) mach_port_type_t type;
-@property (assign) mach_port_type_t send;
-@property (assign) mach_port_type_t recv;
 @property (assign) natural_t object;
 @end
 

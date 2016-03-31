@@ -5,6 +5,46 @@
 #import "ProcArray.h"
 #import "NetArray.h"
 
+@implementation PSProcInfo
+int sort_procs_by_pid(const void *p1, const void *p2)
+{
+	pid_t kp1 = ((struct kinfo_proc *)p1)->kp_proc.p_pid, kp2 = ((struct kinfo_proc *)p2)->kp_proc.p_pid;
+	return kp1 == kp2 ? 0 : kp1 > kp2 ? 1 : -1;
+}
+
+- (instancetype)initProcInfoSort:(BOOL)sort
+{
+	self = [super init];
+	self->kp = 0;
+	self->count = 0;
+	// Get buffer size
+	size_t bufSize = 0;
+	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
+		{ self->ret = errno; return self; }
+	bufSize *= 2;
+	self->kp = (struct kinfo_proc *)malloc(bufSize);
+	// Get process list
+	self->ret = sysctl(mib, 4, self->kp, &bufSize, NULL, 0);
+	if (self->ret)
+		{ free(self->kp); self->kp = 0; return self; }
+	self->count = bufSize / sizeof(struct kinfo_proc);
+	if (sort)
+		qsort(self->kp, self->count, sizeof(*kp), sort_procs_by_pid);
+	return self;
+}
+
++ (instancetype)psProcInfoSort:(BOOL)sort
+{
+	return [[PSProcInfo alloc] initProcInfoSort:sort];
+}
+
+- (void)dealloc
+{
+	if (self->kp) free(self->kp);
+}
+@end
+
 @implementation PSProcArray
 
 - (instancetype)initProcArrayWithIconSize:(CGFloat)size
@@ -53,42 +93,33 @@
 		return obj.display != ProcDisplayTerminated;
 	}]];
 	[self setAllDisplayed:ProcDisplayTerminated];
-	// Get buffer size
-	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
-	size_t bufSize;
-	if (sysctl(mib, 4, NULL, &bufSize, NULL, 0) < 0)
-		return errno;
-	// Make sure the buffer is large enough ;)
-	bufSize *= 2;
-	struct kinfo_proc *kp = (struct kinfo_proc *)malloc(bufSize);
 	// Get process list and update the procs array
-	int err = sysctl(mib, 4, kp, &bufSize, NULL, 0);
-	if (!err) {
-		for (int i = 0; i < bufSize / sizeof(struct kinfo_proc); i++) {
-			PSProc *proc = [self procForPid:kp[i].kp_proc.p_pid];
-			if (!proc) {
-				proc = [PSProc psProcWithKinfo:&kp[i] iconSize:self.iconSize];
-				[self.procs addObject:proc];
-			} else {
-				[proc updateWithKinfo:&kp[i]];
-				proc.display = ProcDisplayUser;
-			}
-			// Compute totals
-			if (proc.pid) self.totalCpu += proc.pcpu;	// Kernel gets all idle CPU time
-			if (proc.uid == mobileuid) self.mobileCount++;
-			if (proc.state == ProcStateRunning) self.runningCount++;
-			if (proc.role != TASK_UNSPECIFIED) self.guiCount++;
-			self.threadCount += proc.threads;
-			self.portCount += proc.ports;
-			self.machCalls += proc->events.syscalls_mach - proc->events_prev.syscalls_mach;
-			self.unixCalls += proc->events.syscalls_unix - proc->events_prev.syscalls_unix;
-			self.switchCount += proc->events.csw - proc->events_prev.csw;
+	PSProcInfo *procs = [PSProcInfo psProcInfoSort:NO];
+	if (procs->ret)
+		return procs->ret;
+	for (int i = 0; i < procs->count; i++) {
+		PSProc *proc = [self procForPid:procs->kp[i].kp_proc.p_pid];
+		if (!proc) {
+			proc = [PSProc psProcWithKinfo:&procs->kp[i] iconSize:self.iconSize];
+			[self.procs addObject:proc];
+		} else {
+			[proc updateWithKinfo:&procs->kp[i]];
+			proc.display = ProcDisplayUser;
 		}
+		// Compute totals
+		if (proc.pid) self.totalCpu += proc.pcpu;	// Kernel gets all idle CPU time
+		if (proc.uid == mobileuid) self.mobileCount++;
+		if (proc.state == ProcStateRunning) self.runningCount++;
+		if (proc.role != TASK_UNSPECIFIED) self.guiCount++;
+		self.threadCount += proc.threads;
+		self.portCount += proc.ports;
+		self.machCalls += proc->events.syscalls_mach - proc->events_prev.syscalls_mach;
+		self.unixCalls += proc->events.syscalls_unix - proc->events_prev.syscalls_unix;
+		self.switchCount += proc->events.csw - proc->events_prev.csw;
 	}
-	free(kp);
 	[self refreshMemStats];
 	[self.nstats refresh:self];
-	return err;
+	return 0;
 }
 
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc

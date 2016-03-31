@@ -1,6 +1,15 @@
 #import "Proc.h"
 #import "NetArray.h"
 
+@interface PSProcInfo : NSObject
+{
+@public struct kinfo_proc *kp;
+@public size_t count;
+@public int ret;
+}
++ (instancetype)psProcInfoSort:(BOOL)sort;
+@end
+
 @interface PSProcArray : NSObject
 @property (strong) NSMutableArray *procs;
 @property (strong) PSNetArray *nstats;
