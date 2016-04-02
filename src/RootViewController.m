@@ -141,14 +141,14 @@
 	// Status bar
 // Also add: Uptime, CPU Freq, Cores, Cache L1/L2
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
-		statusLabel.text = [NSString stringWithFormat:@"RAM: %.1f MB  CPU: %.1f%%",
-			(float)procs.memUsed / 1024 / 1024,
+		statusLabel.text = [NSString stringWithFormat:@"Free: %.1f MB  CPU: %.1f%%",
+			(float)procs.memFree / 1024 / 1024,
 			(float)procs.totalCpu / 10];
 	else
-		statusLabel.text = [NSString stringWithFormat:@"Processes: %u   Threads: %u   RAM: %.1f/%.1f MB   CPU: %.1f%%",
+		statusLabel.text = [NSString stringWithFormat:@"Processes: %u   Threads: %u   Free: %.1f/%.1f MB   CPU: %.1f%%",
 			procs.count,
 			procs.threadCount,
-			(float)procs.memUsed / 1024 / 1024,
+			(float)procs.memFree / 1024 / 1024,
 			(float)procs.memTotal / 1024 / 1024,
 			(float)procs.totalCpu / 10];
 	// Query network statistics, cause no one did it before.

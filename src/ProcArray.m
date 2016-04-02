@@ -74,8 +74,12 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 
 	host_page_size(host_port, &pagesize);
 	if (host_statistics64(host_port, HOST_VM_INFO64, (host_info_t)&vm_stat, &host_size) == KERN_SUCCESS) {
-		self.memUsed = (vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count) * pagesize;
+//		self.memUsed = (vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count) * pagesize;
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+//		self.memUsed += vm_stat.compressor_page_count * pagesize;
+//#endif
 		self.memFree = vm_stat.free_count * pagesize;
+		self.memUsed = self.memTotal - self.memFree;
 	}
 }
 
