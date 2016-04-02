@@ -249,46 +249,50 @@ void dump(unsigned char *b, int s)
 - (instancetype)initWithSocks:(PSSockArray *)socks fd:(int32_t)fd type:(uint32_t)type
 {
 	pid_t pid = socks.proc.pid;
-	NSString *name = nil;
+	NSMutableString *name = nil;
 	UIColor *color = [UIColor blackColor];
 	uint32_t flags = 0;
+	uint64_t node = 0;
 	char *stype = nil;
 
 	if (type == PROX_FDTYPE_VNODE) {
 		struct vnode_fdinfowithpath info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDVNODEPATHINFO, &info, PROC_PIDFDVNODEPATHINFO_SIZE) != PROC_PIDFDVNODEPATHINFO_SIZE)
 			return nil;
-		name = [PSSymLink simplifyPathName:[NSString stringWithUTF8String:info.pvip.vip_path]];
+		name = [[PSSymLink simplifyPathName:[NSString stringWithUTF8String:info.pvip.vip_path]] mutableCopy];
 		stype = "VNODE";
 		flags = info.pfi.fi_openflags;
+		node = info.pvip.vip_vi.vi_stat.vst_ino;
 	} else if (type == PROX_FDTYPE_PIPE) {
 		struct pipe_fdinfo info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDPIPEINFO, &info, PROC_PIDFDPIPEINFO_SIZE) != PROC_PIDFDPIPEINFO_SIZE)
 			return nil;
 		NSString *partner = socks.objects[@(info.pipeinfo.pipe_peerhandle)];
-		name = [NSString stringWithFormat:@"\u2192 %@", partner ? partner : @"<Unknown>"];
-		if (info.pipeinfo.pipe_status & PIPE_WANTR)		name = [name stringByAppendingString:@" READ"];
-		if (info.pipeinfo.pipe_status & PIPE_WANTW)		name = [name stringByAppendingString:@" WRITE"];
-		if (info.pipeinfo.pipe_status & PIPE_SEL)		name = [name stringByAppendingString:@" SELECT"];
-		if (info.pipeinfo.pipe_status & PIPE_EOF)		name = [name stringByAppendingString:@" EOF"];
-		if (info.pipeinfo.pipe_status & PIPE_KNOTE)		name = [name stringByAppendingString:@" KNOTE"];
-		if (info.pipeinfo.pipe_status & PIPE_DRAIN)		name = [name stringByAppendingString:@" DRAIN"];
-		if (info.pipeinfo.pipe_status & PIPE_DEAD)		name = [name stringByAppendingString:@" DEAD"];
+		name = [NSMutableString stringWithFormat:@"\u2192 %@", partner ? partner : @"<Unknown>"];
+		if (info.pipeinfo.pipe_status & PIPE_WANTR)			[name appendString:@" READ"];
+		if (info.pipeinfo.pipe_status & PIPE_WANTW)			[name appendString:@" WRITE"];
+		if (info.pipeinfo.pipe_status & PIPE_SEL)			[name appendString:@" SELECT"];
+		if (info.pipeinfo.pipe_status & PIPE_EOF)			[name appendString:@" EOF"];
+		if (info.pipeinfo.pipe_status & PIPE_KNOTE)			[name appendString:@" KNOTE"];
+		if (info.pipeinfo.pipe_status & PIPE_DRAIN)			[name appendString:@" DRAIN"];
+		if (info.pipeinfo.pipe_status & PIPE_DEAD)			[name appendString:@" DEAD"];
 		stype = "PIPE";
 		color = [UIColor blueColor];
 		flags = info.pfi.fi_openflags;
+		node = info.pipeinfo.pipe_handle;
 	} else if (type == PROX_FDTYPE_KQUEUE) {
 		struct kqueue_fdinfo info;
 		if (proc_pidfdinfo(pid, fd, PROC_PIDFDKQUEUEINFO, &info, PROC_PIDFDKQUEUEINFO_SIZE) != PROC_PIDFDKQUEUEINFO_SIZE)
 			return nil;
-		name = info.kqueueinfo.kq_state & PROC_KQUEUE_64 ? @"KQUEUE64:" : info.kqueueinfo.kq_state & PROC_KQUEUE_32 ? @"KQUEUE32:" : @"KQUEUE:";
-		if (info.kqueueinfo.kq_state & PROC_KQUEUE_SELECT)	name = [name stringByAppendingString:@" SELECT"];
-		if (info.kqueueinfo.kq_state & PROC_KQUEUE_SLEEP)	name = [name stringByAppendingString:@" SLEEP"];
-		if (info.kqueueinfo.kq_state & PROC_KQUEUE_QOS)		name = [name stringByAppendingString:@" QOS"];
-		if (!(info.kqueueinfo.kq_state & ~(PROC_KQUEUE_32 | PROC_KQUEUE_64))) name = [name stringByAppendingString:@" SUSPENDED"];
+		name = [info.kqueueinfo.kq_state & PROC_KQUEUE_64 ? @"KQUEUE64:" : info.kqueueinfo.kq_state & PROC_KQUEUE_32 ? @"KQUEUE32:" : @"KQUEUE:" mutableCopy];
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_SELECT)	[name appendString:@" SELECT"];
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_SLEEP)	[name appendString:@" SLEEP"];
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_QOS)		[name appendString:@" QOS"];
+		if (!(info.kqueueinfo.kq_state & ~(PROC_KQUEUE_32 | PROC_KQUEUE_64))) [name appendString:@" SUSPENDED"];
 		stype = "QUEUE";
 		color = [UIColor grayColor];
 		flags = info.pfi.fi_openflags;
+		node = info.kqueueinfo.kq_state;
 	} else if (type == PROX_FDTYPE_SOCKET) {
 		char lip[INET_ADDRSTRLEN] = "", fip[INET_ADDRSTRLEN] = "";
 		struct in_sockinfo *s;
@@ -313,39 +317,39 @@ void dump(unsigned char *b, int s)
 			fsp = s->insi_fport ? getservbyport(s->insi_fport, 0) : &any;
 			if (info.psi.soi_family == AF_INET6) stype = (info.psi.soi_kind == SOCKINFO_TCP) ? "TCP6" : "UDP6";
 											else stype = (info.psi.soi_kind == SOCKINFO_TCP) ? "TCP" : "UDP";
-			if (lsp) name = [NSString stringWithFormat:@"%s:%s \u2192 ", lip, lsp->s_name];
-				else name = [NSString stringWithFormat:@"%s:%d \u2192 ", lip, ntohs(s->insi_lport)];
-			if (!s->insi_fport) name = [name stringByAppendingString:@"Listening"]; else
-			if (fsp) name = [name stringByAppendingFormat:@"%s:%s", fip, fsp->s_name];
-				else name = [name stringByAppendingFormat:@"%s:%d", fip, ntohs(s->insi_fport)];
+			if (lsp) name = [NSMutableString stringWithFormat:@"%s:%s \u2192 ", lip, lsp->s_name];
+				else name = [NSMutableString stringWithFormat:@"%s:%d \u2192 ", lip, ntohs(s->insi_lport)];
+			if (!s->insi_fport) [name appendString:@"Listening"]; else
+			if (fsp) [name appendFormat:@"%s:%s", fip, fsp->s_name];
+				else [name appendFormat:@"%s:%d", fip, ntohs(s->insi_fport)];
 			color = [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0];
 			break;
 		case SOCKINFO_UN: {
 			stype = "UNIX";
 			switch (info.psi.soi_type) {
-			case SOCK_STREAM:	name = @"STREAM"; break;
-			case SOCK_DGRAM:	name = @"DGRAM"; break;
-			case SOCK_RAW:		name = @"RAW"; break;
-			case SOCK_RDM:		name = @"RDM"; break;
-			case SOCK_SEQPACKET:name = @"SEQPACKET"; break;
-			default: 			name = [NSString stringWithFormat:@"UNIX: %d", info.psi.soi_type];
+			case SOCK_STREAM:	name = [@"STREAM" mutableCopy]; break;
+			case SOCK_DGRAM:	name = [@"DGRAM" mutableCopy]; break;
+			case SOCK_RAW:		name = [@"RAW" mutableCopy]; break;
+			case SOCK_RDM:		name = [@"RDM" mutableCopy]; break;
+			case SOCK_SEQPACKET:name = [@"SEQPACKET" mutableCopy]; break;
+			default: 			name = [NSMutableString stringWithFormat:@"UNIX: %d", info.psi.soi_type];
 			}
 			NSString *client = [NSString stringWithUTF8String:info.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path],
 					 *server = [NSString stringWithUTF8String:info.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path],
 					*partner = socks.objects[@(info.psi.soi_proto.pri_un.unsi_conn_so)];
-			name = [name stringByAppendingFormat:@": %@ \u2192 %@ %@", [PSSymLink simplifyPathName:client], [PSSymLink simplifyPathName:server], partner ? partner : @""];
+			[name appendFormat:@": %@ \u2192 %@ %@", [PSSymLink simplifyPathName:client], [PSSymLink simplifyPathName:server], partner ? partner : @""];
 			color = [UIColor brownColor];
 			break; }
 		case SOCKINFO_GENERIC:
-			name = [NSString stringWithFormat:@"GENERIC: %d", info.psi.soi_family];
+			name = [NSMutableString stringWithFormat:@"GENERIC: %d", info.psi.soi_family];
 			stype = "GEN";
 			break;
 		case SOCKINFO_NDRV:
-			name = [NSString stringWithFormat:@"NDRV: %d", info.psi.soi_family];
+			name = [NSMutableString stringWithFormat:@"NDRV: %d", info.psi.soi_family];
 			stype = "NDRV";
 			break;
 		case SOCKINFO_KERN_CTL:
-			name = [NSString stringWithFormat:@"KEXT: %s", info.psi.soi_proto.pri_kern_ctl.kcsi_name];
+			name = [NSMutableString stringWithFormat:@"KEXT: %s", info.psi.soi_proto.pri_kern_ctl.kcsi_name];
 			stype = "KCTL";
 			color = [UIColor orangeColor];
 			break;
@@ -389,19 +393,20 @@ void dump(unsigned char *b, int s)
 				case KEV_APPLE80211_EVENT_SUBCLASS: kclass = @"EVENT"; break;
 				} break;
 			}
-			name = [NSString stringWithFormat:@"%@:%@:%@", kvendor, kclass, ksubcls];
+			name = [NSMutableString stringWithFormat:@"%@:%@:%@", kvendor, kclass, ksubcls];
 			stype = "KEVNT";
 			color = [UIColor redColor];
 			break; }
 		}
 		flags = info.pfi.fi_openflags;
+		node = info.psi.soi_so;
 	}
 	if (!name)
 		return nil;
 	switch (fd) {
-	case 0: name = [name stringByAppendingString:@" [stdin]"]; break;
-	case 1: name = [name stringByAppendingString:@" [stdout]"]; break;
-	case 2: name = [name stringByAppendingString:@" [stderr]"]; break;
+	case 0: [name appendString:@" [stdin]"]; break;
+	case 1: [name appendString:@" [stdout]"]; break;
+	case 2: [name appendString:@" [stderr]"]; break;
 	}
 	if (self = [super init]) {
 		self.display = ProcDisplayStarted;
@@ -409,8 +414,9 @@ void dump(unsigned char *b, int s)
 		self.type = type;
 		self.stype = stype;
 		self.color = color;
-		self.name = name;
+		self.name = [name copy];
 		self.flags = flags;
+		self.node = node;
 	}
 	return self;
 }
@@ -418,6 +424,42 @@ void dump(unsigned char *b, int s)
 + (instancetype)psSock:(PSSockArray *)socks fd:(int32_t)fd type:(uint32_t)type
 {
 	return [[PSSockFiles alloc] initWithSocks:socks fd:fd type:type];
+}
+
+- (BOOL)updateWithPid:(pid_t)pid fd:(int32_t)fd
+{
+	if (self.display != ProcDisplayStarted)
+		self.display = ProcDisplayUser;
+	if (self.type == PROX_FDTYPE_VNODE) {
+		struct vnode_fdinfo info;
+		if (proc_pidfdinfo(pid, fd, PROC_PIDFDVNODEINFO, &info, PROC_PIDFDVNODEINFO_SIZE) != PROC_PIDFDVNODEINFO_SIZE)
+			return NO;
+		return self.node == info.pvi.vi_stat.vst_ino;
+	} else if (self.type == PROX_FDTYPE_PIPE) {
+		struct pipe_fdinfo info;
+		if (proc_pidfdinfo(pid, fd, PROC_PIDFDPIPEINFO, &info, PROC_PIDFDPIPEINFO_SIZE) != PROC_PIDFDPIPEINFO_SIZE)
+			return NO;
+		return self.node == info.pipeinfo.pipe_handle;
+	} else if (self.type == PROX_FDTYPE_SOCKET) {
+		struct socket_fdinfo info;
+		if (proc_pidfdinfo(pid, fd, PROC_PIDFDSOCKETINFO, &info, PROC_PIDFDSOCKETINFO_SIZE) != PROC_PIDFDSOCKETINFO_SIZE)
+			return NO;
+		return self.node == info.psi.soi_so;
+	} else if (self.type == PROX_FDTYPE_KQUEUE) {
+		struct kqueue_fdinfo info;
+		if (proc_pidfdinfo(pid, fd, PROC_PIDFDKQUEUEINFO, &info, PROC_PIDFDKQUEUEINFO_SIZE) != PROC_PIDFDKQUEUEINFO_SIZE)
+			return NO;
+		if (self.node == info.kqueueinfo.kq_state)
+			return YES;
+		self.node = info.kqueueinfo.kq_state;
+		NSMutableString *name = [info.kqueueinfo.kq_state & PROC_KQUEUE_64 ? @"KQUEUE64:" : info.kqueueinfo.kq_state & PROC_KQUEUE_32 ? @"KQUEUE32:" : @"KQUEUE:" mutableCopy];
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_SELECT)	[name appendString:@" SELECT"];
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_SLEEP)	[name appendString:@" SLEEP"];
+		if (info.kqueueinfo.kq_state & PROC_KQUEUE_QOS)		[name appendString:@" QOS"];
+		if (!(info.kqueueinfo.kq_state & ~(PROC_KQUEUE_32 | PROC_KQUEUE_64))) [name appendString:@" SUSPENDED"];
+		self.name = [name copy];
+	}
+	return YES;
 }
 
 // Get system-wide fds that can potentially be used for IPC with this process
@@ -490,18 +532,10 @@ void dump(unsigned char *b, int s)
 			if (!sock) {
 				sock = [PSSockFiles psSock:socks fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
 				if (sock) [socks.socks addObject:sock];
-			} else {
-				if (i + 1 == totalfds || fdinfo[i].proc_fd != fdinfo[i + 1].proc_fd + 1) {
-					// Last-in-a-row fds are often reused, so we wouldn't notice if it changed, until we get full info
-					PSSockFiles *newsock = [PSSockFiles psSock:socks fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
-					if (newsock && ![newsock.name isEqualToString:sock.name]) {
-						sock.display = ProcDisplayTerminated;
-						[socks.socks addObject:newsock];
-						continue;
-					}
-				}
-				if (sock.display != ProcDisplayStarted)
-					sock.display = ProcDisplayUser;
+			} else if (![sock updateWithPid:socks.proc.pid fd:fdinfo[i].proc_fd]) {
+				sock.display = ProcDisplayTerminated;
+				PSSockFiles *newsock = [PSSockFiles psSock:socks fd:fdinfo[i].proc_fd type:fdinfo[i].proc_fdtype];
+				if (newsock) [socks.socks addObject:newsock];
 			}
 		}
 	}

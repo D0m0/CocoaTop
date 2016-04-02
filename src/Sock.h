@@ -51,6 +51,7 @@
 @property (assign) display_t display;
 @property (strong) NSString *name;
 @property (strong) UIColor *color;
+@property (assign) uint64_t node;
 + (int)refreshArray:(PSSockArray *)socks;
 - (NSString *)description;
 @end
