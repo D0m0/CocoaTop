@@ -95,9 +95,8 @@
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	self.extendArgsLabel = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullWidthCommandLine"];
 	self.colorDiffs = [[NSUserDefaults standardUserDefaults] boolForKey:@"ColorDiffs"];
-	if (size.height < 40)
-		self.textLabel.font = [UIFont systemFontOfSize:12.0];
-	else if (self.extendArgsLabel)
+	self.textLabel.font = size.height > 40 ? [UIFont systemFontOfSize:18.0] : [UIFont systemFontOfSize:12.0];
+	if (size.height > 40 && self.extendArgsLabel)
 		size.height /= 2;
 	NSUInteger totalCol;
 	for (PSColumn *col in columns)
@@ -110,7 +109,7 @@
 			}
 		} else {
 			UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
-			divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
+			divider.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1];
 			[self.dividers addObject:divider];
 			[self.contentView addSubview:divider];
 
@@ -135,7 +134,7 @@
 	if (self.extendArgsLabel) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(self.firstColWidth, size.height, totalCol - self.firstColWidth, 1)];
 		[self.dividers addObject:divider];
-		divider.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
+		divider.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1];
 		[self.contentView addSubview:divider];
 	}
 	self.id = id;
@@ -164,11 +163,22 @@
 
 - (void)updateWithSock:(PSSock *)sock columns:(NSArray *)columns
 {
+	self.detailTextLabel.textColor = [UIColor grayColor];
 	for (PSColumn *col in columns) {
-		UILabel *label = (col != columns[0]) ? (UILabel *)[self viewWithTag:col.tag + 1] : self.textLabel;
+		UILabel *label;
+		if (col != columns[0])
+			label = (UILabel *)[self viewWithTag:col.tag + 1];
+		else if (col.style & ColumnStyleTooLong) {
+			self.textLabel.text = sock.description;
+			label = self.detailTextLabel;
+		} else {
+			self.detailTextLabel.text = nil;
+			label = self.textLabel;
+		}
 		if (label) {
 			// The cell label gets a shorter text (sock.name), but the summary page will get the full one
 			label.text = col.style & ColumnStyleTooLong ? sock.name : col.getData(sock);
+			if (col != columns[0])
 			label.textColor = sock.color;
 		}
 	}
@@ -210,14 +220,14 @@
 	self = [super initWithReuseIdentifier:@"Header"];
 	self.backgroundView = ({
 		UIView *view = [[UIView alloc] initWithFrame:self.bounds];
-		view.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
+		view.backgroundColor = [UIColor colorWithWhite:.75 alpha:.85];
 		view;
 	});
 #elif __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
 	self = [super initWithReuseIdentifier:@"Header"];
 #else
 	self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
-	self.backgroundColor = [UIColor colorWithRed:.75 green:.75 blue:.75 alpha:.85];
+	self.backgroundColor = [UIColor colorWithWhite:.75 alpha:.85];
 #endif
 	self.labels = [NSMutableArray arrayWithCapacity:columns.count];
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];

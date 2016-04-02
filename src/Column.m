@@ -581,10 +581,10 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			sort:^NSComparisonResult(PSSockPorts *a, PSSockPorts *b) { COMPARE(type & MACH_PORT_TYPE_ALL_RIGHTS); } summary:nil],
 		];
 		sockColumns[ColumnModeModules] = @[
-		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 tag:4000 style:ColumnStylePathTrunc
+		[PSColumn psColumnWithName:@"Mapped module" fullname:@"Module Filename" align:NSTextAlignmentLeft width:220 tag:4000 style:ColumnStylePathTrunc | ColumnStyleTooLong
 			data:^NSString*(PSSockModules *sock) { return sock.name; }
-			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return [a.name caseInsensitiveCompare:b.name]; } summary:nil],
-		[PSColumn psColumnWithName:@"Addr" fullname:@"Loaded Virtual Address" align:NSTextAlignmentRight width:90 tag:4001 style:ColumnStyleMonoFont
+			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return [a.bundle caseInsensitiveCompare:b.bundle]; } summary:nil],
+		[PSColumn psColumnWithName:@"Addr" fullname:@"Loaded Virtual Address" align:NSTextAlignmentRight width:90 tag:4001 style:ColumnStyleMonoFont | ColumnStyleiPad
 			data:^NSString*(PSSockModules *sock) { return [NSString stringWithFormat:@"%llX", sock.addr]; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(addr); } summary:nil],
 //		[PSColumn psColumnWithName:@"End" fullname:@"End Virtual Address" align:NSTextAlignmentRight width:90 tag:4002 style:ColumnStyleMonoFont
@@ -602,6 +602,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 {
 	NSArray *cols = [PSColumn psGetTaskColumns:mode];
 	PSColumn *extendedcol = nil;
+	// if (!((col.style & ColumnStyleiPad) && UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone))
 	for (PSColumn *col in cols) {
 		col.width = col.minwidth;
 		width -= col.width;

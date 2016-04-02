@@ -755,6 +755,7 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 	if (self = [super init]) {
 		self.display = ProcDisplayStarted;
 		self.name = rwpi->prp_vip.vip_path[0] ? [PSSymLink simplifyPathName:[NSString stringWithUTF8String:rwpi->prp_vip.vip_path]] : @"<none>";
+		self.bundle = [self.name lastPathComponent];
 		self.addr = rwpi->prp_prinfo.pri_address;
 		self.addrend = rwpi->prp_prinfo.pri_address + rwpi->prp_prinfo.pri_size;
 		self.dev = rwpi->prp_vip.vip_vi.vi_stat.vst_dev;
@@ -779,7 +780,8 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 		self.dev = [dict[@"OSBundleLoadTag"] longValue];
 		self.ino = [dict[@"OSBundleRetainCount"] longValue];
 		self.color = self.name ? [UIColor blackColor] : [UIColor grayColor];
-		if (!self.name) self.name = dict[@"CFBundleIdentifier"];
+		self.bundle = dict[@"CFBundleIdentifier"];
+		if (!self.name) self.name = self.bundle;
 	}
 	return self;
 }
@@ -787,6 +789,11 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 + (instancetype)psSockWithDict:(NSDictionary *)dict 
 {
 	return [[PSSockModules alloc] initWithDict:dict];
+}
+
+- (NSString *)description
+{
+	return self.bundle;
 }
 
 extern CFDictionaryRef OSKextCopyLoadedKextInfo(CFArrayRef kextIdentifiers, CFArrayRef infoKeys);

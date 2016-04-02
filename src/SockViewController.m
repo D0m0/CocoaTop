@@ -20,6 +20,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	CGFloat timerInterval;
 	NSUInteger configId;
 	column_mode_t viewMode;
+	CGFloat fullRowHeight;
 }
 
 - (void)popupMenuTappedItem:(NSInteger)item
@@ -93,7 +94,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[self.tableView addGestureRecognizer:twoTap];
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
-	self.tableView.rowHeight = self.tableView.rowHeight * 2 / 3;
+	fullRowHeight = self.tableView.rowHeight;
 	configId = 0;
 	fullScreen = NO;
 }
@@ -169,6 +170,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	header = [GridHeaderView headerWithColumns:columns size:CGSizeMake(0, self.tableView.sectionHeaderHeight)];
 	[header sortColumnOld:nil New:sortColumn desc:sortDescending];
 	[header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
+	self.tableView.rowHeight = viewMode == ColumnModeModules ? fullRowHeight : fullRowHeight * 2 / 3;
 }
 
 - (void)viewWillAppear:(BOOL)animated

@@ -83,6 +83,7 @@
 @end
 
 @interface PSSockModules : PSSock
+@property (strong) NSString *bundle;
 @property (assign) mach_vm_address_t addr;
 @property (assign) mach_vm_address_t addrend;
 @property (assign) uint32_t dev;
