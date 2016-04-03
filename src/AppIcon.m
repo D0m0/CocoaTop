@@ -27,12 +27,8 @@
 			}
 			while ([Value isKindOfClass:[NSArray class]] && [Value count])
 				Value = Value[0];
-			if ([Value isKindOfClass:[NSString class]]) {
-				// Calendar App returns a white icon by default
-				if ([Value isEqualToString:@"icon"] && [app[@"CFBundleIdentifier"] isEqualToString:@"com.apple.mobilecal"])
-					return @"icon-about";
+			if ([Value isKindOfClass:[NSString class]])
 				return Value;
-			}
 		}
 	}
 	@finally {}
@@ -41,15 +37,14 @@
 
 + (NSString *)getIconFileForPath:(NSString *)path iconFile:(NSString *)icon
 {
-	NSMutableArray *iconNames = [NSMutableArray arrayWithObjects:@"Icon", @"icon", @"Icon-Small", @"Icon-Small-50", @"Icon-Small-40", @"icon-114", nil];
-	if (icon)
-		[iconNames insertObject:icon atIndex:0];
+	NSMutableArray *iconNames = [NSMutableArray arrayWithObjects:@"Icon-76", @"Icon-60", @"icon_120x120", @"icon_80x80", @"Icon-Small-50", @"Icon-Small-40", @"Icon-Small", @"icon-about", icon, nil];
+	[iconNames addObjectsFromArray:@[@"Icon", @"icon"]];
 	NSFileManager *fileMgr = [NSFileManager defaultManager];
 	NSString *iconFull;
 	for (NSString *Icon in iconNames) {
 		iconFull = [path stringByAppendingPathComponent:Icon];
 		if (![iconFull pathExtension].length) {
-			for (NSString *IconExt in @[@"@2x~ipad.png", @"@2x.png", @"@2x~iphone.png", @"~ipad.png", @"~iphone.png", @".png"])
+			for (NSString *IconExt in @[@"@3x.png", @"@2x~ipad.png", @"@2x.png", @"@2x~iphone.png", @"~ipad.png", @"~iphone.png", @".png"])
 				if ([fileMgr fileExistsAtPath:[iconFull stringByAppendingString:IconExt]])
 					return [iconFull stringByAppendingString:IconExt];
 		}
@@ -75,10 +70,7 @@
 
 + (UIImage *)getIconForApp:(NSDictionary *)app bundle:(NSString *)bundle path:(NSString *)path size:(NSInteger)dim
 {
-	NSString *iconFile = [PSAppIcon getIconFileForApp:app];
-	if (!iconFile)
-		return nil;
-	NSString *iconPath = [PSAppIcon getIconFileForPath:path iconFile:iconFile];
+	NSString *iconPath = [PSAppIcon getIconFileForPath:path iconFile:[PSAppIcon getIconFileForApp:app]];
 	if (!iconPath)
 		return nil;
 	UIImage *image = [UIImage imageWithContentsOfFile:iconPath];
