@@ -14,7 +14,7 @@
 	return [NSDictionary dictionaryWithContentsOfFile:[path stringByAppendingPathComponent:@"Info.plist"]];
 }
 
-+ (NSString *)getIconFileForApp:(NSDictionary *)app
++ (NSArray *)getIconFileForApp:(NSDictionary *)app
 {
 	@try {
 		for (NSString *Key in @[@"CFBundleIcons~ipad", @"CFBundleIcons", @"CFBundleIconFiles", @"CFBundleIconFile"]) {
@@ -25,25 +25,33 @@
 				if (!Try) break;
 				Value = Try;
 			}
-			while ([Value isKindOfClass:[NSArray class]] && [Value count])
-				Value = Value[0];
+			Try = nil;
+			while ([Value isKindOfClass:[NSArray class]] && [Value count]) {
+				Try = Value; Value = Value[0];
+			}
 			if ([Value isKindOfClass:[NSString class]])
-				return Value;
+				return Try ? Try : @[Value];
 		}
 	}
 	@finally {}
 	return nil;
 }
 
-+ (NSString *)getIconFileForPath:(NSString *)path iconFile:(NSString *)icon
++ (NSString *)getIconFileForPath:(NSString *)path iconFiles:(NSArray *)icons
 {
-	NSMutableArray *iconNames = [NSMutableArray arrayWithObjects:@"Icon-76", @"Icon-60", @"icon_120x120", @"icon_80x80", @"Icon-Small-50", @"Icon-Small-40", @"Icon-Small", @"icon-about", icon, nil];
-	[iconNames addObjectsFromArray:@[@"Icon", @"icon"]];
+	NSArray* preferred = [@[@"Icon-76", @"Icon-60", @"icon_120x120", @"icon_80x80", @"Icon-Small-50", @"Icon-Small-40", @"Icon-Small"] arrayByAddingObjectsFromArray:icons];
+	NSMutableArray *iconNames = [@[@"icon-about"] mutableCopy];		// for MobileCalendar
+	for (NSString* icon in preferred)
+		if ([icons containsObject:icon])
+			[iconNames addObject:icon];
+	for (NSString* icon in preferred)
+		if (![icons containsObject:icon])
+			[iconNames addObject:icon];
 	NSFileManager *fileMgr = [NSFileManager defaultManager];
 	NSString *iconFull;
 	for (NSString *Icon in iconNames) {
 		iconFull = [path stringByAppendingPathComponent:Icon];
-		if (![iconFull pathExtension].length) {
+		if (![Icon pathExtension].length) {
 			for (NSString *IconExt in @[@"@3x.png", @"@2x~ipad.png", @"@2x.png", @"@2x~iphone.png", @"~ipad.png", @"~iphone.png", @".png"])
 				if ([fileMgr fileExistsAtPath:[iconFull stringByAppendingString:IconExt]])
 					return [iconFull stringByAppendingString:IconExt];
@@ -70,7 +78,7 @@
 
 + (UIImage *)getIconForApp:(NSDictionary *)app bundle:(NSString *)bundle path:(NSString *)path size:(NSInteger)dim
 {
-	NSString *iconPath = [PSAppIcon getIconFileForPath:path iconFile:[PSAppIcon getIconFileForApp:app]];
+	NSString *iconPath = [PSAppIcon getIconFileForPath:path iconFiles:[PSAppIcon getIconFileForApp:app]];
 	if (!iconPath)
 		return nil;
 	UIImage *image = [UIImage imageWithContentsOfFile:iconPath];
