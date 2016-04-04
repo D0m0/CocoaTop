@@ -587,16 +587,13 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Address" fullname:@"Loaded Virtual Address" align:NSTextAlignmentRight width:90 tag:4001 style:ColumnStyleMonoFont | ColumnStyleiPad
 			data:^NSString*(PSSockModules *sock) { return [NSString stringWithFormat:@"%llX", sock.addr]; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(addr); } summary:nil],
-//		[PSColumn psColumnWithName:@"End" fullname:@"End Virtual Address" align:NSTextAlignmentRight width:90 tag:4002 style:ColumnStyleMonoFont
-//			data:^NSString*(PSSockModules *sock) { return sock.addrend == sock.addr ? @"-" : [NSString stringWithFormat:@"%llX", sock.addrend]; }
-//			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(addrend); } summary:nil],
+		[PSColumn psColumnWithName:@"Size" fullname:@"Mapped size" align:NSTextAlignmentRight width:60 tag:4002 style:ColumnStyleSortDesc
+			data:^NSString*(PSSockModules *sock) { return !sock.size ? @"-" : [NSByteCountFormatter stringFromByteCount:sock.size countStyle:NSByteCountFormatterCountStyleMemory]; }
+			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(size); } summary:nil],
 //		[PSColumn psColumnWithName:@"iNode" fullname:@"Device and iNode of Module on Disk" align:NSTextAlignmentLeft width:80 tag:4003 style:0
 //			data:^NSString*(PSSockModules *sock) { return sock.dev || sock.ino ? [NSString stringWithFormat:@"%u,%u %u", sock.dev >> 24, sock.dev & ((1<<24)-1), sock.ino] : @"  cache"; }
 //			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return a.dev == b.dev ? a.ino - b.ino : a.dev - b.dev; } summary:nil],
-		[PSColumn psColumnWithName:@"Size" fullname:@"Mapped size" align:NSTextAlignmentRight width:60 tag:4004 style:ColumnStyleSortDesc
-			data:^NSString*(PSSockModules *sock) { return !sock.size ? @"-" : [NSByteCountFormatter stringFromByteCount:sock.size countStyle:NSByteCountFormatterCountStyleMemory]; }
-			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(size); } summary:nil],
-		[PSColumn psColumnWithName:@"Ref" fullname:@"Reference count" align:NSTextAlignmentRight width:40 tag:4005 style:ColumnStyleSortDesc
+		[PSColumn psColumnWithName:@"Ref" fullname:@"Reference count" align:NSTextAlignmentRight width:40 tag:4004 style:ColumnStyleSortDesc
 			data:^NSString*(PSSockModules *sock) { return [NSString stringWithFormat:@"%d", sock.ref]; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(ref); } summary:nil],
 		];

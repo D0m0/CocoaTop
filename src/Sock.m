@@ -758,7 +758,6 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 		self.bundle = [self.name lastPathComponent];
 		self.addr = rwpi->prp_prinfo.pri_address;
 		self.size = rwpi->prp_prinfo.pri_size;
-		self.addrend = rwpi->prp_prinfo.pri_address + rwpi->prp_prinfo.pri_size;
 		self.ref = rwpi->prp_prinfo.pri_ref_count;
 		self.dev = rwpi->prp_vip.vip_vi.vi_stat.vst_dev;
 		self.ino = rwpi->prp_vip.vip_vi.vi_stat.vst_ino;
@@ -779,7 +778,6 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 		self.name = dict[@"OSBundleExecutablePath"];
 		self.addr = [dict[@"OSBundleLoadAddress"] longLongValue] & 0xffffffffffffLL;
 		self.size = [dict[@"OSBundleLoadSize"] longLongValue];
-		self.addrend = self.addr + self.size;
 		self.ref = [dict[@"OSBundleRetainCount"] longValue];
 //		self.dev = [dict[@"OSBundleLoadTag"] longValue];
 		self.color = self.name ? [UIColor blackColor] : [UIColor grayColor];
@@ -886,7 +884,6 @@ extern CFDictionaryRef OSKextCopyLoadedKextInfo(CFArrayRef kextIdentifiers, CFAr
 							if (!rwpi.prp_vip.vip_vi.vi_stat.vst_dev && !rwpi.prp_vip.vip_vi.vi_stat.vst_ino && rwpi.prp_prinfo.pri_user_tag)
 								break;
 							sock.size += rwpi.prp_prinfo.pri_size;
-							sock.addrend = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
 						}
 						[socks.socks addObject:sock];
 					}
