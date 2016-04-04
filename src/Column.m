@@ -593,16 +593,13 @@ NSString *psProcessCpuTime(unsigned int ptime)
 //		[PSColumn psColumnWithName:@"iNode" fullname:@"Device and iNode of Module on Disk" align:NSTextAlignmentLeft width:80 tag:4003 style:0
 //			data:^NSString*(PSSockModules *sock) { return sock.dev || sock.ino ? [NSString stringWithFormat:@"%u,%u %u", sock.dev >> 24, sock.dev & ((1<<24)-1), sock.ino] : @"  cache"; }
 //			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { return a.dev == b.dev ? a.ino - b.ino : a.dev - b.dev; } summary:nil],
-		[PSColumn psColumnWithName:@"Mapped" fullname:@"Mapped size" align:NSTextAlignmentRight width:65 tag:4004 style:ColumnStyleSortDesc
+		[PSColumn psColumnWithName:@"Size" fullname:@"Mapped size" align:NSTextAlignmentRight width:60 tag:4004 style:ColumnStyleSortDesc
 			data:^NSString*(PSSockModules *sock) { return !sock.size ? @"-" : [NSByteCountFormatter stringFromByteCount:sock.size countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(size); } summary:nil],
+		[PSColumn psColumnWithName:@"Ref" fullname:@"Reference count" align:NSTextAlignmentRight width:40 tag:4005 style:ColumnStyleSortDesc
+			data:^NSString*(PSSockModules *sock) { return [NSString stringWithFormat:@"%d", sock.ref]; }
+			sort:^NSComparisonResult(PSSockModules *a, PSSockModules *b) { COMPARE(ref); } summary:nil],
 		];
-	// uint32_t		pri_flags;		/* shared, external pager, is submap */
-	// uint32_t		pri_behavior;
-	// uint32_t		pri_user_tag;
-	// uint32_t		pri_ref_count;
-	// uint32_t		pri_obj_id;
-
 	});
 	return sockColumns[mode];
 }
