@@ -757,6 +757,7 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 		self.name = rwpi->prp_vip.vip_path[0] ? [PSSymLink simplifyPathName:[NSString stringWithUTF8String:rwpi->prp_vip.vip_path]] : @"<none>";
 		self.bundle = [self.name lastPathComponent];
 		self.addr = rwpi->prp_prinfo.pri_address;
+		self.size = rwpi->prp_prinfo.pri_size;
 		self.addrend = rwpi->prp_prinfo.pri_address + rwpi->prp_prinfo.pri_size;
 		self.dev = rwpi->prp_vip.vip_vi.vi_stat.vst_dev;
 		self.ino = rwpi->prp_vip.vip_vi.vi_stat.vst_ino;
@@ -776,7 +777,8 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 		self.display = ProcDisplayUser;
 		self.name = dict[@"OSBundleExecutablePath"];
 		self.addr = [dict[@"OSBundleLoadAddress"] longLongValue] & 0xffffffffffffLL;
-		self.addrend = self.addr + [dict[@"OSBundleLoadSize"] longLongValue];
+		self.size = [dict[@"OSBundleLoadSize"] longLongValue];
+		self.addrend = self.addr + self.size;
 		self.dev = [dict[@"OSBundleLoadTag"] longValue];
 		self.ino = [dict[@"OSBundleRetainCount"] longValue];
 		self.color = self.name ? [UIColor blackColor] : [UIColor grayColor];
@@ -874,13 +876,17 @@ extern CFDictionaryRef OSKextCopyLoadedKextInfo(CFArrayRef kextIdentifiers, CFAr
 					}
 					sock = [PSSockModules psSockWithRwpi:&rwpi];
 					if (sock) {
-						//while (rwpi.prp_prinfo.pri_size) {
-						//	addr = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
-						//	if (proc_pidinfo(socks.proc.pid, PROC_PIDREGIONPATHINFO, addr, &rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE) break;
-						//	if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev != sock.dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino != sock.ino)
-						//		break;
-						//	sock.addrend = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
-						//}
+						while (rwpi.prp_prinfo.pri_size) {
+							if (proc_pidinfo(socks.proc.pid, PROC_PIDREGIONPATHINFO, rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size,
+								&rwpi, PROC_PIDREGIONPATHINFO_SIZE) != PROC_PIDREGIONPATHINFO_SIZE) break;
+							if (rwpi.prp_vip.vip_vi.vi_stat.vst_dev && rwpi.prp_vip.vip_vi.vi_stat.vst_ino &&
+								(rwpi.prp_vip.vip_vi.vi_stat.vst_dev != sock.dev || rwpi.prp_vip.vip_vi.vi_stat.vst_ino != sock.ino))
+								break;
+							if (!rwpi.prp_vip.vip_vi.vi_stat.vst_dev && !rwpi.prp_vip.vip_vi.vi_stat.vst_ino && rwpi.prp_prinfo.pri_user_tag)
+								break;
+							sock.size += rwpi.prp_prinfo.pri_size;
+							sock.addrend = rwpi.prp_prinfo.pri_address + rwpi.prp_prinfo.pri_size;
+						}
 						[socks.socks addObject:sock];
 					}
 				} else if (sock.display != ProcDisplayStarted)
