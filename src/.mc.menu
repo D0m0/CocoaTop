@@ -1,0 +1,45 @@
+shell_patterns=0
+
+0	Clean & Make
+	make clean
+	make
+
+1	Make for 5 & 6
+	echo ===================================== iOS5
+	make TARGET=iphone:clang:5.0 SCHEMA=five
+	echo ===================================== iOS6
+	make TARGET=iphone:clang:6.0 SCHEMA=six
+	echo ===================================== DEB
+	make package
+
+2	Make package
+	make package
+
+3	Install to iPad Air
+	make install
+
+4	Install to iPhone 5c
+	make install THEOS_DEVICE_IP=192.168.0.109
+
+5	Install to iPhone 4s
+	make install THEOS_DEVICE_IP=192.168.0.111
+
+6	Install to iPad Black
+	make install THEOS_DEVICE_IP=192.168.0.104
+
+7	Install to iPad White
+	make install THEOS_DEVICE_IP=192.168.0.110
+
+8	Install to iPad 1
+	make install THEOS_DEVICE_IP=192.168.0.106
+
+= t d
+9	Compress the current subdirectory (tar.gz)
+	Pwd=`basename %d /`
+	echo -n "Name of the compressed file (without extension) [$Pwd]: "
+	read tar
+	if [ "$tar"x = x ]; then tar="$Pwd"; fi
+	cd .. && \
+	tar cf - "$Pwd" | gzip -f9 > "$tar.tar.gz" && \
+	echo "../$tar.tar.gz created."
+
