@@ -265,9 +265,10 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	PSSockSummary *sock = (PSSockSummary *)socks[indexPath.row];
 	if (!sock)
 		return;
-	NSString *title = (viewMode == ColumnModeSummary) ? sock.name : @"Property",
+	NSString *title = (viewMode == ColumnModeSummary) ? sock.name : ColumnModeName[viewMode],
 		   *message = (viewMode == ColumnModeSummary) ? [NSString stringWithFormat:@"%@\n\n%@", sock.col.getData(sock.proc),
-		   [sock.col.descr substringWithRange:[sock.col.descr lineRangeForRange:NSMakeRange(0,1)]]] : sock.description;
+		   [sock.col.descr substringWithRange:NSMakeRange(0, [sock.col.descr lineRangeForRange:NSMakeRange(0,1)].length-1)]] :
+					  (viewMode == ColumnModeModules) ? sock.name : sock.description;
 	if (viewMode == ColumnModePorts)
 		message = [[message stringByReplacingOccurrencesOfString:@" <" withString:@"\n<"] stringByReplacingOccurrencesOfString:@" >" withString:@"\n>"];
 	[[[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];

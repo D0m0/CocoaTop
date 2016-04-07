@@ -20,6 +20,7 @@ typedef enum {
 	ColumnStylePath = 128,		// This column should be truncated path-like
 	ColumnStylePathTrunc = 131,	// ColumnStylePath + ColumnStyleExtend + ColumnStyleEllipsis
 	ColumnStyleColor = 256,		// Column label can change color
+	ColumnStyleLowSpace = 512,	// Column will not be shown in low-space environments (i.e. iPhone portrait mode)
 } column_style_t;
 
 typedef NSString *(^PSColumnData)(id proc);
