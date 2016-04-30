@@ -187,6 +187,7 @@ void NetStatCallBack(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef
 		for (NSValue *val in self.nstats.allValues) {
 			PSCounts cnt = val.countsValue;
 			if (cnt.pid == 1)
+				// Because launchd runs as root, it can create low-numbered TCP/IP listen sockets and hand them off to the daemon (from developer.apple.com)
 				nstatGetSrcDesc(fd, cnt.provider, cnt.srcref);
 			else
 				nstatQuerySrc(fd, cnt.srcref, cnt.srcref);
