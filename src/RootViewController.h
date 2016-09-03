@@ -2,5 +2,5 @@
 #import "GridCell.h"
 #import "PopupMenuView.h"
 
-@interface RootViewController : UITableViewControllerWithMenu
+@interface RootViewController : UITableViewControllerWithMenu<UISearchBarDelegate>
 @end

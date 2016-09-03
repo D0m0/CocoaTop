@@ -36,4 +36,5 @@
 - (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
 - (NSUInteger)indexForPid:(pid_t)pid;
 - (PSProc *)procForPid:(pid_t)pid;
+- (NSMutableArray *)filter:(NSString *)text;
 @end

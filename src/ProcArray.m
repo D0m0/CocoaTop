@@ -179,4 +179,15 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 	return idx == NSNotFound ? nil : (PSProc *)self.procs[idx];
 }
 
+- (NSMutableArray *)filter:(NSString *)text
+{
+	NSMutableArray *procsFiltered = [self.procs mutableCopy];
+	// Remove processes without "text"
+	if (text.length)
+		[procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
+			return [obj.executable rangeOfString:text options:NSCaseInsensitiveSearch].location != NSNotFound;
+		}]];
+	return procsFiltered;
+}
+
 @end

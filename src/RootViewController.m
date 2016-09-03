@@ -15,7 +15,9 @@
 {
 	GridHeaderView *header;
 	GridHeaderView *footer;
+	UISearchBar *search;
 	PSProcArray *procs;
+	NSMutableArray *procsFiltered;
 	NSTimer *timer;
 	UILabel *statusLabel;
 	NSArray *columns;
@@ -86,6 +88,15 @@
 	twoTap.numberOfTouchesRequired = 2;
 	[self.tableView addGestureRecognizer:twoTap];
 
+	search = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, 0)];
+	search.placeholder = @"search";
+//	search.showsCancelButton = YES;
+//	search.showsSearchResultsButton = NO;
+	search.delegate = self; 
+	[search sizeToFit];  
+	self.tableView.tableHeaderView = search;
+	self.tableView.contentOffset = CGPointMake(0, search.frame.size.height - self.tableView.contentInset.top);
+
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
@@ -111,6 +122,27 @@
 	configId = 0;
 	selectedPid = -1;
 	fullScreen = NO;
+}
+
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+{
+	[self.tableView reloadData];
+}
+
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
+{
+	[searchBar resignFirstResponder];
+	searchBar.text = @"";
+}
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+{
+	[searchBar resignFirstResponder];
+}
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+	[search resignFirstResponder];
 }
 
 - (void)preRefreshProcs:(NSTimer *)_timer
@@ -146,7 +178,7 @@
 			(float)procs.totalCpu / 10];
 	else
 		statusLabel.text = [NSString stringWithFormat:@"Processes: %u   Threads: %u   Free: %.1f/%.1f MB   CPU: %.1f%%",
-			procs.count,
+			procs.procs.count,
 			procs.threadCount,
 			(float)procs.memFree / 1024 / 1024,
 			(float)procs.memTotal / 1024 / 1024,
@@ -212,17 +244,8 @@
 		atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
 }
 
-- (void)viewWillAppear:(BOOL)animated
+- (void)columnConfigChanged
 {
-	[super viewWillAppear:animated];
-	self.navigationController.navigationBar.barTintColor = nil;
-	// When major options change, process list is rebuilt from scratch
-	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
-	NSString *configCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"ShortenPaths"], [def stringForKey:@"FirstColumnStyle"]];
-	if (![configChange isEqualToString:configCheck]) {
-		procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
-		configChange = configCheck;
-	}
 	// When configId changes, all cells are reconfigured
 	configId++;
 	columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
@@ -235,6 +258,20 @@
 	[header sortColumnOld:nil New:sortColumn desc:sortDescending];
 	[header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
 	[footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+	[super viewWillAppear:animated];
+	self.navigationController.navigationBar.barTintColor = nil;
+	// When major options change, process list is rebuilt from scratch
+	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
+	NSString *configCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"ShortenPaths"], [def stringForKey:@"FirstColumnStyle"]];
+	if (![configChange isEqualToString:configCheck]) {
+		procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
+		configChange = configCheck;
+	}
+	[self columnConfigChanged];
 	// Refresh interval
 	timerInterval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	[self refreshProcs:nil];
@@ -246,6 +283,7 @@
 	if (timer.isValid)
 		[timer invalidate];
 	header = nil;
+	footer = nil;
 	columns = nil;
 }
 
@@ -262,25 +300,12 @@
 	if ((fromInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || fromInterfaceOrientation == UIInterfaceOrientationLandscapeRight) &&
 		(self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft || self.interfaceOrientation == UIInterfaceOrientationLandscapeRight))
 		return;
-	// Size changed - need to redraw
-	configId++;
-	columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
-	header = [GridHeaderView headerWithColumns:columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionHeaderHeight)];
-	footer = [GridHeaderView footerWithColumns:columns size:CGSizeMake(self.tableView.bounds.size.width, self.tableView.sectionFooterHeight)];
-	[header sortColumnOld:nil New:sortColumn desc:sortDescending];
-	[header addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sortHeader:)]];
-	[footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
+	[self columnConfigChanged];
 	[timer fire];
 }
 
 #pragma mark -
 #pragma mark Table view data source
-
-// Customize the number of sections in the table view.
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
-{
-	return 1;
-}
 
 // Section header/footer will be used as a grid header/footer
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
@@ -295,17 +320,24 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
 { return [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFooter"] && !fullScreen ? self.tableView.sectionFooterHeight : 0; }
 
+// Customize the number of sections in the table view.
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+	return 1;
+}
+
 // Data is acquired from PSProcArray
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return procs.count;
+	procsFiltered = [procs filter:search.text];
+	return procsFiltered.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	PSProc *proc = nil;
-	if (indexPath.row < procs.count && columns && columns.count)
-		proc = procs[indexPath.row];
+	if (indexPath.row < procsFiltered.count && columns && columns.count)
+		proc = procsFiltered[indexPath.row];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:proc.icon != nil]];
 	if (cell == nil)
 		cell = [GridTableCell cellWithIcon:proc.icon != nil];
@@ -317,7 +349,7 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	display_t display = procs[indexPath.row].display;
+	display_t display = ((PSProc *)procsFiltered[indexPath.row]).display;
 	if (display == ProcDisplayTerminated)
 		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
 	else if (display == ProcDisplayStarted)
@@ -330,7 +362,7 @@
 
 - (void)tableView:(UITableView *)tableView sendSignal:(int)sig toProcessAtIndexPath:(NSIndexPath *)indexPath
 {
-	PSProc *proc = procs[indexPath.row];
+	PSProc *proc = procsFiltered[indexPath.row];
 	// task_for_pid(mach_task_self(), pid, &task)
 	// task_terminate(task)
 	if (kill(proc.pid, sig)) {
@@ -373,10 +405,12 @@
 	// Shitty bug in iOS 7
 	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_8_0) anim = YES;
 #endif
+	if (search.isFirstResponder)
+		[search resignFirstResponder];
 	// Return from fullscreen, or there's no way back ;)
 	if (fullScreen)
 		[self hideShowNavBar:nil];
-	PSProc *proc = procs[indexPath.row];
+	PSProc *proc = procsFiltered[indexPath.row];
 	selectedPid = proc.pid;
 	[self.navigationController pushViewController:[[SockViewController alloc] initWithProc:proc] animated:anim];
 }
@@ -400,6 +434,7 @@
 	footer = nil;
 	sortColumn = nil;
 	procs = nil;
+	procsFiltered = nil;
 	columns = nil;
 	[super viewDidUnload];
 }

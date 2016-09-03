@@ -18,8 +18,8 @@ shell_patterns=0
 3	Install to iPad Air
 	make install
 
-4	Install to iPhone 5c
-	make install THEOS_DEVICE_IP=192.168.0.109
+4	Install to iPhone 6s
+	make install THEOS_DEVICE_IP=192.168.1.244
 
 5	Install to iPhone 4s
 	make install THEOS_DEVICE_IP=192.168.0.111
@@ -28,7 +28,7 @@ shell_patterns=0
 	make install THEOS_DEVICE_IP=192.168.0.104
 
 7	Install to iPad White
-	make install THEOS_DEVICE_IP=192.168.0.110
+	make install THEOS_DEVICE_IP=192.168.1.165
 
 8	Install to iPad 1
 	make install THEOS_DEVICE_IP=192.168.0.106
