@@ -27,6 +27,7 @@
 @property (assign) unsigned int mobileCount;
 @property (assign) unsigned int runningCount;
 @property (assign) unsigned int coresCount;
+@property (assign) unsigned int filterCount;
 + (instancetype)psProcArrayWithIconSize:(CGFloat)size;
 - (int)refresh;
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;

@@ -57,6 +57,7 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 	NSProcessInfo *procinfo = [NSProcessInfo processInfo];
 	self.memTotal = procinfo.physicalMemory;
 	self.coresCount = procinfo.processorCount;
+	self.filterCount = 0;
 	return self;
 }
 
@@ -181,12 +182,16 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 
 - (NSMutableArray *)filter:(NSString *)text
 {
-	NSMutableArray *procsFiltered = [self.procs mutableCopy];
+	NSMutableArray *procsFiltered;
 	// Remove processes without "text"
-	if (text.length)
+	if (text.length) {
+		procsFiltered = [self.procs mutableCopy];
 		[procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
 			return [obj.executable rangeOfString:text options:NSCaseInsensitiveSearch].location != NSNotFound;
 		}]];
+	} else
+		procsFiltered = self.procs;
+	self.filterCount = procsFiltered.count;
 	return procsFiltered;
 }
 

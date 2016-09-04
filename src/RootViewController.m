@@ -89,7 +89,11 @@
 	[self.tableView addGestureRecognizer:twoTap];
 
 	search = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, 0)];
-	search.placeholder = @"search";
+	search.placeholder = @"search by executable";
+	search.autocapitalizationType = UITextAutocapitalizationTypeNone;
+	search.autocorrectionType = UITextAutocorrectionTypeNo;
+	search.spellCheckingType = UITextSpellCheckingTypeNo;
+//	search.returnKeyType = UIReturnKeyDone;
 //	search.showsCancelButton = YES;
 //	search.showsSearchResultsButton = NO;
 	search.delegate = self; 
@@ -126,7 +130,9 @@
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
 {
+	procsFiltered = [procs filter:search.text];
 	[self.tableView reloadData];
+	[footer updateSummaryWithColumns:columns procs:procs];
 }
 
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
@@ -168,6 +174,7 @@
 		return;
 	[procs refresh];
 	[procs sortUsingComparator:sortColumn.sort desc:sortDescending];
+	procsFiltered = [procs filter:search.text];
 	[self.tableView reloadData];
 	[footer updateSummaryWithColumns:columns procs:procs];
 	// Status bar
@@ -329,7 +336,6 @@
 // Data is acquired from PSProcArray
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	procsFiltered = [procs filter:search.text];
 	return procsFiltered.count;
 }
 
