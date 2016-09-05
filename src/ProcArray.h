@@ -12,6 +12,7 @@
 
 @interface PSProcArray : NSObject
 @property (strong) NSMutableArray *procs;
+@property (strong) NSMutableArray *procsFiltered;
 @property (strong) PSNetArray *nstats;
 @property (assign) CGFloat iconSize;
 @property (assign) uint64_t memUsed;
@@ -33,9 +34,10 @@
 - (void)sortUsingComparator:(NSComparator)comp desc:(BOOL)desc;
 - (void)setAllDisplayed:(display_t)display;
 - (NSUInteger)indexOfDisplayed:(display_t)display;
+- (NSUInteger)totalCount;
 - (NSUInteger)count;
 - (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
 - (NSUInteger)indexForPid:(pid_t)pid;
 - (PSProc *)procForPid:(pid_t)pid;
-- (NSMutableArray *)filter:(NSString *)text;
+- (void)filter:(NSString *)text;
 @end

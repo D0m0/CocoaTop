@@ -124,6 +124,7 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 	}
 	[self refreshMemStats];
 	[self.nstats refresh:self];
+	self.procsFiltered = self.procs;
 	return 0;
 }
 
@@ -145,7 +146,7 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 
 - (NSUInteger)indexOfDisplayed:(display_t)display
 {
-	return [self.procs indexOfObjectPassingTest:^BOOL(PSProc *obj, NSUInteger idx, BOOL *stop) {
+	return [self.procsFiltered indexOfObjectPassingTest:^BOOL(PSProc *obj, NSUInteger idx, BOOL *stop) {
 		return obj.display == display;
 	}];
 //	return [self.procs enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^void(PSProc *obj, NSUInteger idx, BOOL *stop) {
@@ -156,14 +157,19 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 //	}
 }
 
-- (NSUInteger)count
+- (NSUInteger)totalCount
 {
 	return self.procs.count;
 }
 
+- (NSUInteger)count
+{
+	return self.procsFiltered.count;
+}
+
 - (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx
 {
-	return (PSProc *)self.procs[idx];
+	return (PSProc *)self.procsFiltered[idx];
 }
 
 - (NSUInteger)indexForPid:(pid_t)pid
@@ -180,19 +186,16 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 	return idx == NSNotFound ? nil : (PSProc *)self.procs[idx];
 }
 
-- (NSMutableArray *)filter:(NSString *)text
+- (void)filter:(NSString *)text
 {
-	NSMutableArray *procsFiltered;
 	// Remove processes without "text"
-	if (text.length) {
-		procsFiltered = [self.procs mutableCopy];
-		[procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
+	if (text && text.length) {
+		self.procsFiltered = [self.procs mutableCopy];
+		[self.procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
 			return [obj.executable rangeOfString:text options:NSCaseInsensitiveSearch].location != NSNotFound;
 		}]];
 	} else
-		procsFiltered = self.procs;
-	self.filterCount = procsFiltered.count;
-	return procsFiltered;
+		self.procsFiltered = self.procs;
 }
 
 @end

@@ -17,7 +17,6 @@
 	GridHeaderView *footer;
 	UISearchBar *search;
 	PSProcArray *procs;
-	NSMutableArray *procsFiltered;
 	NSTimer *timer;
 	UILabel *statusLabel;
 	NSArray *columns;
@@ -130,15 +129,9 @@
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
 {
-	procsFiltered = [procs filter:search.text];
+	[procs filter:searchText];
 	[self.tableView reloadData];
 	[footer updateSummaryWithColumns:columns procs:procs];
-}
-
-- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
-{
-	[searchBar resignFirstResponder];
-	searchBar.text = @"";
 }
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
@@ -174,7 +167,7 @@
 		return;
 	[procs refresh];
 	[procs sortUsingComparator:sortColumn.sort desc:sortDescending];
-	procsFiltered = [procs filter:search.text];
+	[procs filter:search.text];
 	[self.tableView reloadData];
 	[footer updateSummaryWithColumns:columns procs:procs];
 	// Status bar
@@ -185,7 +178,7 @@
 			(float)procs.totalCpu / 10];
 	else
 		statusLabel.text = [NSString stringWithFormat:@"Processes: %u   Threads: %u   Free: %.1f/%.1f MB   CPU: %.1f%%",
-			procs.procs.count,
+			procs.totalCount,
 			procs.threadCount,
 			(float)procs.memFree / 1024 / 1024,
 			(float)procs.memTotal / 1024 / 1024,
@@ -336,14 +329,14 @@
 // Data is acquired from PSProcArray
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	return procsFiltered.count;
+	return procs.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	PSProc *proc = nil;
-	if (indexPath.row < procsFiltered.count && columns && columns.count)
-		proc = procsFiltered[indexPath.row];
+	if (indexPath.row < procs.count && columns && columns.count)
+		proc = procs[indexPath.row];
 	GridTableCell *cell = [tableView dequeueReusableCellWithIdentifier:[GridTableCell reuseIdWithIcon:proc.icon != nil]];
 	if (cell == nil)
 		cell = [GridTableCell cellWithIcon:proc.icon != nil];
@@ -355,7 +348,7 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	display_t display = ((PSProc *)procsFiltered[indexPath.row]).display;
+	display_t display = ((PSProc *)procs[indexPath.row]).display;
 	if (display == ProcDisplayTerminated)
 		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
 	else if (display == ProcDisplayStarted)
@@ -368,7 +361,7 @@
 
 - (void)tableView:(UITableView *)tableView sendSignal:(int)sig toProcessAtIndexPath:(NSIndexPath *)indexPath
 {
-	PSProc *proc = procsFiltered[indexPath.row];
+	PSProc *proc = procs[indexPath.row];
 	// task_for_pid(mach_task_self(), pid, &task)
 	// task_terminate(task)
 	if (kill(proc.pid, sig)) {
@@ -416,7 +409,7 @@
 	// Return from fullscreen, or there's no way back ;)
 	if (fullScreen)
 		[self hideShowNavBar:nil];
-	PSProc *proc = procsFiltered[indexPath.row];
+	PSProc *proc = procs[indexPath.row];
 	selectedPid = proc.pid;
 	[self.navigationController pushViewController:[[SockViewController alloc] initWithProc:proc] animated:anim];
 }
@@ -440,7 +433,6 @@
 	footer = nil;
 	sortColumn = nil;
 	procs = nil;
-	procsFiltered = nil;
 	columns = nil;
 	[super viewDidUnload];
 }
