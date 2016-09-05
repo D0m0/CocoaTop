@@ -98,7 +98,6 @@
 	search.delegate = self; 
 	[search sizeToFit];  
 	self.tableView.tableHeaderView = search;
-	self.tableView.contentOffset = CGPointMake(0, search.frame.size.height - self.tableView.contentInset.top);
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
@@ -272,6 +271,7 @@
 		configChange = configCheck;
 	}
 	[self columnConfigChanged];
+	self.tableView.contentOffset = CGPointMake(0, search.frame.size.height - self.tableView.contentInset.top);
 	// Refresh interval
 	timerInterval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	[self refreshProcs:nil];
