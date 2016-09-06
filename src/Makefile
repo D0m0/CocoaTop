@@ -13,5 +13,5 @@ include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/application.mk
 
 before-package::
-	@cp obj/five/CocoaTop.app/CocoaTop _/Applications/CocoaTop.app/CocoaTop5
-	@cp obj/six/CocoaTop.app/CocoaTop _/Applications/CocoaTop.app/CocoaTop6
+	@cp .theos/obj/five_debug/CocoaTop.app/CocoaTop .theos/_/Applications/CocoaTop.app/CocoaTop5
+	@cp .theos/obj/six_debug/CocoaTop.app/CocoaTop .theos/_/Applications/CocoaTop.app/CocoaTop6

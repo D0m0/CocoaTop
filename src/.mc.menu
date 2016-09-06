@@ -21,17 +21,17 @@ shell_patterns=0
 4	Install to iPhone 6s
 	make install THEOS_DEVICE_IP=192.168.1.244
 
-5	Install to iPhone 4s
-	make install THEOS_DEVICE_IP=192.168.0.111
+5	Install to iPhone 5c
+	make install THEOS_DEVICE_IP=192.168.1.131
 
 6	Install to iPad Black
-	make install THEOS_DEVICE_IP=192.168.0.104
+	make install THEOS_DEVICE_IP=192.168.1.101
 
 7	Install to iPad White
 	make install THEOS_DEVICE_IP=192.168.1.165
 
 8	Install to iPad 1
-	make install THEOS_DEVICE_IP=192.168.0.106
+	make install THEOS_DEVICE_IP=192.168.1.227
 
 = t d
 9	Compress the current subdirectory (tar.gz)

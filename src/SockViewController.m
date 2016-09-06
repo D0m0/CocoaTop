@@ -83,7 +83,12 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 		style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
 
 	viewMode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
-	[self popupMenuWithItems:[NSArray arrayWithObjects:ColumnModeName count:ColumnModes] selected:viewMode aligned:UIControlContentHorizontalAlignmentRight];
+	NSMutableArray *modeItems = [NSMutableArray arrayWithObjects:ColumnModeName count:ColumnModes];
+	modeItems[ColumnModeThreads] = [modeItems[ColumnModeThreads] stringByAppendingFormat:@" (%u)", proc.threads];
+	modeItems[ColumnModeFiles  ] = [modeItems[ColumnModeFiles  ] stringByAppendingFormat:@" (%u)", proc.files];
+	modeItems[ColumnModePorts  ] = [modeItems[ColumnModePorts  ] stringByAppendingFormat:@" (%u)", proc.ports];
+//	modeItems[ColumnModeModules] = [modeItems[ColumnModeModules] stringByAppendingFormat:@" (%u)", proc.modules];
+	[self popupMenuWithItems:modeItems selected:viewMode aligned:UIControlContentHorizontalAlignmentRight];
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarHamburger"] style:UIBarButtonItemStylePlain
 		target:self action:@selector(popupMenuToggle)];
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
