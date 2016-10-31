@@ -174,7 +174,7 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 
 - (NSUInteger)indexForPid:(pid_t)pid
 {
-	NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+	NSUInteger idx = [self.procsFiltered indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		return ((PSProc *)obj).pid == pid;
 	}];
 	return idx;
@@ -182,7 +182,9 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 
 - (PSProc *)procForPid:(pid_t)pid
 {
-	NSUInteger idx = [self indexForPid:pid];
+	NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+		return ((PSProc *)obj).pid == pid;
+	}];
 	return idx == NSNotFound ? nil : (PSProc *)self.procs[idx];
 }
 

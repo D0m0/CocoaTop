@@ -271,7 +271,10 @@
 		configChange = configCheck;
 	}
 	[self columnConfigChanged];
-	self.tableView.contentOffset = CGPointMake(0, search.frame.size.height - self.tableView.contentInset.top);
+	// Hide search bar
+	CGFloat minOffset = search.frame.size.height - self.tableView.contentInset.top;
+	if (self.tableView.contentOffset.y < minOffset)
+		self.tableView.contentOffset = CGPointMake(0, minOffset);
 	// Refresh interval
 	timerInterval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
 	[self refreshProcs:nil];
@@ -416,13 +419,6 @@
 
 #pragma mark -
 #pragma mark Memory management
-
-- (void)didReceiveMemoryWarning
-{
-	// Releases the view if it doesn't have a superview.
-	[super didReceiveMemoryWarning];
-	NSLog(@"didReceiveMemoryWarning");
-}
 
 - (void)viewDidUnload
 {

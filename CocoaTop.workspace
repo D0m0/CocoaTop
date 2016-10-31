@@ -67,5 +67,6 @@
         <File name="src\BackButtonHandler.m" />
         <File name="src\task.xml" />
         <File name="src\Makefile" />
+        <File name="src\README.md" />
     </Project>
 </NotepadPlus>
