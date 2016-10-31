@@ -246,6 +246,16 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 		memset(&events, 0, sizeof(events));
 	else if (!events_prev.csw)	// Fill in events_prev on first update
 		memcpy(&events_prev, &events, sizeof(events_prev));
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+	// Task power info
+	// uint64_t total_user, total_system;
+	info_count = TASK_POWER_INFO_COUNT;
+	if (task_info(task, TASK_POWER_INFO, (task_info_t)&power, &info_count) != KERN_SUCCESS)
+		memset(&power, 0, sizeof(power));
+	else if (!power_prev.total_user)	// Fill in power_prev on first update
+		memcpy(&power_prev, &power, sizeof(power_prev));
+	power.task_timer_wakeups_bin_1 += power.task_timer_wakeups_bin_2;
+#endif
 	// Task ports
 	mach_msg_type_number_t ncnt, tcnt;
 	mach_port_name_array_t names;

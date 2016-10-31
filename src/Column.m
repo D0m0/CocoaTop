@@ -257,7 +257,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size); }
 			summary:^NSString*(PSProcArray* procs) { return [NSByteCountFormatter stringFromByteCount:procs.memUsed countStyle:NSByteCountFormatterCountStyleMemory]; }
 			color:^UIColor*(PSProc *proc) { DIFF_VAR(basic.resident_size); }
-			descr:@"Resident memory usage. Also see 'Physical Memory Footprint' column. "],
+			descr:@"Resident memory usage. Also see 'Physical Memory Footprint' column."],
 		[PSColumn psColumnWithName:@"VSize" fullname:@"Virtual Address Space Usage" align:NSTextAlignmentRight width:70 tag:8 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return !proc->basic.virtual_size ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.virtual_size countStyle:NSByteCountFormatterCountStyleMemory]; }
@@ -275,11 +275,11 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Group" fullname:@"Group Id" align:NSTextAlignmentLeft width:80 tag:10 style:0
 			data:^NSString*(PSProc *proc) { return [NSString stringWithCString:group_from_gid(proc.gid, 0) encoding:NSASCIIStringEncoding]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(gid); } summary:nil
-			descr:@"Process group id. "],
+			descr:@"Process group id."],
 		[PSColumn psColumnWithName:@"TTY" fullname:@"Terminal" align:NSTextAlignmentLeft width:65 tag:11 style:ColumnStyleSortDesc
 			data:^NSString*(PSProc *proc) { return psProcessTty(proc); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(tdev); } summary:nil
-			descr:@"For console processes this contains the name of the controlling terminal (TTY). "],
+			descr:@"For console processes this contains the name of the controlling terminal (TTY)."],
 		[PSColumn psColumnWithName:@"Thr" fullname:@"Thread Count" align:NSTextAlignmentRight width:40 tag:12 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%u", proc.threads]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE(threads); }
@@ -449,12 +449,31 @@ NSString *psProcessCpuTime(unsigned int ptime)
 				"This value is inaccurate due to the fact that CocoaTop can only monitor process' sockets "
 				"while it is active. Sockets having a lifetime during CocoaTop being inactive are not counted."],
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+		[PSColumn psColumnWithName:@"WInt" fullname:@"Interrupt Wakeups (Delta)" align:NSTextAlignmentRight width:52 tag:49 style:ColumnStyleSortDesc | ColumnStyleColor
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%llu", DELTA(proc,power,task_interrupt_wakeups)]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(power, task_interrupt_wakeups); }
+			summary:nil
+			color:^UIColor*(PSProc *proc) { DIFF_DELTA(power, task_interrupt_wakeups); }
+			descr:@"Number of interrupt wakeups by this process per update interval.\n\n"
+				"This is the number of times the process was activated by the kernel due to a hardware interrupt."],
+		[PSColumn psColumnWithName:@"WIdle" fullname:@"Idle Wakeups (Delta)" align:NSTextAlignmentRight width:52 tag:50 style:ColumnStyleSortDesc | ColumnStyleColor
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%llu", DELTA(proc,power,task_platform_idle_wakeups)]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(power, task_platform_idle_wakeups); }
+			summary:nil
+			color:^UIColor*(PSProc *proc) { DIFF_DELTA(power, task_platform_idle_wakeups); }
+			descr:@"Number of idle wakeups by this process per update interval."],
+		[PSColumn psColumnWithName:@"WTmr" fullname:@"Timer Wakeups (Delta)" align:NSTextAlignmentRight width:52 tag:51 style:ColumnStyleSortDesc | ColumnStyleColor
+			data:^NSString*(PSProc *proc) { return [NSString stringWithFormat:@"%llu", DELTA(proc,power,task_timer_wakeups_bin_1)]; }
+			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(power, task_timer_wakeups_bin_1); }
+			summary:nil
+			color:^UIColor*(PSProc *proc) { DIFF_DELTA(power, task_timer_wakeups_bin_1); }
+			descr:@"Number of timer wakeups by this process per update interval."],
 		[PSColumn psColumnWithName:@"RMax" fullname:@"Maximum Resident Memory Usage" align:NSTextAlignmentRight width:70 tag:23 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return !proc->basic.resident_size_max ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->basic.resident_size_max countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(basic.resident_size_max); } summary:nil
 			color:^UIColor*(PSProc *proc) { DIFF_VAR(basic.resident_size_max); }
-			descr:@"Maximum resident memory usage since process launch. "],
+			descr:@"Maximum resident memory usage since process launch."],
 		[PSColumn psColumnWithName:@"Phys" fullname:@"Physical Memory Footprint" align:NSTextAlignmentRight width:70 tag:24 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_phys_footprint ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_phys_footprint countStyle:NSByteCountFormatterCountStyleMemory]; }
@@ -466,30 +485,30 @@ NSString *psProcessCpuTime(unsigned int ptime)
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,rusage,ri_diskio_bytesread) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(rusage, ri_diskio_bytesread); } summary:nil
 			color:^UIColor*(PSProc *proc) { DIFF_DELTA(rusage, ri_diskio_bytesread); }
-			descr:@"Bytes read from disk per update interval. "],
+			descr:@"Bytes read from disk per update interval."],
 		[PSColumn psColumnWithName:@"DiskW" fullname:@"Disk I/O Bytes Written Delta" align:NSTextAlignmentRight width:70 tag:26 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return !DELTA(proc,rusage,ri_diskio_byteswritten) ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:DELTA(proc,rusage,ri_diskio_byteswritten) countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_DELTA(rusage, ri_diskio_byteswritten); } summary:nil
 			color:^UIColor*(PSProc *proc) { DIFF_DELTA(rusage, ri_diskio_byteswritten); }
-			descr:@"Bytes written to disk per update interval. "],
+			descr:@"Bytes written to disk per update interval."],
 		[PSColumn psColumnWithName:@"\u03A3DiskR" fullname:@"Disk I/O Total Bytes Read" align:NSTextAlignmentRight width:70 tag:27 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_diskio_bytesread ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_diskio_bytesread countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_diskio_bytesread); } summary:nil
 			color:^UIColor*(PSProc *proc) { DIFF_VAR(rusage.ri_diskio_bytesread); }
-			descr:@"Bytes read from disk since process launch. "],
+			descr:@"Bytes read from disk since process launch."],
 		[PSColumn psColumnWithName:@"\u03A3DiskW" fullname:@"Disk I/O Total Bytes Written" align:NSTextAlignmentRight width:70 tag:28 style:ColumnStyleSortDesc | ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return !proc->rusage.ri_diskio_byteswritten ? @"-" :
 				[NSByteCountFormatter stringFromByteCount:proc->rusage.ri_diskio_byteswritten countStyle:NSByteCountFormatterCountStyleMemory]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_diskio_byteswritten); } summary:nil
 			color:^UIColor*(PSProc *proc) { DIFF_VAR(rusage.ri_diskio_byteswritten); }
-			descr:@"Bytes written to disk since process launch. "],
+			descr:@"Bytes written to disk since process launch."],
 		[PSColumn psColumnWithName:@"\u03A3Time" fullname:@"Total Process Running Time" align:NSTextAlignmentRight width:75 tag:29 style:ColumnStyleColor
 			data:^NSString*(PSProc *proc) { return psProcessUptime(proc->rusage.ri_proc_start_abstime, proc->rusage.ri_proc_exit_abstime); }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { COMPARE_VAR(rusage.ri_proc_start_abstime); } summary:nil
 			color:^UIColor*(PSProc *proc) { DIFF_VAR(rusage.ri_proc_start_abstime); }
-			descr:@"Time elapsed since process launch. "],
+			descr:@"Time elapsed since process launch."],
 #endif
 //		[PSColumn psColumnWithName:@"More" fullname:@"More Data" align:NSTextAlignmentLeft width:170 tag:9999 style:0
 //			data:^NSString*(PSProc *proc) { return proc.moredata; }
