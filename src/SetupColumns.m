@@ -138,13 +138,16 @@ enum InOutCols {
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	cols[_in] = [PSColumn psGetShownColumnsWithWidth:100000000];
-	cols[_out] = [NSMutableArray array];
-	for (PSColumn* col in [PSColumn psGetAllColumns])
-		if (!(col.style & ColumnStyleForSummary))
-			if (![cols[_in] containsObject:col])
-				[cols[_out] addObject:col];
-	[self.tableView reloadData];
+	if (animated) {
+		// Don't reset row order if returning from TextViewController
+		cols[_in] = [PSColumn psGetShownColumnsWithWidth:100000000];
+		cols[_out] = [NSMutableArray array];
+		for (PSColumn* col in [PSColumn psGetAllColumns])
+			if (!(col.style & ColumnStyleForSummary))
+				if (![cols[_in] containsObject:col])
+					[cols[_out] addObject:col];
+		[self.tableView reloadData];
+	}
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -153,11 +156,6 @@ enum InOutCols {
 	for (PSColumn* col in cols[_in])
 		[order addObject:[NSNumber numberWithUnsignedInteger:col.tag]];
 	[[NSUserDefaults standardUserDefaults] setObject:order forKey:@"Columns"];
-}
-
-- (void)didReceiveMemoryWarning
-{
-	[super didReceiveMemoryWarning];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -201,9 +199,19 @@ enum InOutCols {
 	return cell;
 }
 
-- (UITableViewCellEditingStyle) tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
+- (UITableViewCellEditingStyle) tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)src
 {
-	return UITableViewCellEditingStyleNone;
+	return src.section == 0 ? UITableViewCellEditingStyleNone : UITableViewCellEditingStyleInsert;
+}
+
+- (BOOL)tableView:(UITableView *)tableView shouldIndentWhileEditingRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	return NO;
+}
+
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)src
+{
+	return !(src.section == 0 && src.row == 0);
 }
 
 - (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)src
@@ -218,11 +226,23 @@ enum InOutCols {
 	return dst;
 }
 
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)src
+{
+	if (editingStyle == UITableViewCellEditingStyleInsert && src.section == 1) {
+		NSIndexPath *dst = [NSIndexPath indexPathForRow:cols[0].count inSection:0];
+		id save = cols[1][src.row];
+		[cols[1] removeObjectAtIndex:src.row];
+		[cols[0] addObject:save];
+		[tableView moveRowAtIndexPath:src toIndexPath:dst];
+	}
+}
+
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)src toIndexPath:(NSIndexPath *)dst
 {
 	id save = cols[src.section][src.row];
 	[cols[src.section] removeObjectAtIndex:src.row];
 	[cols[dst.section] insertObject:save atIndex:dst.row];
+	[tableView reloadData];
 }
 
 - (void)viewDidUnload
