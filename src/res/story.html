@@ -43,10 +43,12 @@
 		up to a minute of previous (real) time. Since the time base over which this is computed varies (since processes may be 
 		very young) it is possible for the sum of all %CPU fields to exceed 100%. And this is why Android sucks. Also, because 
 		of Java, which isn't bad by itself, but... the mobile world?</p>
-		<p class=note>Update: Depending on your iOS+jailbreak version, you may or may not notice that the kernel task (pid&nbsp;0) takes 
-		up a lot of %CPU, in fact it takes up all unused CPU power. This is because for every CPU core there's a kernel thread which 
+		<p class=note>Update: You may have noticed that on older versions of CocoaTop the kernel task (pid 0) took 
+		up a lot of %CPU, in fact it took up all unused CPU power. This is because for every CPU core there's a kernel thread which 
 		halts the core when it's not used to save battery life, effectively eating up remaining CPU cycles. You can actually find 
-		these threads when you switch to process details, thread mode: they will have a small 'i' for 'idle' in the state column.</p>
+		these threads when you switch to process details, thread mode: they will have a small 'i' for 'idle' in the state column. 
+		Newer versions of CocoaTop no longer include there threads in kernel CPU usage. Unfortunately, on 64-bit devices information 
+		on kernel threads is substantially limited.</p>
 		<p>&#x2605; Everyone knows about processes, but what about Mach tasks? These are actually different things. In fact, it is 
 		technically possible to create a Mach task without a BSD process. A Mach task can actually be created without threads 
 		and memory (ah, the benefits of The Microkernel, my love). Mach tasks do not have parent-child relationships, those are 

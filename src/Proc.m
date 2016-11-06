@@ -267,21 +267,22 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	} else
 		self.ports = 0;
 	// Enumerate all threads to acquire detailed info
-	unsigned int				thread_count;
-	thread_port_array_t			thread_list;
-	struct thread_basic_info	thval;
+	thread_port_array_t thread_list;
+	unsigned int thread_count;
 	if (task_threads(task, &thread_list, &thread_count) == KERN_SUCCESS) {
 		self.threads = thread_count;
 		for (unsigned int j = 0; j < thread_count; j++) {
+			struct thread_basic_info tbi;
 			info_count = THREAD_BASIC_INFO_COUNT;
-			if (thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&thval, &info_count) == KERN_SUCCESS) {
-				self.pcpu += thval.cpu_usage;
-				unsigned int prio = mach_thread_priority(thread_list[j], thval.policy);
+			if (thread_info(thread_list[j], THREAD_BASIC_INFO, (thread_info_t)&tbi, &info_count) == KERN_SUCCESS) {
+				if (!(tbi.flags & TH_FLAGS_IDLE))
+					self.pcpu += tbi.cpu_usage;
+				unsigned int prio = mach_thread_priority(thread_list[j], tbi.policy);
 				// Actual process priority will be the largest priority of a thread
 				if (self.prio < prio) self.prio = prio;
 			}
 			// Task state is formed from all thread states
-			proc_state_t thstate = mach_state_order(&thval);
+			proc_state_t thstate = mach_state_order(&tbi);
 			if (self.state > thstate)
 				self.state = thstate;
 			mach_port_deallocate(mach_task_self(), thread_list[j]);
