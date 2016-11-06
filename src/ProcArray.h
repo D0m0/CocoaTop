@@ -1,4 +1,5 @@
 #import "Proc.h"
+#import "Column.h"
 #import "NetArray.h"
 
 @interface PSProcInfo : NSObject
@@ -39,5 +40,5 @@
 - (PSProc *)objectAtIndexedSubscript:(NSUInteger)idx;
 - (NSUInteger)indexForPid:(pid_t)pid;
 - (PSProc *)procForPid:(pid_t)pid;
-- (void)filter:(NSString *)text;
+- (void)filter:(NSString *)text column:(PSColumn *)col;
 @end

@@ -15,12 +15,13 @@
 {
 	GridHeaderView *header;
 	GridHeaderView *footer;
-	UISearchBar *search;
+	UISearchBar *filter;
 	PSProcArray *procs;
 	NSTimer *timer;
 	UILabel *statusLabel;
 	NSArray *columns;
 	PSColumn *sortColumn;
+	PSColumn *filterColumn;
 	BOOL sortDescending;
 	BOOL fullScreen;
 	CGFloat timerInterval;
@@ -87,17 +88,16 @@
 	twoTap.numberOfTouchesRequired = 2;
 	[self.tableView addGestureRecognizer:twoTap];
 
-	search = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, 0)];
-	search.placeholder = @"search by executable";
-	search.autocapitalizationType = UITextAutocapitalizationTypeNone;
-	search.autocorrectionType = UITextAutocorrectionTypeNo;
-	search.spellCheckingType = UITextSpellCheckingTypeNo;
-//	search.returnKeyType = UIReturnKeyDone;
-//	search.showsCancelButton = YES;
-//	search.showsSearchResultsButton = NO;
-	search.delegate = self; 
-	[search sizeToFit];  
-	self.tableView.tableHeaderView = search;
+	filter = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, 0)];
+	filter.autocapitalizationType = UITextAutocapitalizationTypeNone;
+	filter.autocorrectionType = UITextAutocorrectionTypeNo;
+	filter.spellCheckingType = UITextSpellCheckingTypeNo;
+//	filter.returnKeyType = UIReturnKeyDone;
+//	filter.showsCancelButton = YES;
+//	filter.showsSearchResultsButton = NO;
+	filter.delegate = self; 
+	[filter sizeToFit];  
+	self.tableView.tableHeaderView = filter;
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
@@ -114,6 +114,7 @@
 		@"ShowFooter" : @YES,
 		@"ShortenPaths" : @YES,
 		@"SortColumn" : @1,         @"SortDescending" : @NO,		// Main page (sort by pid)
+		@"FilterColumn" : @0,
 		@"ProcInfoMode" : @0,
 		@"Mode0SortColumn" : @1001, @"Mode0SortDescending" : @NO,	// Summary (by initial column order)
 		@"Mode1SortColumn" : @2000, @"Mode1SortDescending" : @NO,	// Threads (by thread id)
@@ -126,11 +127,21 @@
 	fullScreen = NO;
 }
 
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)filterText
 {
-	[procs filter:searchText];
+	[procs filter:filterText column:filterColumn];
 	[self.tableView reloadData];
 	[footer updateSummaryWithColumns:columns procs:procs];
+}
+
+- (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar
+{
+	searchBar.placeholder = [NSString stringWithFormat:@"filter by %@ <tap any column>", filterColumn.fullname];
+}
+
+- (void)searchBarTextDidEndEditing:(UISearchBar *)searchBar
+{
+	searchBar.placeholder = [NSString stringWithFormat:@"filter by %@", filterColumn.fullname];
 }
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
@@ -140,7 +151,7 @@
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
-	[search resignFirstResponder];
+	[filter resignFirstResponder];
 }
 
 - (void)preRefreshProcs:(NSTimer *)_timer
@@ -166,7 +177,7 @@
 		return;
 	[procs refresh];
 	[procs sortUsingComparator:sortColumn.sort desc:sortDescending];
-	[procs filter:search.text];
+	[procs filter:filter.text column:filterColumn];
 	[self.tableView reloadData];
 	[footer updateSummaryWithColumns:columns procs:procs];
 	// Status bar
@@ -227,12 +238,20 @@
 			loc.x -= col.width;
 			continue;
 		}
-		sortDescending = sortColumn == col ? !sortDescending : col.style & ColumnStyleSortDesc;
-		[header sortColumnOld:sortColumn New:col desc:sortDescending];
-		sortColumn = col;
-		[[NSUserDefaults standardUserDefaults] setInteger:col.tag forKey:@"SortColumn"];
-		[[NSUserDefaults standardUserDefaults] setBool:sortDescending forKey:@"SortDescending"];
-		[timer fire];
+		if (filter.isFirstResponder && !filter.text.length) {
+			// Change filtering column
+			filterColumn = col;
+			[[NSUserDefaults standardUserDefaults] setInteger:col.tag forKey:@"FilterColumn"];
+			[self searchBarTextDidEndEditing:filter];
+		} else {
+			// Change sorting column
+			sortDescending = sortColumn == col ? !sortDescending : col.style & ColumnStyleSortDesc;
+			[header sortColumnOld:sortColumn New:col desc:sortDescending];
+			sortColumn = col;
+			[[NSUserDefaults standardUserDefaults] setInteger:col.tag forKey:@"SortColumn"];
+			[[NSUserDefaults standardUserDefaults] setBool:sortDescending forKey:@"SortDescending"];
+			[timer fire];
+		}
 		break;
 	}
 }
@@ -249,6 +268,8 @@
 	configId++;
 	columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
 	// Find sort column and create table header
+	filterColumn = [PSColumn psColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:@"FilterColumn"]];
+	[self searchBarTextDidEndEditing:filter];
 	sortColumn = [PSColumn psColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:@"SortColumn"]];
 	if (!sortColumn) sortColumn = columns[0];
 	sortDescending = [[NSUserDefaults standardUserDefaults] boolForKey:@"SortDescending"];
@@ -271,8 +292,8 @@
 		configChange = configCheck;
 	}
 	[self columnConfigChanged];
-	// Hide search bar
-	CGFloat minOffset = search.frame.size.height - self.tableView.contentInset.top;
+	// Hide filter bar
+	CGFloat minOffset = filter.frame.size.height - self.tableView.contentInset.top;
 	if (self.tableView.contentOffset.y < minOffset)
 		self.tableView.contentOffset = CGPointMake(0, minOffset);
 	// Refresh interval
@@ -407,8 +428,8 @@
 	// Shitty bug in iOS 7
 	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_8_0) anim = YES;
 #endif
-	if (search.isFirstResponder)
-		[search resignFirstResponder];
+	if (filter.isFirstResponder)
+		[filter resignFirstResponder];
 	// Return from fullscreen, or there's no way back ;)
 	if (fullScreen)
 		[self hideShowNavBar:nil];
@@ -428,6 +449,7 @@
 	header = nil;
 	footer = nil;
 	sortColumn = nil;
+	filterColumn = nil;
 	procs = nil;
 	columns = nil;
 	[super viewDidUnload];

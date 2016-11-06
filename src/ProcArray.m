@@ -146,11 +146,11 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 
 - (NSUInteger)indexOfDisplayed:(display_t)display
 {
-	return [self.procsFiltered indexOfObjectPassingTest:^BOOL(PSProc *obj, NSUInteger idx, BOOL *stop) {
-		return obj.display == display;
+	return [self.procsFiltered indexOfObjectPassingTest:^BOOL(PSProc *proc, NSUInteger idx, BOOL *stop) {
+		return proc.display == display;
 	}];
-//	return [self.procs enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^void(PSProc *obj, NSUInteger idx, BOOL *stop) {
-//		if (obj.display == display) *stop = YES;
+//	return [self.procs enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^void(PSProc *proc, NSUInteger idx, BOOL *stop) {
+//		if (proc.display == display) *stop = YES;
 //	}];
 //	for (PSProc *proc in [self.procs reverseObjectEnumerator]) {
 //		if (proc.display == display) return idx;
@@ -174,28 +174,41 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 
 - (NSUInteger)indexForPid:(pid_t)pid
 {
-	NSUInteger idx = [self.procsFiltered indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-		return ((PSProc *)obj).pid == pid;
+	NSUInteger idx = [self.procsFiltered indexOfObjectPassingTest:^BOOL(id proc, NSUInteger idx, BOOL *stop) {
+		return ((PSProc *)proc).pid == pid;
 	}];
 	return idx;
 }
 
 - (PSProc *)procForPid:(pid_t)pid
 {
-	NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-		return ((PSProc *)obj).pid == pid;
+	NSUInteger idx = [self.procs indexOfObjectPassingTest:^BOOL(id proc, NSUInteger idx, BOOL *stop) {
+		return ((PSProc *)proc).pid == pid;
 	}];
 	return idx == NSNotFound ? nil : (PSProc *)self.procs[idx];
 }
 
-- (void)filter:(NSString *)text
+- (void)filter:(NSString *)text column:(PSColumn *)col
 {
 	// Remove processes without "text"
 	if (text && text.length) {
 		self.procsFiltered = [self.procs mutableCopy];
-		[self.procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *obj, NSDictionary *bind) {
-			return [obj.executable rangeOfString:text options:NSCaseInsensitiveSearch].location != NSNotFound;
-		}]];
+		if (col.style & ColumnStyleColor) {
+			float minValue = [text floatValue];
+			// NSRange range = [text rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"kKmMgG"]];
+			// unichar ch = range.location != NSNotFound ? [text characterAtIndex:range.location] : 0;
+			// switch(ch) {
+			// case 'k': case 'K': minValue *= 1024; break;
+			// case 'm': case 'M': minValue *= 1024*1024; break;
+			// case 'g': case 'G': minValue *= 1024*1024*1024; break;
+			// }
+			[self.procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *proc, NSDictionary *bind) {
+				return [col.getData(proc) floatValue] >= minValue;
+			}]];
+		} else
+			[self.procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *proc, NSDictionary *bind) {
+				return [col.getData(proc) rangeOfString:text options:NSCaseInsensitiveSearch].location != NSNotFound;
+			}]];
 	} else
 		self.procsFiltered = self.procs;
 }
