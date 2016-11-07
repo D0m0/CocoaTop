@@ -136,12 +136,12 @@
 
 - (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar
 {
-	searchBar.placeholder = [NSString stringWithFormat:@"filter by %@ <tap any column>", filterColumn.fullname];
+	searchBar.placeholder = [NSString stringWithFormat:@"filter by %@ <tap another column>", filterColumn.fullname.lowercaseString];
 }
 
 - (void)searchBarTextDidEndEditing:(UISearchBar *)searchBar
 {
-	searchBar.placeholder = [NSString stringWithFormat:@"filter by %@", filterColumn.fullname];
+	searchBar.placeholder = [NSString stringWithFormat:@"filter by %@", filterColumn.fullname.lowercaseString];
 }
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar

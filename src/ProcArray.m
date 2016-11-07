@@ -190,20 +190,17 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 
 - (void)filter:(NSString *)text column:(PSColumn *)col
 {
-	// Remove processes without "text"
 	if (text && text.length) {
 		self.procsFiltered = [self.procs mutableCopy];
-		if (col.style & ColumnStyleColor) {
-			float minValue = [text floatValue];
-			// NSRange range = [text rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"kKmMgG"]];
-			// unichar ch = range.location != NSNotFound ? [text characterAtIndex:range.location] : 0;
-			// switch(ch) {
-			// case 'k': case 'K': minValue *= 1024; break;
-			// case 'm': case 'M': minValue *= 1024*1024; break;
-			// case 'g': case 'G': minValue *= 1024*1024*1024; break;
-			// }
+		if (col.getFloatData != nil) {
+			double minValue = [text doubleValue];
+			switch([text characterAtIndex:text.length-1]) {
+			case 'k': case 'K': minValue *= 1024; break;
+			case 'm': case 'M': minValue *= 1024*1024; break;
+			case 'g': case 'G': minValue *= 1024*1024*1024; break;
+			}
 			[self.procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *proc, NSDictionary *bind) {
-				return [col.getData(proc) floatValue] >= minValue;
+				return col.getFloatData(proc) >= minValue;
 			}]];
 		} else
 			[self.procsFiltered filterUsingPredicate:[NSPredicate predicateWithBlock: ^BOOL(PSProc *proc, NSDictionary *bind) {

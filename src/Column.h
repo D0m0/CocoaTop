@@ -25,6 +25,7 @@ typedef enum {
 
 typedef NSString *(^PSColumnData)(id proc);
 typedef UIColor *(^PSColumnColor)(id proc);
+typedef double (^PSColumnFloat)(id proc);
 
 @interface PSColumn : NSObject
 // Full column name (in settings)
@@ -41,6 +42,8 @@ typedef UIColor *(^PSColumnColor)(id proc);
 @property (assign) NSInteger width;
 // Data displayer (based on PSProc/PSSock data)
 @property (assign) PSColumnData getData;
+// Data filtering supplement
+@property (assign) PSColumnFloat getFloatData;
 // Summary displayer (based on PSProcArray data)
 @property (assign) PSColumnData getSummary;
 // Color changer
@@ -53,9 +56,13 @@ typedef UIColor *(^PSColumnColor)(id proc);
 @property (assign) int tag;
 
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
+	width:(NSInteger)width tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data floatData:(PSColumnFloat)floatData sort:(NSComparator)sort summary:(PSColumnData)summary color:(PSColumnColor)color descr:(NSString *)descr;
++ (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
 	width:(NSInteger)width tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary color:(PSColumnColor)color descr:(NSString *)descr;
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
 	width:(NSInteger)width tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr;
++ (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align width:(NSInteger)width tag:(NSInteger)tag
+	style:(column_style_t)style data:(PSColumnData)data floatData:(PSColumnFloat)floatData sort:(NSComparator)sort summary:(PSColumnData)summary descr:(NSString *)descr;
 + (instancetype)psColumnWithName:(NSString *)name fullname:(NSString *)fullname align:(NSTextAlignment)align
 	width:(NSInteger)width tag:(NSInteger)tag style:(column_style_t)style data:(PSColumnData)data sort:(NSComparator)sort summary:(PSColumnData)summary;
 + (NSArray *)psGetAllColumns;
