@@ -199,6 +199,8 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	self.prio = 0;
 	self.pcpu = 0;
 	self.ptime = 0;
+	if (self.pid == 0 && floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_10_0)
+		return;
 	if (task_for_pid(mach_task_self(), self.pid, &task) != KERN_SUCCESS)
 		return;
 	// Basic task info

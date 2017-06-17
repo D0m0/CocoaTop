@@ -34,6 +34,10 @@
 #define NSFoundationVersionNumber_iOS_9_0 1221.0
 #endif
 
+#ifndef NSFoundationVersionNumber_iOS_10_0
+#define NSFoundationVersionNumber_iOS_10_0 1300
+#endif
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
 #define UITableViewCellAccessoryDetailButton	UITableViewCellAccessoryDetailDisclosureButton
 #define barTintColor							tintColor

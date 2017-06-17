@@ -2,24 +2,24 @@ shell_patterns=0
 
 0	Clean & Make
 	make clean
-	make
+	make DEBUG=0
 
 1	Make for 5 & 6
 	echo ===================================== iOS5
-	make TARGET=iphone:clang:5.0 SCHEMA=five
+	make TARGET=iphone:clang:5.0 SCHEMA=five DEBUG=0
 	echo ===================================== iOS6
-	make TARGET=iphone:clang:6.0 SCHEMA=six
+	make TARGET=iphone:clang:6.0 SCHEMA=six DEBUG=0
 	echo ===================================== DEB
-	make package
+	make package DEBUG=0
 
 2	Make package
-	make package
+	make package DEBUG=0
 
 3	Install to iPad Air
 	make install
 
 4	Install to iPhone 6s
-	make install THEOS_DEVICE_IP=192.168.1.244
+	make install THEOS_DEVICE_IP=192.168.1.23
 
 5	Install to iPhone 5c
 	make install THEOS_DEVICE_IP=192.168.1.131
