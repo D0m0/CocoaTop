@@ -1,20 +1,11 @@
-# CocoaTop: Process Viewer for iOS GUI
+# TODO:
 
-# TODO list:
+* Add a how-to for searching in specific columns.
+* Put object counters (how many threads/handles/ports etc.) in the popup menu.
+* Color-coding (highlighting) values by their magnitude (like Windows Task manager).
+* Add nice graphs!
+* Smooth row transitions. This is hard.
 
-* Написать справку о поиске по выбранной колонке
-* Количество объектов в popup-меню
-* Цветовое выделение больших значений как в винде
-* При тапе на заголовок вывести красивый график, частоту, аптайм и т.п.
-* Плавное движение строк
-
-? Цветовое выделение процессов по категориям: службы, приложения, 32-битные, zombie/stuck
-? Плавный сдвиг колонок при повороте
-? Открывать файл при тапе. Полезно для логов. А еще круче - получать данные, которые туда пишутся!
-
-# Контроль:
-
-* iokit, device
-* соединения с важными процессами
-* создание файлов
-* запуск по белому списку
+? Color-coding different processes by their type: app, service, 32-bit, zombie/stuck...
+? Smooth transition during orientation change.
+? Tap file to view. Useful for logs.
