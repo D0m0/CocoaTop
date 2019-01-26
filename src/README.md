@@ -6,6 +6,7 @@
 * Add nice graphs!
 * Smooth row transitions. This is hard.
 
-? Color-coding different processes by their type: app, service, 32-bit, zombie/stuck...
-? Smooth transition during orientation change.
-? Tap file to view. Useful for logs.
+# Maybe also:
+* Color-coding different processes by their type: app, service, 32-bit, zombie/stuck...
+* Smooth transition during orientation change.
+* Tap file to view. Useful for logs.
