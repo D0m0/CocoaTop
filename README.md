@@ -11,7 +11,7 @@ If you are willing to port CocoaTop to iOS 10, 11, 12, etc., please bear in mind
 
 To build CocoaTop you need:
 * Theos (https://github.com/theos/theos), make sure $(THEOS) environment variable points to it.
-* Appe iOS SDK (currently version 7.0 is used). Download it from Apple and unpack to theos\sdks\.
+* Appe iOS SDK (currently version 7.0 is used). Download it from Apple and unpack to theos\sdks\. Also look here: https://github.com/theos/sdks/
 * make!
 
 Other build commands:
