@@ -165,7 +165,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 		[PSColumn psColumnWithName:@"Command line" fullname:@"Command line" align:NSTextAlignmentLeft width:170 tag:0 style:ColumnStylePathTrunc | ColumnStyleTooLong
 			data:^NSString*(PSProc *proc) { return [proc.executable stringByAppendingString:proc.args]; }
 			sort:^NSComparisonResult(PSProc *a, PSProc *b) { return [a.name caseInsensitiveCompare:b.name]; }
-			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:procs.count == procs.totalCount ? @"Total processes: %u" : @"Shown processes: %u", procs.count]; }
+			summary:^NSString*(PSProcArray* procs) { return [NSString stringWithFormat:procs.count == procs.totalCount ? @"Total processes: %lu" : @"Shown processes: %lu", (unsigned long)procs.count]; }
 			descr:@"Full command line with path and arguments.\n\n"
 				"If the name is given in brackets, then the command line cannot be acquired - usually it's either the Kernel or a zombie process.\n\n"
 				"Summary of this column shows the total number of processes."],

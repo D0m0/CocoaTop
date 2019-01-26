@@ -82,6 +82,13 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 		self.memFree = vm_stat.free_count * pagesize;
 		self.memUsed = self.memTotal - self.memFree;
 	}
+/*
+	host_cpu_load_info_data_t cpu_stat;
+	host_size = HOST_CPU_LOAD_INFO_COUNT;
+	if (host_statistics(host_port, HOST_CPU_LOAD_INFO, (host_info_t)&cpu_stat, &host_size) == KERN_SUCCESS) {
+		cpu_stat.cpu_ticks[CPU_STATE_MAX]
+	}
+*/
 }
 
 - (int)refresh

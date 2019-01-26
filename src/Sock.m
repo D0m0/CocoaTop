@@ -668,7 +668,7 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 
 		natural_t object_type = 0;
 		vm_offset_t object_addr = 0;
-		mach_port_kernel_object(task, iin->iin_name, &object_type, &object_addr);
+		mach_port_kernel_object(task, iin->iin_name, &object_type, (unsigned int *)&object_addr);
 		self.connect = name ? [name mutableCopy] : [NSMutableString stringWithUTF8String:port_types[object_type]];
 		if (pset) {
 			if (!self.connect.length)

@@ -187,9 +187,9 @@
 			(float)procs.memFree / 1024 / 1024,
 			(float)procs.totalCpu / 10];
 	else
-		statusLabel.text = [NSString stringWithFormat:@"Processes: %u   Threads: %u   Free: %.1f/%.1f MB   CPU: %.1f%%",
-			procs.totalCount,
-			procs.threadCount,
+		statusLabel.text = [NSString stringWithFormat:@"Processes: %lu   Threads: %lu   Free: %.1f/%.1f MB   CPU: %.1f%%",
+			(unsigned long)procs.totalCount,
+			(unsigned long)procs.threadCount,
 			(float)procs.memFree / 1024 / 1024,
 			(float)procs.memTotal / 1024 / 1024,
 			(float)procs.totalCpu / 10];

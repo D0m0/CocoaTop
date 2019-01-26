@@ -1,6 +1,6 @@
 #!/bin/sh
 PS3="Please enter your choice: "
-options=("Clean & Make" "Make for 5 & 6" "iPhone 5c" "iPhone 4s" "iPad Black" "iPad White" "iPad 1" "Quit")
+options=("Clean & Make" "Make for 5 & 6" "iPad 5" "iPhone 4s" "iPad Black" "iPad White" "iPad 1" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -16,8 +16,8 @@ do
 	    echo ===================================== DEB
 	    make package
 	    ;;
-	"iPhone 5c")
-	    make install THEOS_DEVICE_IP=192.168.0.109
+	"iPad 5")
+	    make install THEOS_DEVICE_IP=192.168.1.226 THEOS_DEVICE_PORT=2222
 	    break
 	    ;;
 	"iPhone 4s")
