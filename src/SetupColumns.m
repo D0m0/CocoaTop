@@ -26,7 +26,8 @@ static NSArray *presetNames;
 	[super viewDidLoad];
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
-		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+#if 0
 			presetList = @{
 				@"1: Standard":@[@0, @1, @3, @5, @20, @6, @7],
 				@"2: Inspector":@[@0, @3, @5, @6, @7, @9, @12],
@@ -39,7 +40,30 @@ static NSArray *presetNames;
 				@"8: Disk usage":@[@0, @1, @25, @26, @27, @28],
 #endif
 			};
-		else
+#endif
+            if (@available(iOS 7, *)) {
+                presetList = @{
+                                @"1: Standard":@[@0, @1, @3, @5, @20, @6, @7],
+                                @"2: Inspector":@[@0, @3, @5, @6, @7, @9, @12],
+                                @"3: Performance":@[@0, @3, @16, @4, @5, @17, @7, @12],
+                                @"4: Minimalistic":@[@0, @3, @7],
+                                @"5: Mach-obsessed":@[@0, @3, @12, @13, @15, @14, @21, @22],
+                                @"6: RAM usage":@[@0, @1, @7, @23, @24, @8],
+                                @"7: Net usage":@[@0, @1, @33, @42, @43, @44, @45],
+                                @"8: Disk usage":@[@0, @1, @25, @26, @27, @28],
+                            };
+            } else {
+                presetList = @{
+                    @"1: Standard":@[@0, @1, @3, @5, @20, @6, @7],
+                    @"2: Inspector":@[@0, @3, @5, @6, @7, @9, @12],
+                    @"3: Performance":@[@0, @3, @16, @4, @5, @17, @7, @12],
+                    @"4: Minimalistic":@[@0, @3, @7],
+                    @"5: Mach-obsessed":@[@0, @3, @12, @13, @15, @14, @21, @22],
+                    @"6: RAM usage":@[@0, @1, @7, @23, @24, @8],
+                    @"7: Net usage":@[@0, @1, @33, @42, @43, @44, @45],
+                };
+            }
+        } else {
 			presetList = @{
 				@"1: Standard":@[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 				@"2: Inspector":@[@0, @1, @3, @5, @6, @7, @9, @10, @12, @13],
@@ -52,6 +76,30 @@ static NSArray *presetNames;
 				@"8: Disk usage":@[@0, @1, @9, @25, @26, @27, @28, @24],
 #endif
 			};
+            if (@available(iOS 7, *)) {
+                presetList = @{
+                                @"1: Standard":@[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
+                                @"2: Inspector":@[@0, @1, @3, @5, @6, @7, @9, @10, @12, @13],
+                                @"3: Performance":@[@0, @1, @3, @16, @4, @5, @17, @7, @23, @12, @13, @14, @15, @19],
+                                @"4: Minimalistic":@[@0, @1, @3, @5, @7, @20],
+                                @"5: Mach-obsessed":@[@0, @1, @5, @6, @7, @3, @12, @16, @13, @15, @14, @21, @22],
+                                @"6: RAM usage":@[@0, @1, @3, @5, @7, @23, @24, @8],
+                                @"7: Net usage":@[@0, @1, @3, @5, @33, @42, @43, @44, @45, @46, @47],
+                                @"8: Disk usage":@[@0, @1, @9, @25, @26, @27, @28, @24],
+                            };
+            } else {
+                presetList = @{
+                                               @"1: Standard":@[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
+                                               @"2: Inspector":@[@0, @1, @3, @5, @6, @7, @9, @10, @12, @13],
+                                               @"3: Performance":@[@0, @1, @3, @16, @4, @5, @17, @7, @23, @12, @13, @14, @15, @19],
+                                               @"4: Minimalistic":@[@0, @1, @3, @5, @7, @20],
+                                               @"5: Mach-obsessed":@[@0, @1, @5, @6, @7, @3, @12, @16, @13, @15, @14, @21, @22],
+                                               @"6: RAM usage":@[@0, @1, @3, @5, @7, @23, @24, @8],
+                                               @"7: Net usage":@[@0, @1, @3, @5, @33, @42, @43, @44, @45, @46, @47],
+                                               //@"8: Disk usage":@[@0, @1, @9, @25, @26, @27, @28, @24],
+                                           };
+            }
+        }
 		presetNames = [presetList.allKeys sortedArrayUsingSelector:@selector(compare:)];
 	});
 }
@@ -195,7 +243,11 @@ enum InOutCols {
 	if (cell == nil)
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseId];
 	cell.textLabel.text = ((PSColumn *)cols[src.section][src.row]).fullname;
-	cell.editingAccessoryType = hasDecription ? UITableViewCellAccessoryDetailButton : UITableViewCellAccessoryNone;
+    if (@available(iOS 7, *)) {
+        cell.editingAccessoryType = hasDecription ? UITableViewCellAccessoryDetailButton : UITableViewCellAccessoryNone;
+    } else {
+        cell.editingAccessoryType = hasDecription ? UITableViewCellAccessoryDetailDisclosureButton : UITableViewCellAccessoryNone;
+    }
 	return cell;
 }
 

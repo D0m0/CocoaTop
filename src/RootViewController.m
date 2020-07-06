@@ -8,8 +8,24 @@
 #import "Column.h"
 #import "Proc.h"
 #import "ProcArray.h"
+#import "AppDelegate.h"
 
 #define NTSTAT_PREQUERY_INTERVAL	0.1
+
+@implementation UIScrollView (AdjustInset)
+
+-(UIEdgeInsets)realUIContentInset {
+    if (@available(iOS 11.0, *)) {
+        //UIEdgeInsets system = self.adjustedContentInset;
+        //UIEdgeInsets user = self.contentInset;
+        //return UIEdgeInsetsMake(system.top + user.top, system.left + user.left, system.bottom + user.bottom, system.right + user.right);
+        return self.adjustedContentInset;
+    } else {
+        return self.contentInset;
+    }
+}
+
+@end
 
 @implementation RootViewController
 {
@@ -28,6 +44,8 @@
 	NSUInteger configId;
 	NSString *configChange;
 	pid_t selectedPid;
+    UIUserInterfaceSizeClass lastHorizationWindowSizeClass;
+    CGFloat lastHorizationWindowWidth;
 }
 
 - (void)popupMenuTappedItem:(NSInteger)item
@@ -41,6 +59,22 @@
 	}
 	if (view)
 		[self.navigationController pushViewController:view animated:YES];
+}
+
+- (UINavigationController*)navigationController {
+    if ([self.parentViewController isKindOfClass: [RootTabMaskController class]]) {
+        return self.parentViewController.navigationController;
+    } else {
+        return [super navigationController];
+    }
+}
+
+- (UINavigationItem *)navigationItem {
+    if ([self.parentViewController isKindOfClass: [RootTabMaskController class]]) {
+        return self.parentViewController.navigationItem;
+    } else {
+        return [super navigationItem];
+    }
 }
 
 - (IBAction)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
@@ -68,8 +102,7 @@
 	}
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
 	[super viewDidLoad];
 	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleDefault;
 	bool isPhone = UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone;
@@ -92,17 +125,36 @@
 	filter.autocapitalizationType = UITextAutocapitalizationTypeNone;
 	filter.autocorrectionType = UITextAutocorrectionTypeNo;
 	filter.spellCheckingType = UITextSpellCheckingTypeNo;
+    [filter setBackgroundImage:[UIImage new]];
 //	filter.returnKeyType = UIReturnKeyDone;
 //	filter.showsCancelButton = YES;
 //	filter.showsSearchResultsButton = NO;
 	filter.delegate = self; 
-	[filter sizeToFit];  
+	[filter sizeToFit];
+    
+    if (@available(iOS 13, *)) {
+        self.tableView.backgroundColor = [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
+            if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+                return [UIColor colorWithWhite:.31 alpha:1];
+            } else {
+                return [UIColor colorWithWhite:.75 alpha:1];
+            }
+        }];
+    } else {
+        self.tableView.backgroundColor = [UIColor colorWithWhite:.75 alpha:1];
+    }
+    self.tableView.rowHeight = 44;
+    self.tableView.sectionHeaderHeight = 23;
+    self.tableView.sectionFooterHeight = 23;
 	self.tableView.tableHeaderView = filter;
+    self.tableView.tableFooterView = [[UIView alloc] initWithFrame: CGRectZero];
 
 	self.tableView.sectionHeaderHeight = self.tableView.sectionHeaderHeight * 3 / 2;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
-#endif
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+    if (@available(iOS 7, *)) {
+        [self.tableView setSeparatorInset:UIEdgeInsetsZero];
+    }
+//#endif
 	[[NSUserDefaults standardUserDefaults] registerDefaults:@{
 		@"Columns" : @[@0, @1, @3, @5, @20, @6, @7, @9, @12, @13],
 		@"UpdateInterval" : @"1",
@@ -182,17 +234,45 @@
 	[footer updateSummaryWithColumns:columns procs:procs];
 	// Status bar
 // Also add: Uptime, CPU Freq, Cores, Cache L1/L2
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
-		statusLabel.text = [NSString stringWithFormat:@"Free: %.1f MB  CPU: %.1f%%",
-			(float)procs.memFree / 1024 / 1024,
-			(float)procs.totalCpu / 10];
-	else
-		statusLabel.text = [NSString stringWithFormat:@"Processes: %lu   Threads: %lu   Free: %.1f/%.1f MB   CPU: %.1f%%",
-			(unsigned long)procs.totalCount,
-			(unsigned long)procs.threadCount,
-			(float)procs.memFree / 1024 / 1024,
-			(float)procs.memTotal / 1024 / 1024,
-			(float)procs.totalCpu / 10];
+//    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+//		statusLabel.text = [NSString stringWithFormat:@"Free: %.1f MB  CPU: %.1f%%",
+//			(float)procs.memFree / 1024 / 1024,
+//			(float)procs.totalCpu / 10];
+//    } else {
+//		statusLabel.text = [NSString stringWithFormat:@"Processes: %lu   Threads: %lu   Free: %.1f/%.1f MB   CPU: %.1f%%",
+//			(unsigned long)procs.totalCount,
+//			(unsigned long)procs.threadCount,
+//			(float)procs.memFree / 1024 / 1024,
+//			(float)procs.memTotal / 1024 / 1024,
+//			(float)procs.totalCpu / 10];
+//    }
+    bool shortLabel;
+    if (@available(iOS 8, *)) {
+        UIUserInterfaceSizeClass sizeClass;
+        if (self.view.window == nil) {
+            sizeClass = [UIApplication sharedApplication].keyWindow.traitCollection.horizontalSizeClass;
+        } else {
+            sizeClass = self.view.window.traitCollection.horizontalSizeClass;
+        }
+        shortLabel = (sizeClass == UIUserInterfaceSizeClassCompact);
+    } else {
+        shortLabel = UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone;
+    }
+    
+    if (shortLabel) {
+        statusLabel.frame = CGRectMake(statusLabel.frame.origin.x, statusLabel.frame.origin.y, self.tableView.frame.size.width - 80, 40);
+        statusLabel.text = [NSString stringWithFormat:@"Free: %.1f MB  CPU: %.1f%%",
+        (float)procs.memFree / 1024 / 1024,
+        (float)procs.totalCpu / 10];
+    } else {
+        statusLabel.frame = CGRectMake(statusLabel.frame.origin.x, statusLabel.frame.origin.y, self.tableView.frame.size.width - 150, 40);
+        statusLabel.text = [NSString stringWithFormat:@"Processes: %lu   Threads: %lu   Free: %.1f/%.1f MB   CPU: %.1f%%",
+        (unsigned long)procs.totalCount,
+        (unsigned long)procs.threadCount,
+        (float)procs.memFree / 1024 / 1024,
+        (float)procs.memTotal / 1024 / 1024,
+        (float)procs.totalCpu / 10];
+    }
 	// Query network statistics, cause no one did it before.
 	if (![_timer isKindOfClass:[NSTimer class]])
 		[procs.nstats query];
@@ -207,9 +287,13 @@
 		}
 		if (idx != NSNotFound && procs[idx].display != ProcDisplayTerminated) {
 			[self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
-			[self.tableView deselectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:YES];
-#endif
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
+            if (@available(iOS 7, *)) {
+                
+            } else {
+                [self.tableView deselectRowAtIndexPath:[NSIndexPath indexPathForRow:idx inSection:0] animated:YES];
+            }
+//#endif
 		}
 	} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AutoJumpNewProcess"]) {
 		// If there's a new/terminated process, scroll to it
@@ -280,25 +364,61 @@
 	[footer addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollToBottom)]];
 }
 
+- (void)reappearAllView {
+    // When major options change, process list is rebuilt from scratch
+    NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
+    NSString *configCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"ShortenPaths"], [def stringForKey:@"FirstColumnStyle"]];
+    if (![configChange isEqualToString:configCheck]) {
+        procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
+        configChange = configCheck;
+    }
+    [self columnConfigChanged];
+    // Hide filter bar
+    CGFloat minOffset = filter.frame.size.height - self.tableView.realUIContentInset.top;
+    if (self.tableView.contentOffset.y < minOffset)
+        self.tableView.contentOffset = CGPointMake(0, minOffset);
+    // Refresh interval
+    timerInterval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
+    [self refreshProcs:nil];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    if (self.view.window != nil) {
+        if (@available(iOS 8, *)) {
+            if (lastHorizationWindowSizeClass != self.view.window.traitCollection.horizontalSizeClass || lastHorizationWindowWidth != self.view.bounds.size.width) {
+                if (self.view.window.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact) {
+                    statusLabel.frame = CGRectMake(statusLabel.frame.origin.x, statusLabel.frame.origin.y, self.tableView.frame.size.width - 80, 40);
+                    statusLabel.text = [NSString stringWithFormat:@"Free: %.1f MB  CPU: %.1f%%",
+                    (float)procs.memFree / 1024 / 1024,
+                    (float)procs.totalCpu / 10];
+                } else {
+                    statusLabel.frame = CGRectMake(statusLabel.frame.origin.x, statusLabel.frame.origin.y, self.tableView.frame.size.width - 150, 40);
+                    statusLabel.text = [NSString stringWithFormat:@"Processes: %lu   Threads: %lu   Free: %.1f/%.1f MB   CPU: %.1f%%",
+                    (unsigned long)procs.totalCount,
+                    (unsigned long)procs.threadCount,
+                    (float)procs.memFree / 1024 / 1024,
+                    (float)procs.memTotal / 1024 / 1024,
+                    (float)procs.totalCpu / 10];
+                }
+                lastHorizationWindowSizeClass = self.view.window.traitCollection.horizontalSizeClass;
+                lastHorizationWindowWidth = self.view.bounds.size.width;
+                [self reappearAllView];
+            }
+        }
+    }
+}
+
+
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	self.navigationController.navigationBar.barTintColor = nil;
-	// When major options change, process list is rebuilt from scratch
-	NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
-	NSString *configCheck = [NSString stringWithFormat:@"%d-%@", [def boolForKey:@"ShortenPaths"], [def stringForKey:@"FirstColumnStyle"]];
-	if (![configChange isEqualToString:configCheck]) {
-		procs = [PSProcArray psProcArrayWithIconSize:self.tableView.rowHeight];
-		configChange = configCheck;
-	}
-	[self columnConfigChanged];
-	// Hide filter bar
-	CGFloat minOffset = filter.frame.size.height - self.tableView.contentInset.top;
-	if (self.tableView.contentOffset.y < minOffset)
-		self.tableView.contentOffset = CGPointMake(0, minOffset);
-	// Refresh interval
-	timerInterval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
-	[self refreshProcs:nil];
+    if (@available(iOS 7, *)) {
+        self.navigationController.navigationBar.barTintColor = nil;
+    } else {
+        self.navigationController.navigationBar.tintColor = nil;
+    }
+    [self reappearAllView];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -373,14 +493,45 @@
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	display_t display = ((PSProc *)procs[indexPath.row]).display;
-	if (display == ProcDisplayTerminated)
-		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
-	else if (display == ProcDisplayStarted)
-		cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
-	else if (indexPath.row & 1)
-		cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
-	else
-		cell.backgroundColor = [UIColor whiteColor];
+    if (display == ProcDisplayTerminated) {
+        if (@available(iOS 13, *)) {
+            cell.backgroundColor = [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
+                if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+                    return [UIColor colorWithRed:0.5 green:0.12 blue:0.12 alpha:1];
+                } else {
+                    return [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
+                }
+            }];
+        } else {
+            cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
+        }
+    } else if (display == ProcDisplayStarted) {
+        if (@available(iOS 13, *)) {
+            cell.backgroundColor = [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
+                if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+                    return [UIColor colorWithRed:0.12 green:0.5 blue:0.12 alpha:1];
+                } else {
+                    return [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
+                }
+            }];
+        } else {
+            cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
+        }
+    } else if (indexPath.row & 1) {
+		//cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
+        if (@available(iOS 13, *)) {
+            cell.backgroundColor = UIColor.secondarySystemBackgroundColor;
+        } else {
+            cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
+        }
+    } else {
+		//cell.backgroundColor = [UIColor whiteColor];
+        if (@available(iOS 13, *)) {
+            cell.backgroundColor = UIColor.systemBackgroundColor;
+        } else {
+            cell.backgroundColor = [UIColor whiteColor];
+        }
+    }
 }
 
 - (void)tableView:(UITableView *)tableView sendSignal:(int)sig toProcessAtIndexPath:(NSIndexPath *)indexPath
@@ -424,10 +575,15 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	BOOL anim = NO;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 	// Shitty bug in iOS 7
-	if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_8_0) anim = YES;
-#endif
+    if (@available(iOS 7, *)) {
+        if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_8_0) {
+            anim = YES;
+        }
+        anim = true;
+    }
+//#endif
 	if (filter.isFirstResponder)
 		[filter resignFirstResponder];
 	// Return from fullscreen, or there's no way back ;)
