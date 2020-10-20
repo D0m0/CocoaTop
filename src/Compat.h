@@ -1,3 +1,5 @@
+#include <Foundation/Foundation.h>
+#if 0
 #ifndef __IPHONE_6_0
 #define __IPHONE_6_0 60000
 #endif
@@ -38,12 +40,14 @@
 #define NSFoundationVersionNumber_iOS_10_0 1300
 #endif
 
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
-#define UITableViewCellAccessoryDetailButton	UITableViewCellAccessoryDetailDisclosureButton
-#define barTintColor							tintColor
-#endif
-
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_6_0
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_7_0
+//#define UITableViewCellAccessoryDetailButton	UITableViewCellAccessoryDetailDisclosureButton
+//#define barTintColor							tintColor
+//#endif
+//
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_6_0
+//
+//#endif
 
 #undef YES
 #undef NO
@@ -93,4 +97,8 @@ uint64_t mach_time_to_milliseconds(uint64_t mach_time);
 
 @interface PSSymLink : NSObject
 + (NSString *)simplifyPathName:(NSString *)path;
+@end
+
+@interface UIScrollView (AdjustInset)
+@property(nonatomic, readonly) UIEdgeInsets realUIContentInset;
 @end

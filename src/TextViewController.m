@@ -67,10 +67,12 @@
 //	navController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
 	[parent presentViewController:navController animated:NO completion:nil];
 	if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPhone) {
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-		navController.view.superview.layer.cornerRadius = 10.0;
-		navController.view.superview.layer.borderColor = [UIColor clearColor].CGColor;
-#endif
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+        if (@available(iOS 7, *)) {
+            navController.view.superview.layer.cornerRadius = 10.0;
+            navController.view.superview.layer.borderColor = [UIColor clearColor].CGColor;
+        }
+//#endif
 //		navController.view.superview.layer.borderWidth = 2;
 		navController.view.superview.clipsToBounds = YES;
 	}

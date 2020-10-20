@@ -60,6 +60,8 @@
 @end
 */
 
+
+
 @implementation GridTableCell
 
 + (NSString *)reuseIdWithIcon:(bool)withicon
@@ -109,7 +111,11 @@
 			}
 		} else {
 			UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(totalCol, 0, 1, size.height)];
-			divider.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1];
+            if (@available(iOS 13, *)) {
+                divider.backgroundColor = UIColor.secondarySystemBackgroundColor;
+            } else {
+                divider.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1];
+            }
 			[self.dividers addObject:divider];
 			[self.contentView addSubview:divider];
 
@@ -134,7 +140,11 @@
 	if (self.extendArgsLabel) {
 		UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(self.firstColWidth, size.height, totalCol - self.firstColWidth, 1)];
 		[self.dividers addObject:divider];
-		divider.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1];
+		if (@available(iOS 13, *)) {
+            divider.backgroundColor = UIColor.secondarySystemBackgroundColor;
+        } else {
+            divider.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1];
+        }
 		[self.contentView addSubview:divider];
 	}
 	self.id = id;
@@ -216,19 +226,33 @@
 
 - (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size footer:(bool)footer
 {
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-	self = [super initWithReuseIdentifier:@"Header"];
-	self.backgroundView = ({
-		UIView *view = [[UIView alloc] initWithFrame:self.bounds];
-		view.backgroundColor = [UIColor colorWithWhite:.75 alpha:.85];
-		view;
-	});
-#elif __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
-	self = [super initWithReuseIdentifier:@"Header"];
-#else
-	self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
-	self.backgroundColor = [UIColor colorWithWhite:.75 alpha:.85];
-#endif
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+    if (@available(iOS 7, *)) {
+        self = [super initWithReuseIdentifier:@"Header"];
+        self.backgroundView = ({
+            UIView *view = [[UIView alloc] initWithFrame:self.bounds];
+            if (@available(iOS 13, *)) {
+                view.backgroundColor = [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
+                    if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+                        return [UIColor colorWithWhite:.31 alpha:.85];
+                    } else {
+                        return [UIColor colorWithWhite:.75 alpha:.85];
+                    }
+                }];
+            } else {
+                view.backgroundColor = [UIColor colorWithWhite:.75 alpha:.85];
+            }
+            view;
+        });
+    } else {
+        self = [super initWithReuseIdentifier:@"Header"];
+    }
+//#elif __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
+//	self = [super initWithReuseIdentifier:@"Header"];
+//#else
+//	self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
+//	self.backgroundColor = [UIColor colorWithWhite:.75 alpha:.85];
+//#endif
 	self.labels = [NSMutableArray arrayWithCapacity:columns.count];
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	NSUInteger totalCol = 0;
@@ -239,14 +263,21 @@
 		label.font = footer && col != columns[0] ? [UIFont systemFontOfSize:12.0] : [UIFont boldSystemFontOfSize:16.0];
 		label.adjustsFontSizeToFitWidth = YES;
 		label.text = footer ? @"-" : col.name;
-		label.textColor = [UIColor blackColor];
+        if (@available(iOS 13, *)) {
+            label.textColor = [UIColor labelColor];
+        } else {
+            label.textColor = [UIColor blackColor];
+        }
 		label.backgroundColor = [UIColor clearColor];
 		label.tag = col.tag + 1;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
-		[self.contentView addSubview:label];
-#else
-		[self addSubview:label];
-#endif
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
+        if (@available(iOS 6, *)) {
+            [self.contentView addSubview:label];
+        } else {
+//#else
+            [self addSubview:label];
+        }
+//#endif
 		totalCol += col.width;
 	}
 	return self;
@@ -267,11 +298,16 @@
 	UILabel *label;
 	if (oldCol && oldCol != newCol)
 	if ((label = (UILabel *)[self viewWithTag:oldCol.tag + 1])) {
-		label.textColor = [UIColor blackColor];
+		//
+        if (@available(iOS 13, *)) {
+            label.textColor = [UIColor labelColor];
+        } else {
+            label.textColor = [UIColor blackColor];
+        }
 		label.text = oldCol.name;
 	}
 	if ((label = (UILabel *)[self viewWithTag:newCol.tag + 1])) {
-		label.textColor = [UIColor whiteColor];
+        label.textColor = [UIColor whiteColor];
 		label.text = [newCol.name stringByAppendingString:(desc ? @"\u25BC" : @"\u25B2")];
 	}
 }

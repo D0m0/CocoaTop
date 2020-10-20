@@ -21,6 +21,9 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	NSUInteger configId;
 	column_mode_t viewMode;
 	CGFloat fullRowHeight;
+    
+    UIUserInterfaceSizeClass lastHorizationWindowSizeClass;
+    CGFloat lastHorizationWindowWidth;
 }
 
 - (void)popupMenuTappedItem:(NSInteger)item
@@ -49,7 +52,7 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 
 - (IBAction)backWithoutAnimation
 {
-	[self.navigationController popViewControllerAnimated:NO];
+	[self.navigationController popViewControllerAnimated:true];
 }
 
 - (IBAction)hideShowNavBar:(UIGestureRecognizer *)gestureRecognizer
@@ -79,9 +82,11 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-	self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back"
-		style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
+	//self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back"
+	//	style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
 
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back"
+        style: UIBarButtonItemStyleDone target:self action:@selector(backWithoutAnimation)];
 	viewMode = [[NSUserDefaults standardUserDefaults] integerForKey:@"ProcInfoMode"];
 	NSMutableArray *modeItems = [NSMutableArray arrayWithObjects:ColumnModeName count:ColumnModes];
 	modeItems[ColumnModeThreads] = [modeItems[ColumnModeThreads] stringByAppendingFormat:@" (%u)", proc.threads];
@@ -91,9 +96,26 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[self popupMenuWithItems:modeItems selected:viewMode aligned:UIControlContentHorizontalAlignmentRight];
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"UIButtonBarHamburger"] style:UIBarButtonItemStylePlain
 		target:self action:@selector(popupMenuToggle)];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
-#endif
+    self.tableView.rowHeight = 44;
+    self.tableView.sectionHeaderHeight = 23;
+    self.tableView.sectionFooterHeight = 23;
+    self.tableView.tableFooterView = [[UIView alloc] initWithFrame: CGRectZero];
+//    if (@available(iOS 13, *)) {
+//        self.tableView.backgroundColor = [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
+//            if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+//                return [UIColor colorWithWhite:.31 alpha:1];
+//            } else {
+//                return [UIColor colorWithWhite:.75 alpha:1];
+//            }
+//        }];
+//    } else {
+//        self.tableView.backgroundColor = [UIColor colorWithWhite:.75 alpha:1];
+//    }
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+    if (@available(iOS 7, *)) {
+        [self.tableView setSeparatorInset:UIEdgeInsetsZero];
+    }
+//#endif
 	UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideShowNavBar:)];
 	twoTap.numberOfTouchesRequired = 2;
 	[self.tableView addGestureRecognizer:twoTap];
@@ -116,8 +138,13 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	[proc update];
 	self.navigationItem.title = [procName stringByAppendingFormat:@" (CPU %.1f%%)", (float)proc.pcpu / 10];
 	// Update tableview
-	if ([socks refreshWithMode:viewMode] && socks.proc.pid != 0)
-		self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
+    if ([socks refreshWithMode:viewMode] && socks.proc.pid != 0) {
+        if (@available(iOS 7, *)) {
+            self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
+        } else {
+            self.navigationController.navigationBar.tintColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
+        }
+    }
 	[socks sortUsingComparator:sortColumn.sort desc:sortDescending];
 	[self.tableView reloadData];
 	// First time refresh?
@@ -178,15 +205,32 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 	self.tableView.rowHeight = viewMode == ColumnModeModules ? fullRowHeight : fullRowHeight * 0.6;
 }
 
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    if (self.view.window != nil) {
+        if (@available(iOS 8, *)) {
+            if (lastHorizationWindowSizeClass != self.view.window.traitCollection.horizontalSizeClass || lastHorizationWindowWidth != self.view.bounds.size.width) {
+                lastHorizationWindowSizeClass = self.view.window.traitCollection.horizontalSizeClass;
+                lastHorizationWindowWidth = self.view.bounds.size.width;
+                [self reappearAllView];
+            }
+        }
+    }
+}
+
+- (void)reappearAllView {
+    socks = [PSSockArray psSockArrayWithProc:proc];
+    procName = [proc.executable lastPathComponent];
+    [self configureMode];
+    // Refresh interval
+    timerInterval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
+    [self refreshSocks:nil];
+}
+
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	socks = [PSSockArray psSockArrayWithProc:proc];
-	procName = [proc.executable lastPathComponent];
-	[self configureMode];
-	// Refresh interval
-	timerInterval = [[NSUserDefaults standardUserDefaults] floatForKey:@"UpdateInterval"];
-	[self refreshSocks:nil];
+    [self reappearAllView];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -252,14 +296,44 @@ NSString *ColumnModeName[ColumnModes] = {@"Summary", @"Threads", @"Open files", 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	display_t display = socks[indexPath.row].display;
-	if (display == ProcDisplayTerminated)
-		cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
-	else if (display == ProcDisplayStarted)
-		cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
-	else if (indexPath.row & 1)
-		cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
-	else
-		cell.backgroundColor = [UIColor whiteColor];
+    if (display == ProcDisplayTerminated) {
+        if (@available(iOS 13, *)) {
+            cell.backgroundColor = [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
+                if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+                    return [UIColor colorWithRed:0.5 green:0.12 blue:0.12 alpha:1];
+                } else {
+                    return [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
+                }
+            }];
+        } else {
+            cell.backgroundColor = [UIColor colorWithRed:1 green:0.7 blue:0.7 alpha:1];
+        }
+		
+    } else if (display == ProcDisplayStarted) {
+        if (@available(iOS 13, *)) {
+            cell.backgroundColor = [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
+                if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+                    return [UIColor colorWithRed:0.12 green:0.5 blue:0.12 alpha:1];
+                } else {
+                    return [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
+                }
+            }];
+        } else {
+            cell.backgroundColor = [UIColor colorWithRed:0.7 green:1 blue:0.7 alpha:1];
+        }
+    } else if (indexPath.row & 1) {
+		if (@available(iOS 13, *)) {
+            cell.backgroundColor = UIColor.secondarySystemBackgroundColor;
+        } else {
+            cell.backgroundColor = [UIColor colorWithRed:.95 green:.95 blue:.95 alpha:1];
+        }
+    } else {
+		if (@available(iOS 13, *)) {
+            cell.backgroundColor = UIColor.systemBackgroundColor;
+        } else {
+            cell.backgroundColor = [UIColor whiteColor];
+        }
+    }
 }
 
 #pragma mark -

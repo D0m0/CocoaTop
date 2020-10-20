@@ -44,10 +44,10 @@ typedef struct PSCounts {
 @public mach_task_basic_info_data_t basic;
 @public struct task_events_info events;
 @public struct task_events_info events_prev;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
 @public struct task_power_info power;
 @public struct task_power_info power_prev;
-#endif
+//#endif
 @public struct rusage_info_v2 rusage;
 @public struct rusage_info_v2 rusage_prev;
 @public struct PSCounts netstat;
