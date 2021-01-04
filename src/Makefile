@@ -12,6 +12,9 @@ CocoaTop_RESOURCE_DIRS = res
 include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/application.mk
 
+SUBPROJECTS = postinst
+include $(THEOS_MAKE_PATH)/aggregate.mk
+
 #before-package::
 #	@cp .theos/obj/five/CocoaTop.app/CocoaTop .theos/_/Applications/CocoaTop.app/CocoaTop5
 #	@cp .theos/obj/six/CocoaTop.app/CocoaTop .theos/_/Applications/CocoaTop.app/CocoaTop6

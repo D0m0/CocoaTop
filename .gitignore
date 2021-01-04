@@ -1,4 +1,10 @@
+.DS_Store
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/*.xcuserdatad/UserInterfaceState.xcuserstate
+*.xcodeproj/project.xcworkspace/xcuserdata/*.xcuserdatad/IDEFindNavigatorScopes.plist
+*.xcodeproj/project.xcworkspace/xcuserdata/*.xcuserdatad/WorkspaceSettings.xcsettings
 /src/_
 /src/obj
 /src/.theos
 /src/theos
+/src/packages

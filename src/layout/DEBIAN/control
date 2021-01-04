@@ -1,7 +1,7 @@
 Package: com.sxx.cocoatop
 Name: CocoaTop
 Depends: 
-Version: 2.2.1
+Version: 2.2.2
 Architecture: iphoneos-arm
 Description: Process Viewer for iOS GUI, Enhanced by SXX! Now support iOS 13 Dark mode and split view on iPad!
 Maintainer: SXX

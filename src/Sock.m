@@ -661,10 +661,17 @@ void dump(unsigned char *b, int s)
 
 + (NSMutableDictionary *)getLaunchdPortNames
 {
+    static dispatch_queue_t launchd_pipe_queue;
+    static dispatch_once_t once;
+    static NSCharacterSet *MU_cset;
+    static NSCharacterSet *AD_cset;
+    dispatch_once(&once, ^{
+        launchd_pipe_queue = dispatch_queue_create("com.sxx.queue.launchd_pipe", DISPATCH_QUEUE_SERIAL);
+        MU_cset = [NSCharacterSet characterSetWithCharactersInString:@"MU"];
+        AD_cset = [NSCharacterSet characterSetWithCharactersInString:@"AD"];
+    });
 	NSMutableDictionary *knownPorts = nil;
-//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
-    if (@available(iOS 6, *)) {
-	int hpipe[2];
+	int *hpipe = alloca(sizeof(int) * 2);
 	pipe(hpipe);
 	xpc_object_t xpc_out = 0, xpc_in = xpc_dictionary_create(0, 0, 0);
 	xpc_dictionary_set_uint64(xpc_in, "handle", 0);
@@ -674,9 +681,37 @@ void dump(unsigned char *b, int s)
 	xpc_dictionary_set_fd(xpc_in, "fd", hpipe[1]);
 	xpc_pipe_t xp = xpc_pipe_create_from_port(bootstrap_port, 0);
 //	xpc_pipe_t xp = (xpc_pipe_t)_os_alloc_once_table[1].ptr[3];
-	if (xpc_pipe_routine(xp, xpc_in, &xpc_out) || !xpc_dictionary_get_int64(xpc_out, "error")) {
-		char *buf = (char *)malloc(0x100000u);
-		read(hpipe[0], buf, 0x100000u);
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
+    if (@available(iOS 6, *)) {
+        size_t buf_size;
+        if (@available(iOS 12, *)) {
+            buf_size = 0x800000u;
+        } else {
+            buf_size = 0x100000u;
+        }
+        char *buf = (char *)malloc(buf_size);
+        
+        dispatch_async(launchd_pipe_queue, ^{
+            off_t done = 0;
+            size_t remains = buf_size;
+            int fd = hpipe[0];
+            while (done < buf_size) {
+                ssize_t once = read(fd, buf + done, remains);
+                if (once <= 0) {
+                    break;
+                }
+                done += once;
+                remains -= once;
+            }
+        });
+        
+        if (xpc_pipe_routine(xp, xpc_in, &xpc_out) || !xpc_dictionary_get_int64(xpc_out, "error")) {
+            close(hpipe[1]);
+            close(hpipe[0]);
+            hpipe[1] = -1;
+            hpipe[0] = -1;
+            dispatch_sync(launchd_pipe_queue, ^{});
+        }
 		char *endpoints_start = strstr(buf, "\tendpoints = {");
 		if (endpoints_start) {
 			endpoints_start += 14;
@@ -686,13 +721,14 @@ void dump(unsigned char *b, int s)
 			PSPortInfo *ports = [PSPortInfo psPortInfoForPid:1];
 			NSScanner *endpoints = [NSScanner scannerWithString:[NSString stringWithUTF8String:endpoints_start]];
 			free(buf);
+            buf = NULL;
 			knownPorts = [NSMutableDictionary dictionaryWithCapacity:1000];
 			while (!endpoints.isAtEnd) {
 				mach_port_name_t port;
 				NSString *name;
 				if (![endpoints scanHexInt:&port]) break;
-				[endpoints scanCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"MU"] intoString:nil];
-				[endpoints scanCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"AD"] intoString:nil];
+				[endpoints scanCharactersFromSet:MU_cset intoString:nil];
+				[endpoints scanCharactersFromSet:AD_cset intoString:nil];
 				if (![endpoints scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&name]) break;
 				for (mach_msg_type_number_t i = 0; i < ports->count; i++)
 					if (ports->table[i].iin_name == port) {
@@ -701,12 +737,18 @@ void dump(unsigned char *b, int s)
 					}
 			}
 		}
-	}
+        if (buf != NULL) {
+            free(buf);
+        }
+    }
 	if (xpc_in) xpc_release(xpc_in);
 	if (xpc_out) xpc_release(xpc_out);
 	xpc_release(xp);
-	close(hpipe[0]);
-	close(hpipe[1]);
+    if (hpipe[0] != -1) {
+        close(hpipe[0]);
+    }
+    if (hpipe[1] != -1) {
+        close(hpipe[1]);
     }
 //#endif
 	return knownPorts;

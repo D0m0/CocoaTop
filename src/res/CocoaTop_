@@ -1,6 +1,7 @@
 #!/bin/bash
 C=/${0}
 C=${C%/*}
+exec "${C:-.}"/CocoaTop_
 if test -e /System/Library/Frameworks/GameController.framework; then
 	exec "${C:-.}"/CocoaTop
 elif test -e /System/Library/Frameworks/MediaToolbox.framework; then
