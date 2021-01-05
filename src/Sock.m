@@ -706,10 +706,10 @@ void dump(unsigned char *b, int s)
         });
         
         if (xpc_pipe_routine(xp, xpc_in, &xpc_out) || !xpc_dictionary_get_int64(xpc_out, "error")) {
+            xpc_release(xpc_in);
+            xpc_in = nil;
             close(hpipe[1]);
-            close(hpipe[0]);
             hpipe[1] = -1;
-            hpipe[0] = -1;
             dispatch_sync(launchd_pipe_queue, ^{});
         }
 		char *endpoints_start = strstr(buf, "\tendpoints = {");
