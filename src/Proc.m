@@ -201,12 +201,9 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	self.prio = 0;
 	self.pcpu = 0;
 	self.ptime = 0;
-    if (@available(iOS 10, *)) {
-	//if (self.pid == 0 && floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_10_0)
-        if (self.pid == 0)
-            return;
-    }
-	if (task_for_pid(mach_task_self(), self.pid, &task) != KERN_SUCCESS)
+
+    extern kern_return_t _task_for_pid(pid_t pid, task_port_t *target);
+    if (_task_for_pid(self.pid, &task) != KERN_SUCCESS)
 		return;
 	// Basic task info
 	unsigned int info_count = MACH_TASK_BASIC_INFO_COUNT;
@@ -240,6 +237,11 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
 	info_count = TASK_CATEGORY_POLICY_COUNT;
 	task_policy_get(task, TASK_CATEGORY_POLICY, (task_policy_t)&policy_info, &info_count, &get_default);
 	self.role = policy_info.role;
+    if (@available(iOS 11, *)) {
+    } else if (@available(iOS 10, *)) {
+        if (self.pid == 0)
+            goto task_port;
+    }
 	// Task times
 	struct task_thread_times_info times;
 	info_count = TASK_THREAD_TIMES_INFO_COUNT;
@@ -265,6 +267,7 @@ unsigned int mach_thread_priority(thread_t thread, policy_t policy)
         power.task_timer_wakeups_bin_1 += power.task_timer_wakeups_bin_2;
     }
 //#endif
+    task_port:;
 	// Task ports
 	mach_msg_type_number_t ncnt, tcnt;
 	mach_port_name_array_t names;

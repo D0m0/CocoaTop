@@ -57,16 +57,25 @@ static UIColor *_grayColor() {
 
 static UIColor *_greenColor() {
     if (@available(iOS 13, *)) {
-            return [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
-                if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-                    return [UIColor colorWithRed:0.12 green:0.8 blue:0.12 alpha:1];
-                } else {
-                    return [UIColor colorWithRed:0 green:0.5 blue:0 alpha:1];
-                }
-            }];
-        } else {
-    return [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0];
-        }
+        return [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
+            if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+                return [UIColor colorWithRed:0.12 green:0.8 blue:0.12 alpha:1];
+            } else {
+                return [UIColor colorWithRed:0 green:0.5 blue:0 alpha:1];
+            }
+        }];
+    } else {
+        return [UIColor colorWithRed:.0 green:.5 blue:.0 alpha:1.0];
+    }
+}
+
+kern_return_t
+_task_for_pid(pid_t pid, task_port_t *target) {
+    kern_return_t ret = task_for_pid(mach_task_self(), pid, target);
+    if (ret != KERN_SUCCESS && pid == 0) {
+        ret = host_get_special_port(mach_host_self(), HOST_LOCAL_NODE, 4, target);
+    }
+    return ret;
 }
 
 NSString *psGetProcessName(struct extern_proc *ep)
@@ -210,7 +219,7 @@ void dump(unsigned char *b, int s)
 	}
 */
 	task_port_t task;
-	if (task_for_pid(mach_task_self(), socks.proc.pid, &task) != KERN_SUCCESS)
+    if (_task_for_pid(socks.proc.pid, &task) != KERN_SUCCESS)
 		return EPERM;
 	thread_port_array_t thread_list;
 	unsigned int thread_count;
@@ -631,7 +640,7 @@ void dump(unsigned char *b, int s)
 	self->task = 0;
 	self->table = 0;
 	self->count = 0;
-	self->ret = task_for_pid(mach_task_self(), pid, &self->task);
+    self->ret = _task_for_pid(pid, &self->task);
 	if (self->ret == KERN_SUCCESS) {
 		ipc_info_space_t info;		// iis_genno_mask
 		ipc_info_tree_name_array_t tree = 0;
@@ -929,7 +938,7 @@ extern CFDictionaryRef OSKextCopyLoadedKextInfo(CFArrayRef kextIdentifiers, CFAr
 	}
 
 	task_port_t task;
-	if (task_for_pid(mach_task_self(), socks.proc.pid, &task) != KERN_SUCCESS)
+    if (_task_for_pid(socks.proc.pid, &task) != KERN_SUCCESS)
 		return EPERM;
 	task_dyld_info_data_t task_dyld_info;
 	mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
