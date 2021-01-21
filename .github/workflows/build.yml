@@ -55,7 +55,7 @@ jobs:
       run: |
         cd src
         mkdir -p packages
-        rm packages/*
+        rm -f packages/*
         make package FINALPACKAGE=1
 
     - name: upload deb
