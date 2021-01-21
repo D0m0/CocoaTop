@@ -1,4 +1,5 @@
 #include <Foundation/Foundation.h>
+#include <UIKit/UIKit.h>
 #if 0
 #ifndef __IPHONE_6_0
 #define __IPHONE_6_0 60000
