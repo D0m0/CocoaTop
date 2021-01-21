@@ -2,7 +2,7 @@ Package: ru.domo.cocoatop64
 Name: CocoaTop
 Depends: 
 Conflicts: ru.domo.cocoatop
-Version: 2.2.2
+Version: 2.2.3
 Architecture: iphoneos-arm
 Description: Process Viewer for iOS GUI, updated for iOS 13 by SXX.
 Maintainer: SXX, Domo
