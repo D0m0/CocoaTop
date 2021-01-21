@@ -54,6 +54,7 @@ jobs:
     - name: actual build
       run: |
         cd src
+        mkdir -p packages
         rm packages/*
         make package FINALPACKAGE=1
 
