@@ -350,7 +350,7 @@
 {
 	// When configId changes, all cells are reconfigured
 	configId++;
-	columns = [PSColumn psGetShownColumnsWithWidth:self.tableView.bounds.size.width];
+	columns = [PSColumn psGetShownColumnsWithWidth:UIApplication.sharedApplication.keyWindow.bounds.size.width];
 	// Find sort column and create table header
 	filterColumn = [PSColumn psColumnWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:@"FilterColumn"]];
 	[self searchBarTextDidEndEditing:filter];

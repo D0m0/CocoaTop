@@ -10,6 +10,7 @@
 #import "sys/dyld64.h"
 #import "kern/debug.h"
 #import "xpc/xpc.h"
+#include <dlfcn.h>
 
 #ifndef SYS_stack_snapshot 
 #define SYS_stack_snapshot 365
@@ -917,10 +918,15 @@ const char *port_types[] = {"","(thread)","(task)","(host)","(host priv)","(proc
 	return self.bundle;
 }
 
-extern CFDictionaryRef OSKextCopyLoadedKextInfo(CFArrayRef kextIdentifiers, CFArrayRef infoKeys);
+CFDictionaryRef (*OSKextCopyLoadedKextInfo)(CFArrayRef kextIdentifiers, CFArrayRef infoKeys);
 
 + (int)refreshArray:(PSSockArray *)socks
 {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        OSKextCopyLoadedKextInfo = dlsym(nil, "_OSKextCopyLoadedKextInfo");
+    });
+    
 	// For the kernel task we will show loaded kernel extensions
 	if (socks.proc.pid == 0) {
 		if (!socks.objects) {
