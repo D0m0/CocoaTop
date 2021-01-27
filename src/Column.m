@@ -194,7 +194,7 @@ NSString *psProcessCpuTime(unsigned int ptime)
 #include "Column_pre_ios7.h"
             ];
         }
-#if 0
+#if TARGET_IPHONE_SIMULATOR
 		allColumns = @[
 		[PSColumn psColumnWithName:@"Command line" fullname:@"Command line" align:NSTextAlignmentLeft width:170 tag:0 style:ColumnStylePathTrunc | ColumnStyleTooLong
 			data:^NSString*(PSProc *proc) { return [proc.executable stringByAppendingString:proc.args]; }

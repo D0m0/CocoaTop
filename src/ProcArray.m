@@ -124,7 +124,9 @@ int sort_procs_by_pid(const void *p1, const void *p2)
 	static uid_t mobileuid = 0;
 	if (!mobileuid) {
 		struct passwd *mobile = getpwnam("mobile");
-		mobileuid = mobile->pw_uid;
+        if (mobile) {
+            mobileuid = mobile->pw_uid;
+        }
 	}
 	// Reset totals
 	self.totalCpu = self.threadCount = self.portCount = self.machCalls = self.unixCalls = self.switchCount = self.runningCount = self.mobileCount = self.guiCount = 0;
