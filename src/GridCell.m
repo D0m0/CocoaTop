@@ -226,33 +226,13 @@
 
 - (instancetype)initWithColumns:(NSArray *)columns size:(CGSize)size footer:(bool)footer
 {
-//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_7_0
-    if (@available(iOS 7, *)) {
+    if (@available(iOS 6.0, *)) {
         self = [super initWithReuseIdentifier:@"Header"];
-        self.backgroundView = ({
-            UIView *view = [[UIView alloc] initWithFrame:self.bounds];
-            if (@available(iOS 13, *)) {
-                view.backgroundColor = [UIColor colorWithDynamicProvider:^(UITraitCollection *collection) {
-                    if (collection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-                        return [UIColor colorWithWhite:.31 alpha:.85];
-                    } else {
-                        return [UIColor colorWithWhite:.75 alpha:.85];
-                    }
-                }];
-            } else {
-                view.backgroundColor = [UIColor colorWithWhite:.75 alpha:.85];
-            }
-            view;
-        });
+        self.backgroundView = [[NSClassFromString(@"_UITableViewHeaderFooterView") alloc] initWithFrame:self.bounds];
     } else {
         self = [super initWithReuseIdentifier:@"Header"];
     }
-//#elif __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_6_0
-//	self = [super initWithReuseIdentifier:@"Header"];
-//#else
-//	self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
-//	self.backgroundColor = [UIColor colorWithWhite:.75 alpha:.85];
-//#endif
+    
 	self.labels = [NSMutableArray arrayWithCapacity:columns.count];
 	self.dividers = [NSMutableArray arrayWithCapacity:columns.count];
 	NSUInteger totalCol = 0;
@@ -280,6 +260,7 @@
 //#endif
 		totalCol += col.width;
 	}
+    
 	return self;
 }
 
