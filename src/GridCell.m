@@ -307,7 +307,7 @@
 		label.text = oldCol.name;
 	}
 	if ((label = (UILabel *)[self viewWithTag:newCol.tag + 1])) {
-        label.textColor = [UIColor whiteColor];
+        label.textColor = self.tintColor;
 		label.text = [newCol.name stringByAppendingString:(desc ? @"\u25BC" : @"\u25B2")];
 	}
 }
